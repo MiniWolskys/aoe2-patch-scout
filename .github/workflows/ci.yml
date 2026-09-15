@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Checks (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.1.0
+        with:
+          enable-cache: true
+
+      # Pinned by hand: Dependabot can't update the Biome binary (CONTRIBUTING.md).
+      - uses: biomejs/setup-biome@v2.7.1
+        with:
+          version: "2.5.13"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: pre-commit (all files)
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+      - name: mypy
+        run: uv run mypy
+
+      - name: pytest
+        run: uv run pytest
