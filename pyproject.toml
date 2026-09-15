@@ -23,6 +23,8 @@ build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 100
+# Code blocks in the docs quote upstream sources verbatim; don't reformat them.
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "PTH", "N", "T20", "RUF"]
@@ -30,11 +32,6 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "PTH", "N", "T20", "RUF"]
 [tool.mypy]
 files = ["src", "tests"]
 strict = true
-
-[[tool.mypy.overrides]]
-# pywebview ships no py.typed marker.
-module = ["webview", "webview.*"]
-ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
