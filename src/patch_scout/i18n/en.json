@@ -1,3 +1,5 @@
 {
-  "app.title": "Patch Scout"
+  "app.title": "Patch Scout",
+  "webview2.missing.title": "Patch Scout needs WebView2",
+  "webview2.missing.text": "Patch Scout shows its window with the Microsoft Edge WebView2 Runtime. It comes with Windows 11 and most Windows 10 PCs, but it isn't working on this one.\n\nOpen Microsoft's download page in your browser?"
 }

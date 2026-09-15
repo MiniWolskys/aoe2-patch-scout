@@ -43,12 +43,10 @@ a = Analysis(
   - On the test machine: HKLM `pv` = `153.0.4234.32`; no HKCU key.
   - The .NET call `CoreWebView2Environment.GetAvailableBrowserVersionString` agrees, but it works only once pywebview has loaded the WebView2 assemblies. So the registry check is the one to use before start.
 - **Download page for users:** https://developer.microsoft.com/microsoft-edge/webview2/consumer/
-- **Suggested approach, to settle in the M1 spec:**
-  1. Check the registry before `webview.start`.
-  2. If the runtime is missing, show a native Windows message box, with its text from the i18n catalog, instead of opening the window.
-  3. After start, also check that `webview.renderer` is `"edgechromium"`.
-
-  How the download page gets opened must respect D-02: the app itself makes no network access.
+- **What the app does (D-40, `gui/webview2.py`, `gui/app.py`):**
+  1. Before `webview.start`, it reads both `pv` values above. A missing or empty value, or `0.0.0.0`, means not installed.
+  2. If the runtime is missing, a native Windows message box (`MessageBoxW`, text from the i18n catalog) offers to open the download page. **Yes** hands the URL to the user's default browser; either way the app exits with code 1 and opens no window. The app itself makes no network access (D-02).
+  3. After start, if `webview.renderer` isn't `"edgechromium"`, the same message shows and the window closes.
 
 ## Serving the frontend
 

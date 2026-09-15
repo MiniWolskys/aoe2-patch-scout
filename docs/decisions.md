@@ -206,6 +206,18 @@ Third-party JavaScript, e.g. an image export library, is vendored as a single fi
 - UI in HTML/CSS/JS through pywebview.
 - Extraction is isolated: the UI never reads game files.
 
+### D-40 WebView2 Runtime: rely on Windows' copy: Decided
+Chosen by the maintainer on 2026-09-15, in the app shell spec.
+- **What:** the app uses the Evergreen WebView2 Runtime that Windows provides. It isn't bundled.
+- **Why:**
+  - Microsoft preinstalls it on every Windows 11 device, pushed it to eligible Windows 10 devices, and keeps it updated.
+  - The Fixed Version is over 250 MB, never updates itself, needs extra `icacls` permissions on Windows 10, and is proprietary, which conflicts with SignPath's rule (P-21).
+- **When it's missing:**
+  - before opening the window, the app checks Microsoft's documented registry values;
+  - a native message box explains it and offers to open Microsoft's download page in the user's browser, then the app exits. The app itself makes no connection (D-02);
+  - if pywebview still falls back to another engine after start, the same message shows and the window closes.
+- **Details:** [packaging.md](reference/packaging.md#webview2-engine-detection-verified).
+
 ### D-19 Never assume where the game is installed: Decided
 - Detection (Steam; Microsoft Store / Xbox app; folders used before) only **proposes** a folder in an editable field.
 - The user can always browse to another folder, and every folder is validated.
