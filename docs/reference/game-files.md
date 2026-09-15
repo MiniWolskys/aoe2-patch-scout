@@ -115,16 +115,32 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
 - **Civs.** Each civ holds its **own copy of every unit slot**: `civ.units: list[Unit | None]`. Many slots are empty or used only by scenarios.
   - Every civ has **2,701 unit slots** (IDs 0–2700). Of the 162,060 slots across the 60 civs, 33,335 are empty. [verified 101.103.48987.0]
   - The file also holds 1,510 techs and 1,409 effects. [verified 101.103.48987.0]
+  - **2,642 unit IDs** are non-empty in at least one civ (128,725 records), and 2,078 of them are identical in every civ that has them. [verified 101.103.48987.0]
+  - **Per-civ differences are mostly graphics and text.** Compared with each unit's most common record, there are 11,654 (unit, civ) differences; the most frequent fields are `standing_graphic`, `building.snow_graphic_id`, `dying_graphic` and `damage_graphics`. [verified 101.103.48987.0]
+  - **A few are real stat differences**, mostly in the Chronicles civs' copies. For example, Champion (567) has lower attack and line of sight there, and 22 units have a different `frame_delay`. [verified 101.103.48987.0]
 - **Techs.** One global table: cost, research time, required techs, research location, effect ID.
+  - Example: Fletching (tech 199) has `resource_costs` (0, 100) and (3, 50), and costs 100 food and 50 gold in-game. So resource type **0 is food and 3 is gold**; the other types are unconfirmed. [verified 101.103.48987.0]
 - **Effects.** Lists of commands: modify attribute, enable/disable unit, upgrade unit, disable tech, resource modifiers…
   - Civ bonuses, team bonuses, Blacksmith-style upgrades and each civ's disabled units and techs are all effects.
   - Each civ points to its tech tree effect (what it can't have) and its team bonus effect.
-- **Where civ bonuses live** [to verify]. Expected: mostly effects (bonus techs applied at game start), not values baked into per-civ unit copies. Check with the Franks mounted-unit HP bonus. The answer decides how bonus changes show up in the diff (decision O-5).
+- **Where civ bonuses live** [verified 101.103.48987.0]: in effects only, never in the per-civ unit copies. Knight (unit 38) has 100 HP in all 60 civs, Franks included. A civ reaches its effects in three ways:
+  - `Civ.tech_tree_id` points to its tech tree effect, named "<Civ> Tech Tree": what the civ can't have.
+  - `Civ.team_bonus_id` points to its team bonus effect, named "<Civ> Team Bonus".
+  - **Bonus techs:** techs whose `Tech.civ` is the civ's index, with no cost and no research location. Base civs name them "C-Bonus, …"; Chronicles civs use names such as "Athenians Static Bonuses".
+    - Example: Franks tech 290 "C-Bonus, Cavalry +20% HP" → effect 285, four commands of type 5 with `d = 1.2`.
+- **Command types used** [verified 101.103.48987.0]. These are numbers only; their meanings come from the M3 mapping tables.
+  - Tech tree effects: 2,060 commands, mostly type 102 (1,576), then 101 (191) and 8 (151).
+  - Team bonus effects: 277 commands, mostly types 4 (113) and 5 (108).
+  - Bonus techs: 2,391 commands, mostly types 5 (1,277) and 4 (585).
+- **Effect names are designer notes, not descriptions** [verified 101.103.48987.0].
+  - 1,267 of the 1,409 effects have a name, but names can be stale or wrong.
+  - "C-Bonus, Building HP x1.5" holds five ×1.1 commands, and "C-Bonus, +15% farmers" has no commands.
+  - So a name can't replace a generated sentence (O-5).
 - **Irrelevant for the diff:** graphics, sounds, terrain and random map data.
 
 ### To verify (M0)
 - [x] genieutils-py 0.1.2 parses this `VER 8.9` file and consumes all of it, and the round trip on the decompressed stream is byte-exact. [verified 101.103.48987.0]
-- [ ] Extracted values match Advanced Genie Editor or in-game values: Knight HP, a Blacksmith tech cost, the Franks bonus effect.
+- [x] Extracted values match in-game values, checked by the maintainer: Knight HP 100 in every civ, and Fletching costs 100 food and 50 gold. The Franks mounted-unit bonus is effect 285, with `d = 1.2` (+20%). [verified 101.103.48987.0]
 - [x] Civ order in the `.dat` matches `civilizations.json` order (Gaia = 0); see §6. [verified 101.103.48987.0]
 - [x] Parse time and peak memory for the 87 MB stream: about 18 s and 1.1 GB; see [genieutils-py.md](genieutils-py.md#measured-on-the-live-build).
 
@@ -214,7 +230,11 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
 **Use:**
 - "What does building X offer this civ."
 - Together with CivTechTrees, the source of the **reachable unit** set used at diff time.
-- Units created by other units, such as dismount or transform forms, may not appear here [to verify].
+- **Units reached only through other units** [verified 101.103.48987.0]:
+  - The tech trees and building offers name 333 unit and building IDs. Following the unit link fields reaches 315 more.
+  - Examples: Konnik → Konnik (Dismounted) through `blood_unit_id`; Trebuchet ↔ Trebuchet (Packed) through `building.transform_unit`; Archer → its projectile through `type_50.projectile_unit_id`.
+  - Many of the others are corpses, rubble and projectiles.
+  - Which links make a unit reachable for the diff is still to be decided (diff-rules.md).
 
 ## 8. Helper JSONs
 

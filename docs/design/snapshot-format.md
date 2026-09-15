@@ -183,6 +183,10 @@ Maps a stat key to an icon ref. The game's stat icons come from `widgetui\textur
 - **Overrides:** for every other civ, the differing fields, as dotted paths mapped to full values. Lists are replaced whole.
 - **Reconstruction:** the diff rebuilds each civ's full record as base + overrides, so the choice of base never affects diff output.
 - **Storage only:** this base/override split is a storage technique. It is not where civ bonuses come from: bonuses are the effects, which are stored raw and never applied to unit records.
+- **Measured in M0** (live build 101.103.48987.0, compact JSON):
+  - full records as base + dotted-path overrides: about 19.7 MB raw, 0.78 MB gzipped;
+  - a full record for every civ, for comparison: 728 MB raw, 7.8 MB gzipped.
+  - Unit tasks (`bird.tasks` in genieutils-py) make up about half of the base records.
 
 **Unit and tech records:**
 - Full records, graphic and sound IDs included; the diff allowlist filters them (D-08).
@@ -190,7 +194,7 @@ Maps a stat key to an icon ref. The game's stat icons come from `widgetui\textur
 
 **Effects:** raw commands, in file order. Sentences are generated at diff time (O-5).
 
-**Civ mapping:** `civ_dat[i]` corresponds to `civs[i]` only if the M0 order check confirms it. The mapping is also a sanity check (P-02).
+**Civ mapping:** `civ_dat[i]` corresponds to `civs[i]`; the M0 check confirmed that the orders match ([game-files.md §6](../reference/game-files.md#6-civilizationsjson)). Checking the mapping on every capture remains a sanity check (P-02).
 
 ## Icon references and the icon store
 
