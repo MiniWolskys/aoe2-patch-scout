@@ -101,6 +101,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 
 - **With no versions,** the main area explains that a comparison needs two versions and offers two cards: **Capture your game** and **Import a version** (a baseline pack or an exported version).
 - **A warning line** reminds users to capture the live build before switching Steam to a preview build.
+- **Wording:** the `first_launch.*` messages in the catalog (`en.json`), taken from the round-3 mockups.
 - **With one version,** its details show, with a hint that comparing needs a second version.
 
 ### Version details

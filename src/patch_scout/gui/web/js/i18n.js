@@ -64,3 +64,21 @@ export function createTranslator(messages) {
     }
   };
 }
+
+/**
+ * Fill in `data-i18n` text and `data-i18n-attr` attributes under `root`.
+ * `data-i18n-attr` holds space-separated `attribute:key` pairs.
+ * @param {ParentNode} root
+ * @param {(key: string) => string} t
+ */
+export function applyTranslations(root, t) {
+  for (const element of root.querySelectorAll("[data-i18n]")) {
+    element.textContent = t(element.dataset.i18n);
+  }
+  for (const element of root.querySelectorAll("[data-i18n-attr]")) {
+    for (const pair of element.dataset.i18nAttr.trim().split(/\s+/)) {
+      const [attribute, key] = pair.split(":");
+      element.setAttribute(attribute, t(key));
+    }
+  }
+}
