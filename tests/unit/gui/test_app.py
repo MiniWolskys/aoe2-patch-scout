@@ -39,6 +39,13 @@ class FakeWindow:
         self.destroyed = True
 
 
+class NeverShownWindow:
+    """A window whose `destroy` times out, as pywebview's does when `shown` never fires."""
+
+    def destroy(self) -> None:
+        raise webview.WebViewException("Main window failed to start")
+
+
 class FakeWebview:
     """Records what the app asks pywebview to do, without opening a window."""
 
@@ -291,6 +298,22 @@ def test_check_renderer_closes_the_window_before_explaining_a_fallback(
 
     assert window.destroyed is True
     assert dialog.destroyed_when_shown == [True]
+    assert failed.is_set() is True
+    assert [title for title, _ in dialog.shown] == [WEBVIEW2_TITLE]
+    assert browser.opened == [DOWNLOAD_URL]
+
+
+def test_check_renderer_still_explains_when_the_window_never_shows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`Window.destroy` raises `WebViewException` after ~20 s if `shown` never fired."""
+    monkeypatch.setattr(webview, "renderer", "mshtml")
+    dialog = Dialog(answer=True)
+    browser = Browser()
+    failed = threading.Event()
+
+    app.check_renderer(NeverShownWindow(), load_catalog("en"), dialog, browser, failed)
+
     assert failed.is_set() is True
     assert [title for title, _ in dialog.shown] == [WEBVIEW2_TITLE]
     assert browser.opened == [DOWNLOAD_URL]

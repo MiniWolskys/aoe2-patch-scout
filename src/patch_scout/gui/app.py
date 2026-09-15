@@ -71,7 +71,13 @@ def check_renderer(
         return
     logger.error("pywebview is using %s instead of Edge Chromium", webview.renderer)
     failed.set()
-    window.destroy()
+    try:
+        window.destroy()
+    except webview.WebViewException:
+        # `Window.destroy` waits up to 20 s for the `shown` event; if the window never
+        # showed at all, it raises instead of closing (`webview/window.py`, `_api_call`).
+        # Still explain WebView2 rather than leaving the thread dead.
+        logger.exception("the window didn't close cleanly")
     offer_download_page(catalog, ask_to_open, open_url)
 
 
