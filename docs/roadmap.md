@@ -28,10 +28,11 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - [ ] Add the CI jobs as required status checks once they have run (D-23).
 
 **Parse layer** (on the live install, read-only)
-- [ ] genieutils-py 0.1.2 parses the live `VER 8.9` file; the round trip on the decompressed stream is byte-exact.
-- [ ] **Layout substitution:** in memory, change the version bytes to an unknown string, e.g. `VER 9.0`. Check the VER 8.9 layout is accepted, and that a copy with one corrupted byte in the body is rejected (P-02).
-- [ ] Parse time and peak memory, including the cost of a failed attempt.
-- [ ] `.dat` civ order matches `civilizations.json` (Gaia = 0).
+- [x] genieutils-py 0.1.2 parses the live `VER 8.9` file; the round trip on the decompressed stream is byte-exact.
+- [x] **Layout substitution:** in memory, change the version bytes to an unknown string, e.g. `VER 9.0`. Check the VER 8.9 layout is accepted, and that a copy with one corrupted byte in the body is rejected (P-02).
+  - **Result:** VER 8.9 is accepted and the older layouts are rejected. A corrupted byte is rejected only when it breaks the structure: most flipped values re-encode unchanged, so only the sanity checks can catch them ([genieutils-py.md](reference/genieutils-py.md#measured-on-the-live-build)).
+- [x] Parse time and peak memory, including the cost of a failed attempt.
+- [x] `.dat` civ order matches `civilizations.json` (Gaia = 0).
 - [ ] Sanity values against Advanced Genie Editor / in-game: Knight HP, a Blacksmith tech cost.
 - [ ] **How civ bonuses are encoded:** effect command types used, how descriptive effect names are. This feeds the effect sentence templates (O-5).
 - [ ] Unit slot count and snapshot size with every non-empty unit slot stored as base + overrides (P-03).
@@ -86,7 +87,8 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 **Exit criteria**
 - The live build captures with `stats_available: true`.
 - A faked unknown version string is read through layout substitution and flagged.
-- A corrupted byte and a failed sanity check both give `stats: null` with the right reason.
+- A structurally corrupted stream (a broken count or string, or a truncated file) and a failed sanity check each give `stats: null` with the right reason.
+- **Known limit:** a corrupted value that stays plausible can't be detected; see [genieutils-py.md](reference/genieutils-py.md#measured-on-the-live-build).
 
 ## M3: Diff engine
 

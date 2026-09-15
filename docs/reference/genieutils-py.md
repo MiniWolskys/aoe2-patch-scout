@@ -28,7 +28,10 @@ Facts about the `.dat` reader this project depends on, checked on 2026-09-15 aga
 - **Write a compressed file:** `DatFile.save(path)`. We never write `.dat` files, so this is for reference only.
 - **Low level:** `DatFile.from_bytes(handler)` reads from a byte handler over the **decompressed** stream. `DatFile.to_bytes()` returns **uncompressed** bytes.
   - Its `version` parameter is ignored; `self.version` (a `str`) is used.
-  - Check the exact handler class and signatures in `datfile.py` of the pinned version.
+  - The handler is `genieutils.common.ByteHandler(memoryview(raw))`. [verified 0.1.2]
+- **`from_bytes` doesn't check that it consumed the whole buffer.** A wrong layout can stop early without any error; see [Measured on the live build](#measured-on-the-live-build). [verified 0.1.2]
+- **Reads aren't bounds-checked.** `ByteHandler.consume_range` slices a `memoryview`, which returns fewer bytes past the end, and `int.from_bytes(b'')` is 0. A misread count can then read zeros instead of failing. Read through a `ByteHandler` subclass whose `consume_range` raises at the end of the buffer, as the M0 spike did. [verified 0.1.2]
+- **Strings** are decoded as strict UTF-8 after stripping trailing NULs, so invalid bytes raise `UnicodeDecodeError`. **Floats** go through `struct` format `'f'`. [verified 0.1.2]
 - **Decompression:** `zlib.decompress(content, wbits=-15)` on load, `zlib.compress(..., level=-1, wbits=-15)` on save.
 
 ### `DatFile` top-level fields (in order)
@@ -54,7 +57,7 @@ VER_78 'VER 7.8', VER_84 'VER 8.4', VER_88 'VER 8.8', VER_89 'VER 8.9'
 - The upstream round-trip test covers 7.7, 7.8, 8.4, 8.8 and 8.9.
 
 ### Hard gate on unknown versions
-`DatFile.from_bytes` does `Version(content.read_string(8))`. `read_string` strips trailing NULs, and any string not in the enum raises `ValueError`, even when the layout didn't change.
+`DatFile.from_bytes` does `Version(content.read_string(8))`. `read_string` strips trailing NULs, and any string not in the enum raises `ValueError`, even when the layout didn't change. [verified: `VER 9.0` does, on build 101.103.48987.0]
 
 The version string carries **no game data**. It only tells the parser which layout to expect.
 
@@ -90,7 +93,9 @@ Decision P-02. The goal is to keep offering unit data when a new build only bump
 **Why this avoids the landmine:** the string genieutils-py sees is always an existing enum member, and the version comparisons behave exactly as for that known version.
 
 **Why the result can be trusted:**
-- **A real layout change breaks parsing.** When fields are added, removed or resized, everything after them shifts. Counts and lengths then read as garbage, and parsing either raises or consumes the wrong number of bytes, which the round trip's length check catches.
+- **A real layout change breaks the round trip.** When fields are added, removed or resized, everything after them shifts, and counts and lengths read as garbage.
+  - Parsing usually **doesn't raise**: in M0, every wrong layout parsed without an error and stopped short of the end.
+  - Only comparing the whole re-encoded stream with the whole input, length included, rejected them. Never compare just the consumed part.
 - **The sanity checks catch shifted-but-plausible data.** They cross-check the parsed data against the files tier, which doesn't depend on the `.dat` format:
   - the civ count and order match `civilizations.json`;
   - every tech tree node points to an existing, non-empty unit, tech or building for that civ;
@@ -99,7 +104,7 @@ Decision P-02. The goal is to keep offering unit data when a new build only bump
   - effect and tech references point to existing records.
 - **Residual risk:** a change that keeps every size but changes a field's *meaning*, e.g. two same-size fields swapped. That risk exists even when the version string is known. The diff's change-volume check ([diff-rules.md](../design/diff-rules.md#change-volume-check)) is the last line of defence.
 
-**Cost:** each failed attempt costs parse time. Attempts on a changed layout usually fail early; measure in M0.
+**Cost:** an attempt that reads most of the file costs as much as a normal parse, about 20 s on the live build; one that goes wrong early costs about 1 s. See [Measured on the live build](#measured-on-the-live-build).
 
 ## Format history
 
@@ -126,7 +131,7 @@ Upstream format-support commits (author date / merge date / release):
 - **0.1.1 fixed** "Fix length encoding bug for debug strings with non-ASCII characters". Before it, parse + save produced a `.dat` that crashed the game. Our floor is `>=0.1.2` (VER 8.9) and includes the fix.
 - **No language-file support** (upstream issue #12). String parsing is ours.
 - **Private test data:** the upstream round-trip test reads `.dat` files from `SiegeEngineers/dat-files`, a private repo. We don't commit `.dat` files either; parse-layer tests run locally against a real install (see [CONTRIBUTING.md](../../CONTRIBUTING.md)).
-- **Memory:** upstream has already worked on it ("Use dataclass slots to decrease memory usage", "Use struct in unit and task classes"). Actual parse time and memory for a DE file are unmeasured → M0.
+- **Memory:** upstream has already worked on it ("Use dataclass slots to decrease memory usage", "Use struct in unit and task classes"). A parsed DE file still takes about 1 GB; see [Measured on the live build](#measured-on-the-live-build).
 
 ## Round trip (our usage)
 
@@ -134,14 +139,45 @@ Minimal shape, to be adapted to the exact signatures of the pinned version:
 
 ```python
 raw = zlib.decompress(compressed_bytes, wbits=-15)
-dat = DatFile.from_bytes(ByteHandler(memoryview(raw)))   # check class name and constructor
+dat = DatFile.from_bytes(BoundedByteHandler(memoryview(raw)))   # ByteHandler subclass that raises past the end
 reencoded = dat.to_bytes()
-if reencoded != raw:
+if reencoded != raw:                                     # whole stream, length included
     offset = first_mismatch(raw, reencoded)              # or length mismatch
     # attempt failed: "round-trip mismatch at byte {offset}"
 ```
 
-The round trip is **necessary, not sufficient**. The sanity checks must also pass before stats are marked available.
+The round trip is **necessary, not sufficient**. It checks the layout, not the values, so the sanity checks must also pass before stats are marked available (measured below).
+
+## Measured on the live build
+
+Build 101.103.48987.0 (`VER 8.9`), genieutils-py 0.1.2, Python 3.12, Windows 10, 2026-09-15. Measured with throwaway spike code; treat the numbers as indicative.
+
+### Parse cost
+- **Decompress:** 0.12 s, from 11,076,546 to 86,745,747 bytes.
+- **Parse:** about 14 s. **Re-encode:** about 4 s. The parser consumes all 86,745,747 bytes, and the round trip is byte-exact.
+- **Memory:** about 960 MB after parsing, 1.1 GB at peak. With two parsed files alive at once, the peak reached 2.1 GB.
+- **Consequences:**
+  - release each failed attempt before trying the next layout;
+  - normalize, then release the `DatFile`;
+  - running the stats tier in a child process would also give the memory back to Windows.
+
+### Layout substitution
+The version bytes were set to `VER 9.0` in memory, then each candidate layout was tried:
+
+| Layout | Parse error? | Bytes consumed | Result | Time |
+|---|---|---|---|---|
+| `VER 8.9` | No | All | Round trip exact: accepted | ~20 s |
+| `VER 8.8` | No | All but the last 22,449 | Output shorter than the input: rejected | ~20 s |
+| `VER 8.4`, `VER 7.8`, `VER 7.7` | No | 5,071,446 | First mismatch at byte 3,391,039: rejected | ~1.2 s each |
+
+### Single-byte corruption
+One byte flipped (XOR `0xFF`) at three random positions in each top-level section: 42 attempts.
+- **32 re-encoded unchanged**, so the round trip passed. They include every flip in `civs` (unit stats), `techs`, `tech_tree`, `unit_headers`, `terrain_restrictions` and `player_colours`.
+- **10 were caught, all as parse errors, none by the byte comparison:**
+  - 4 failed the library's internal assertions, 3 of them in the header counts;
+  - 4 were flips inside strings, giving invalid UTF-8;
+  - 2 made reads run past the end of the buffer. The bounds-checked handler stopped them; the stock handler would have read zeros instead.
+- **So:** a wrong value inside a record passes the round trip. Only the sanity checks can catch it, and only when it leaves a plausible range. The diff's change-volume check is the last line of defence.
 
 ## Upgrading the pinned version
 
