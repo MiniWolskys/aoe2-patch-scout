@@ -136,7 +136,7 @@ flowchart TD
 - **`civilizations.json` is required.** Without it, capture fails: every other file is keyed off it.
 - **No partial writes.** A snapshot file either exists complete or doesn't exist.
 - **Raw backup** is on by default for every capture (P-19). Files are stored content-addressed, so unchanged files cost nothing extra.
-- **Progress reporting:** capture runs off the GUI thread and reports progress by phase. Parse time is measured in M0.
+- **Progress reporting:** capture runs off the GUI thread and reports progress by phase. On the live build, the `.dat` parse and round trip alone take about 18 s and 1 GB of memory ([measured in M0](../reference/genieutils-py.md#measured-on-the-live-build)).
 
 ## Diff flow
 

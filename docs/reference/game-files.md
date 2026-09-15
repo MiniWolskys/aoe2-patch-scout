@@ -112,7 +112,9 @@ Store all of these in the snapshot metadata.
 ### Contents
 Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact class and field names. Never use names from memory.
 
-- **Civs.** Each civ holds its **own copy of every unit slot**: `civ.units: list[Unit | None]`. Many slots are empty or used only by scenarios. Unit IDs go beyond 2,600 [to verify].
+- **Civs.** Each civ holds its **own copy of every unit slot**: `civ.units: list[Unit | None]`. Many slots are empty or used only by scenarios.
+  - Every civ has **2,701 unit slots** (IDs 0–2700). Of the 162,060 slots across the 60 civs, 33,335 are empty. [verified 101.103.48987.0]
+  - The file also holds 1,510 techs and 1,409 effects. [verified 101.103.48987.0]
 - **Techs.** One global table: cost, research time, required techs, research location, effect ID.
 - **Effects.** Lists of commands: modify attribute, enable/disable unit, upgrade unit, disable tech, resource modifiers…
   - Civ bonuses, team bonuses, Blacksmith-style upgrades and each civ's disabled units and techs are all effects.
@@ -121,10 +123,10 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
 - **Irrelevant for the diff:** graphics, sounds, terrain and random map data.
 
 ### To verify (M0)
-- [ ] genieutils-py 0.1.2 parses this `VER 8.9` file, and the round trip on the decompressed stream is byte-exact.
+- [x] genieutils-py 0.1.2 parses this `VER 8.9` file and consumes all of it, and the round trip on the decompressed stream is byte-exact. [verified 101.103.48987.0]
 - [ ] Extracted values match Advanced Genie Editor or in-game values: Knight HP, a Blacksmith tech cost, the Franks bonus effect.
-- [ ] Civ order in the `.dat` matches `civilizations.json` order (Gaia = 0).
-- [ ] Parse time and peak memory for the 87 MB stream.
+- [x] Civ order in the `.dat` matches `civilizations.json` order (Gaia = 0); see §6. [verified 101.103.48987.0]
+- [x] Parse time and peak memory for the 87 MB stream: about 18 s and 1.1 GB; see [genieutils-py.md](genieutils-py.md#measured-on-the-live-build).
 
 ## 5. `CivTechTrees\<CIV>.json`
 
@@ -166,7 +168,8 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
 
 **Order** [verified]
 - Follows `name_string_id`, running in order from 10102 (Gaia) to 10329 (Tupi).
-- Whether it matches the `.dat` civ indices is [to verify].
+- **It matches the `.dat` civ indices** [verified 101.103.48987.0]: 60 civs in both, each at the same position.
+- **Match civs by index, never by name.** The `.dat` civ `name` is an old internal name, not `internal_name`: e.g. `British`, `French`, `Byzantine`, `Mayan`, `Hindustanis` for Britons, Franks, Byzantines, Mayans, Indians.
 
 **Keys:**
 
