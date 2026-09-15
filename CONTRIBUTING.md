@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping! This project is in **M0, foundations** (see [docs/roadmap.md](docs/roadmap.md)). The uv, mypy and pytest commands below work; pre-commit hooks and CI land later in M0.
+Thanks for helping! This project is in **M0, foundations** (see [docs/roadmap.md](docs/roadmap.md)). The commands below work; CI lands later in M0.
 
 Using an AI coding agent? It follows [AGENTS.md](AGENTS.md) in addition to this guide, and you remain responsible for everything you submit.
 
@@ -32,6 +32,8 @@ uv run pre-commit install
 
 - `uv sync` installs Python 3.12 if needed, creates `.venv\`, and installs runtime and dev dependencies from `uv.lock`.
 - `pre-commit install` sets up the git hooks, once per clone.
+  - The hooks run ruff through `uv run`, so its version comes from `uv.lock`, and Biome from your PATH.
+  - A safety hook (`tools/check_forbidden_files.py`) refuses game files, snapshots, `.private/` and `CLAUDE.local.md`. Synthetic game files are allowed under `tests/fixtures/`, but `.dat` files never are.
 
 | Task | Command |
 |---|---|

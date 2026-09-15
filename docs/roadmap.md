@@ -1,6 +1,6 @@
 # Roadmap
 
-**Status on 2026-09-15:** documentation phase; no code yet.
+**Status on 2026-09-15:** M0 in progress: project scaffold, pre-commit hooks and the first parse spike done.
 
 **How milestones run:**
 - Design that goes beyond `docs/design/` is agreed in an issue first, then recorded in `docs/design/` and `docs/decisions.md` together with the code.
@@ -17,7 +17,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
   - GUI entry point;
   - ruff, mypy and pytest configuration.
 - [x] `.python-version` (3.12), `uv.lock`, `src/patch_scout/` skeleton, `tests/` layout, i18n catalog skeleton (D-36).
-- [ ] Dev tooling: pre-commit config with ruff, Biome and safety hooks (D-24, D-26); `biome.json`; pytest-cov (D-25).
+- [x] Dev tooling: pre-commit config with ruff, Biome and safety hooks (D-24, D-26); `biome.json`; pytest-cov (D-25).
 - [ ] GitHub Actions on `windows-latest` and `ubuntu-latest` (D-11):
   - pre-commit on all files;
   - mypy;
