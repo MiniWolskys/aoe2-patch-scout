@@ -8,6 +8,8 @@ license-files = ["LICENSE"]
 authors = [{ name = "the Patch Scout contributors" }]
 requires-python = ">=3.12"
 dependencies = [
+    "genieutils-py>=0.1.2",
+    "pillow>=11.0",
     "pywebview>=6.2.1",
 ]
 
@@ -33,13 +35,15 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "PTH", "N", "T20", "RUF"]
 
 [tool.mypy]
 files = ["src", "tests", "tools"]
-mypy_path = "tools"
+# tests/ so the shared helpers in tests/support/ resolve the same way pytest imports them.
+mypy_path = ["tools", "tests"]
 strict = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# Development scripts in tools/ are imported by their tests.
-pythonpath = ["tools"]
+# Development scripts in tools/, and the shared test helpers in tests/support/, are imported
+# by their tests.
+pythonpath = ["tools", "tests"]
 addopts = [
     "--import-mode=importlib",
     "--strict-markers",
@@ -57,6 +61,7 @@ xfail_strict = true
 dev = [
     "mypy>=2.3.1",
     "pre-commit>=4.6.2",
+    "pyinstaller>=6.22",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "pytest-playwright>=0.9.0",
