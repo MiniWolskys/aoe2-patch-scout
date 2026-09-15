@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+import sys
+
 import pytest
 
 from patch_scout.gui.webview2 import (
@@ -69,6 +71,19 @@ def test_read_registry_value_returns_none_for_a_missing_key() -> None:
     missing_key = r"Software\PatchScoutTests\NoSuchKey"
 
     assert read_registry_value("HKEY_CURRENT_USER", missing_key, "pv") is None
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="reads the Windows registry")
+def test_read_registry_value_reads_a_real_key() -> None:
+    key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+
+    product_name = read_registry_value("HKEY_LOCAL_MACHINE", key_path, "ProductName")
+    assert isinstance(product_name, str)
+    assert product_name != ""
+
+    # CurrentMajorVersionNumber is a REG_DWORD; read_registry_value only returns strings.
+    major_version = read_registry_value("HKEY_LOCAL_MACHINE", key_path, "CurrentMajorVersionNumber")
+    assert major_version is None
 
 
 def test_download_url_is_microsofts_consumer_page() -> None:
