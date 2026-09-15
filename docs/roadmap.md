@@ -1,6 +1,6 @@
 # Roadmap
 
-**Status on 2026-09-15:** M0 nearly done: scaffolding and the parse, files and packaging spikes are finished. The SmartScreen test remains, and the checks that need a PUP branch or a Store install are deferred.
+**Status on 2026-09-15:** M0 done. Scaffolding and the parse, files and packaging spikes are finished; the checks that need a PUP branch or a Store install are deferred. Next: M1, which starts with an approved spec and plan (D-28).
 
 **How milestones run:**
 - Design that goes beyond `docs/design/` is agreed in an issue first, then recorded in `docs/design/` and `docs/decisions.md` together with the code.
@@ -54,8 +54,8 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - [x] Minimal pywebview window frozen with PyInstaller (one-folder) on Windows, Python 3.12.
 - [x] WebView2 engine detection and the fallback message.
 - [x] genieutils-py kept as loose, replaceable files (see [legal.md](legal.md)).
-- [ ] SmartScreen and antivirus behaviour of the unsigned build.
-  - The Defender scan found no threats. SmartScreen still needs a test with a downloaded zip. Details: [packaging.md](reference/packaging.md).
+- [x] SmartScreen and antivirus behaviour of the unsigned build.
+  - The Defender scan found no threats. SmartScreen warns once per downloaded copy, and "Run anyway" works. Details: [packaging.md](reference/packaging.md#antivirus-and-smartscreen).
 
 **Exit criteria**
 - Every `[to verify]` in [game-files.md](reference/game-files.md) is resolved or explicitly deferred.

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping! This project is in **M0, foundations** (see [docs/roadmap.md](docs/roadmap.md)). The commands below work, and CI runs the same checks on every pull request.
+Thanks for helping! This project has finished **M0, foundations**, and M1 is next (see [docs/roadmap.md](docs/roadmap.md)). The commands below work, and CI runs the same checks on every pull request.
 
 Using an AI coding agent? It follows [AGENTS.md](AGENTS.md) in addition to this guide, and you remain responsible for everything you submit.
 

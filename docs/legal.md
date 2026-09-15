@@ -62,7 +62,7 @@ Every release (D-16) must meet these points.
 
 ## Code signing (O-6)
 
-**v1.0 ships unsigned.** Release notes explain the Windows SmartScreen "unknown publisher" warning and how to check the SHA-256 checksum.
+**v1.0 ships unsigned.** Release notes explain the Windows SmartScreen "unknown publisher" warning and how to check the SHA-256 checksum. The M0 test showed the warning appears once per downloaded copy, and **Run anyway** lets the app start ([packaging.md](reference/packaging.md#antivirus-and-smartscreen)).
 
 **After the first public release**, apply to the [SignPath Foundation](https://signpath.org/apply) for free open-source code signing. Conditions, from [signpath.org/terms](https://signpath.org/terms), to re-check when applying:
 
