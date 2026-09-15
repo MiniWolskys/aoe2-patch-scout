@@ -43,12 +43,26 @@ a = Analysis(
   - On the test machine: HKLM `pv` = `153.0.4234.32`; no HKCU key.
   - The .NET call `CoreWebView2Environment.GetAvailableBrowserVersionString` agrees, but it works only once pywebview has loaded the WebView2 assemblies. So the registry check is the one to use before start.
 - **Download page for users:** https://developer.microsoft.com/microsoft-edge/webview2/consumer/
-- **Suggested approach, to settle in the M1 spec:**
-  1. Check the registry before `webview.start`.
-  2. If the runtime is missing, show a native Windows message box, with its text from the i18n catalog, instead of opening the window.
-  3. After start, also check that `webview.renderer` is `"edgechromium"`.
+- **What the app does (D-40, `gui/webview2.py`, `gui/app.py`):**
+  1. Before `webview.start`, it reads both `pv` values above. A missing or empty value, or `0.0.0.0`, means not installed.
+  2. If the runtime is missing, a native Windows message box (`MessageBoxW`, text from the i18n catalog) offers to open the download page. **Yes** hands the URL to the user's default browser; either way the app exits with code 1 and opens no window. The app itself makes no network access (D-02).
+  3. After start, if `webview.renderer` isn't `"edgechromium"`, the window closes first, then the same message shows (the box is always on top), and the app exits with code 1.
 
-  How the download page gets opened must respect D-02: the app itself makes no network access.
+### Screens and scaling [verified]
+
+- **DPI awareness before start:** before `webview.start` runs, the process isn't DPI-aware: `IsProcessDPIAware()` returns false. pywebview only calls `SetProcessDPIAware` inside `start` (`webview/platforms/winforms.py`, around lines 819–820).
+- **Consequence:** `webview.screens`, read before `start` to size and place the window (D-42), reports sizes in logical pixels, not physical ones.
+- Measured 2026-09-15 with pywebview 6.2.1: `webview.screens` reported `2560x1440 at 0,0 1.50x` and `1920x1080 at -1920,1065` — that's `webview.screen.Screen.__repr__`'s own format, `{width}x{height} at {x},{y}`, then the scale factor (omitted when it's `1.00x`, as for the second screen), all in logical pixels.
+- **Re-check in the frozen build (M5),** whose manifest may set DPI awareness differently.
+
+## Serving the frontend
+
+- **pywebview serves local pages through Bottle,** which picks each file's type with Python's `mimetypes`.
+  - On Windows, `mimetypes` also reads the registry, which other software can change.
+  - Chromium refuses ES modules served as `text/plain`.
+- **So the app pins the types it serves** before starting (`gui/web_files.py`): `text/javascript` for `.js`, `text/css`, `image/svg+xml`, `font/ttf`.
+  - On the dev machine (2026-09-15), `.js` already mapped to `text/javascript`, and `.ttf` to nothing.
+- **Page path:** pywebview resolves a relative page path against `sys.argv[0]`, which is `.venv\Scripts` under `uv run` (`webview/util.py`, `get_app_root`). The app passes the absolute path of `index.html`.
 
 ## Antivirus and SmartScreen
 

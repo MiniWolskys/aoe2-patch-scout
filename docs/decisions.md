@@ -206,6 +206,18 @@ Third-party JavaScript, e.g. an image export library, is vendored as a single fi
 - UI in HTML/CSS/JS through pywebview.
 - Extraction is isolated: the UI never reads game files.
 
+### D-40 WebView2 Runtime: rely on Windows' copy: Decided
+Chosen by the maintainer on 2026-09-15, in the app shell spec.
+- **What:** the app uses the Evergreen WebView2 Runtime that Windows provides. It isn't bundled.
+- **Why:**
+  - Microsoft preinstalls it on every Windows 11 device, pushed it to eligible Windows 10 devices, and keeps it updated.
+  - The Fixed Version is over 250 MB, never updates itself, needs extra `icacls` permissions on Windows 10, and is proprietary, which conflicts with SignPath's rule (P-21).
+- **When it's missing:**
+  - before opening the window, the app checks Microsoft's documented registry values;
+  - a native message box explains it and offers to open Microsoft's download page in the user's browser, then the app exits. The app itself makes no connection (D-02);
+  - if pywebview still falls back to another engine after start, the window closes, then the same message shows, and the app exits with code 1.
+- **Details:** [packaging.md](reference/packaging.md#webview2-engine-detection-verified).
+
 ### D-19 Never assume where the game is installed: Decided
 - Detection (Steam; Microsoft Store / Xbox app; folders used before) only **proposes** a folder in an editable field.
 - The user can always browse to another folder, and every folder is validated.
@@ -280,6 +292,14 @@ The window has no navigation rail. A **version list** on the left replaces the s
 - **Status colours avoid red and green:** success is a neutral check, warnings and pre-release are orange, notices are steel blue.
 - **Tokens:** [ui-theme.css](design/ui-theme.css). Typography, sizes and contrast: [ui.md](design/ui.md).
 - **Chosen over:** a light editorial theme, an icon-tile theme, and three other dark palettes (Keep, Byzantium, Graphite).
+
+### D-42 Window size: Decided
+Chosen by the maintainer on 2026-09-15, in the app shell spec.
+- The window opens at **1440×900**, centred on the primary screen, when that screen has room for it (at least 1440×980, leaving space for the title bar and the taskbar); otherwise it opens maximized.
+- **With no screen information at all** (an empty screen list), it opens maximized at the preferred size instead.
+- **Minimum size: 1120×640.** It fits 1366×768 screens and 1080p laptops at 150% scaling, which have about 1280×680 of usable space.
+- **Units:** logical pixels; pywebview multiplies them by the screen's scaling factor.
+- **Consequence for M4:** the comparison must work at 1120px wide. Collapsing the version list frees 216px.
 
 ---
 

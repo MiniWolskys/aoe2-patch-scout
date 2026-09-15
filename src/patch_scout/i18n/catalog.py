@@ -42,6 +42,11 @@ class Catalog:
         except (KeyError, IndexError, ValueError) as exc:
             raise MessageFormatError(f"message {key!r}: {exc!r}") from exc
 
+    def messages(self) -> dict[str, str]:
+        """Return every message this catalog can resolve; its own override the fallback's."""
+        inherited = self._fallback.messages() if self._fallback is not None else {}
+        return inherited | self._messages
+
     def _template(self, key: str) -> str:
         if key in self._messages:
             return self._messages[key]

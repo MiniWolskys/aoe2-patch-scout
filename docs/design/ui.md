@@ -32,6 +32,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 
 - **Version list:** 280px wide; it collapses to a 64px strip holding Capture, Import, Diagnostics and Settings.
 - **The main area** fills the rest of the window.
+- **Window size** (D-42): 1440×900, centred on the primary screen when it's at least 1440×980; maximized otherwise; minimum 1120×640.
 
 ## Behaviour
 
@@ -148,7 +149,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 5. **Filters and search:** low-priority categories, unreachable units, all fields. Where do they go?
 6. **PNG export of a selected section:** how is a section selected?
 7. **Collapsed list during a capture:** show progress on the Capture button.
-8. **Minimum window size:** the mockups are 1440×900; check at 1366×768.
+8. ~~Minimum window size~~ **Decided in D-42:** 1440×900 when the screen has room, maximized otherwise; minimum 1120×640.
 9. **Chronicles civs (D-38):**
    - Do they get their own group at the end of the civ list, or sit behind a filter?
    - Does "all civs" in Overall count them, or would every base-civ change read "all civs except" the six Chronicles civs?

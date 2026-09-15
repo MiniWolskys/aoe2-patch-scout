@@ -153,7 +153,7 @@ flowchart TD
 ## GUI (v1, D-15)
 
 - **Shell:** a pywebview window. The frontend is plain HTML/CSS/JS in `patch_scout/gui/web/` with no build step (P-16). Third-party JS (e.g. the image export library) is vendored as a single file.
-- **Python ↔ JS:** one API object exposed through pywebview's `js_api`. Capture and diff run in worker threads and report progress to the page.
+- **Python ↔ JS:** one API object (`gui/api.py`) exposed through pywebview's `js_api`; pywebview exposes every public attribute of that object, not only its methods, so `Api` keeps its state underscored. The page first calls `get_startup()`: language, resolved messages (English fallback applied in Python), app version and versions. Capture and diff run in worker threads and report progress to the page.
 
 **One window** (D-32). Layout, behaviour, colours and theme tokens are in [ui.md](ui.md).
 
@@ -190,7 +190,9 @@ flowchart TD
 
    Developers can also start the app with `--debug` to get the WebView developer tools.
 
-**WebView2 check.** At startup, confirm that pywebview is using the Edge Chromium engine. If it falls back to MSHTML, show a clear message with the WebView2 Runtime download link instead of running on the deprecated engine. pywebview falls back to MSHTML silently, so the app has to check for itself; the verified detection methods are in [packaging.md](../reference/packaging.md#webview2-engine-detection-verified).
+**WebView2 check** (D-40). The app relies on the WebView2 Runtime Windows provides. Before opening the window, `gui/webview2.py` reads Microsoft's documented registry values. If the runtime is missing, a native message box offers to open Microsoft's download page in the user's browser, and the app exits. After start, if pywebview fell back to MSHTML anyway, `check_renderer` closes the window first, then shows the same message, and the app exits with code 1. Details: [packaging.md](../reference/packaging.md#webview2-engine-detection-verified).
+
+**Window** (D-42): 1440×900, sized for and centred on the primary screen, when it has room; maximized otherwise; minimum 1120×640.
 
 ## Packaging (v1, D-16)
 
@@ -225,7 +227,8 @@ src/patch_scout/
 ├── diff/        engine.py, allowlist.py, collapse.py, effects.py, volume.py
 ├── report/      text.py, html.py
 ├── i18n/        catalog.py, en.json
-└── gui/         app.py, api.py, diagnostics.py, web/ (index.html, app.js, styles.css, vendor/, assets/)
+└── gui/         app.py, api.py, webview2.py, window.py, web_files.py, diagnostics.py,
+                 web/ (index.html, app.js, styles.css, vendor/, assets/)
 tests/
 ├── unit/        synthetic inputs, one test module per source module
 ├── fixtures/    small synthetic game-file trees + snapshot pairs from public builds (P-09)
