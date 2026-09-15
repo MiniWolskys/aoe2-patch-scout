@@ -23,6 +23,21 @@ The tool diffs AoE2:DE game data between two builds and reports every gameplay-r
 ### D-14 Game content in scope: Decided
 - **In scope:** the main game, including the Chronicles (`antiquity` era) civs that live in the main `.dat`.
 - **Out of scope for v1:** Return of Rome (`modes\Pompeii`, with its own `VER 8.8` `.dat`). The reader takes a "data root" so it can be added later.
+- **Shown apart:** the comparison keeps the Chronicles civs apart from the base civs (D-38).
+
+### D-38 Chronicles civs are shown apart: Decided
+Chosen by the maintainer on 2026-09-15.
+- **Why:** Chronicles: Battle for Greece is a solo mode, available only in campaigns through a DLC. Its civs are unlikely to change. To users it feels like a separate mode, much like Return of Rome, even though its civs live in the main `.dat`.
+- **Capture and diff:** unchanged. The Chronicles civs are captured and compared like every other civ (D-14), and their era (`antiquity` in `civilizations.json`) is kept.
+- **Comparison:** they're kept apart from the base civs. The exact form, e.g. their own group or a filter, is designed with the comparison screen (M4; [ui.md](design/ui.md#open-questions)).
+
+### D-39 Civ overview after v1.0: Decided
+Chosen by the maintainer on 2026-09-15.
+- **What:** a view of one civ's full tech tree in one version: availability, civ and team bonuses, unit and tech stats, with a comparison's changes highlighted.
+- **Why:** a single change, such as a new unit, only makes sense next to what the civ already has and lacks.
+- **When:** after v1.0. v1 shows changes only.
+- **Constraint from now on:** snapshots already hold everything the overview needs: every tech tree node with its status, building offers, bonus texts, units, techs and effects. Captures (M1–M2) must keep all of it, so the overview also works on older snapshots.
+- **Not the same as P-17:** it shows the context and doesn't compute bonus-applied stats (D-20).
 
 ### D-15 GUI in v1: Decided
 v1 ships a pywebview desktop GUI.
@@ -139,9 +154,13 @@ Chosen by the maintainer on 2026-09-15, from the M0 link spike ([game-files.md �
 - **Object swaps** (`objreplacement.json`, added 2026-09-15): not followed.
   - The replacements that matter, such as Port, Mule Cart and Settlement, are already tech tree nodes of their civs.
   - The female Villager is a variant of the Villager and isn't reported on its own.
-- **Open:**
-  - links through unit tasks, such as the Spartan Polemarch variants;
-  - the Town Center replacement (444) from `objreplacement.json`, which no tech tree lists.
+- **Variants** (added 2026-09-15): the Town Center replacement (444) is present in every civ and swapped in by a game setting, like the female Villager. It isn't reported on its own.
+- **Unit tasks** (`Bird.tasks`, added 2026-09-15): not followed.
+  - Their links to other units (task type 155) point to the units an ability affects, e.g. Centurion → infantry, Monaspa → Knights, Hippeus → Polemarch. They don't name unit forms.
+  - That reading is inferred from the targets.
+- **Open:** how the Spartan Polemarch variants become reachable.
+  - The maintainer wants them counted for the Spartans, but none of the followed links leads to them.
+  - Their source (starting units, upgrade techs…) is to be found in M3.
 
 Details: [diff-rules.md](design/diff-rules.md#reachability-d-37).
 

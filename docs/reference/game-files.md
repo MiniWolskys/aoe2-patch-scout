@@ -235,6 +235,9 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
   - The tech trees and building offers name 333 unit and building IDs. Following the unit link fields reaches 315 more.
   - Examples: Konnik → Konnik (Dismounted) through `blood_unit_id`; Trebuchet ↔ Trebuchet (Packed) through `building.transform_unit`; Archer → its projectile through `type_50.projectile_unit_id`.
   - Many of the others are corpses, rubble and projectiles.
+  - **Task links** (`Bird.tasks`, task type 155) [verified targets; the meaning is inferred]:
+    - 24 source units point to the units their ability affects, not to their own forms.
+    - Examples: Centurion → Spearman, Swordsman and Legionary lines; Monaspa → Knight, Paladin, Savar; Hippeus → the eight Polemarch variants; Zhou Yu → War Chariots; a Town Center variant (`RTWC2`) → villagers and farms.
   - Which of these links count for the diff is decided in D-37 ([diff-rules.md](../design/diff-rules.md#reachability-d-37)).
 
 ## 8. Helper JSONs
@@ -258,6 +261,7 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
     - The tech-triggered replacements are tree nodes of the civs that get them: Mule Cart (1808) for Armenians and Georgians; Settlement (2556) for Incas, Mapuche, Muisca and Tupi; Port (2172) for the six Chronicles civs.
     - The triggering techs (932, 940, 1353, 1142) aren't tree nodes.
     - Villager (Female) (293) and the Town Center replacement (444) appear in no tech tree.
+    - The Town Center replacement (444, `PTWC`) is present and enabled at game start in all 60 civs; its swap depends on a player attribute (`Raider` in the file). So it's a variant, not tied to the Chronicles civs.
   - Reachability: the swaps aren't followed; see D-37.
 - **`dropsites.json`:** `{ drop_site_list: [ … ] }`, 30 entries: which buildings accept which resources. This is economy data, not availability. [verified]
 - **`eras.json`:** `[ { Name: "base" | "antiquity", Ages: [ { NameId, TechTreeIconMaterialName?, ShieldMaterialName?, PrerequisiteStringId? } ] } ]`. [verified]

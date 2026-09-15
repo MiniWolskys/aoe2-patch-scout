@@ -8,6 +8,7 @@ A snapshot is the **only** thing the diff reads. It must stay readable after any
 - **Raw game data only.** A snapshot stores what the game files contain. Nothing computed from several records is stored. In particular, civ bonuses are never applied to unit stats (D-20).
 - **We control every field name.** Names start out copied from genieutils-py, but once in the schema they are frozen. An upstream rename is absorbed by the capture code, not by the snapshots.
 - **Keyed, not positional.** Readers look fields up by name, so key order never matters. Order is only kept where the game's order means something: civ order, effect command order.
+- **Complete enough for a civ overview** (D-39). A snapshot keeps every tech tree node with its status, the building offers, the bonus texts, and every unit, tech and effect. A capture never narrows this to what v1's comparison shows.
 - **Deterministic.** The same install captured twice gives byte-identical JSON, apart from `meta.captured_at` and `meta.capture_id`. Keys are sorted, lists keep source order, and floats are written with Python's shortest `repr`.
 - **Keep what you don't understand.** Unknown JSON keys in game files are stored under `extra`, so new game data shows up as a change instead of disappearing.
 - **Immutable.** A snapshot file is never modified after it's written. Labels and flags the user edits live in the library index (P-18).
