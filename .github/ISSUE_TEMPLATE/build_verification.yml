@@ -1,0 +1,47 @@
+name: Build verification report
+description: Report how the app reads a new PUBLIC game build.
+labels: ["game-build"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Only for **publicly released** builds. For privately shared pre-release builds, contact a maintainer privately instead.
+        Capture the build in the app, open the **Diagnostics** window and click **Copy diagnostics**.
+  - type: input
+    id: game-build
+    attributes:
+      label: Game build
+      placeholder: e.g. 101.103.48987.0
+    validations:
+      required: true
+  - type: input
+    id: dat-version
+    attributes:
+      label: .dat format version
+      placeholder: e.g. VER 8.9
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Stats available (known format version)
+        - Stats available (unknown version string, read with a previous layout)
+        - Stats not available (no layout passed the checks)
+        - Crash / other error
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Copied diagnostics
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: tool-version
+    attributes:
+      label: Tool version
+    validations:
+      required: true

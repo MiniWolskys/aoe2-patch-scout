@@ -1,0 +1,41 @@
+# --- Python / uv ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- IDEs ---
+.idea/
+.vscode/
+
+# --- Local work (maintainer-private) ---
+scratch/
+.private/
+CLAUDE.local.md
+.claude/settings.local.json
+
+# --- Tool outputs (fixtures are re-included below) ---
+*.snapshot.json.gz
+*.aoe2snap
+
+# --- Game files: must never be committed (see docs/legal.md) ---
+*.dat
+*.dds
+*.DDS
+*.7z
+key-value-*strings*.txt
+*-key-value-strings-utf8.txt
+
+# Synthetic test fixtures are allowed (never real game files, never pre-release data)
+!tests/fixtures/**/*.snapshot.json.gz
+!tests/fixtures/**/*.dds
+!tests/fixtures/**/*.DDS
+!tests/fixtures/**/key-value-*strings*.txt
+!tests/fixtures/**/*-key-value-strings-utf8.txt

@@ -1,0 +1,16 @@
+# Normalize text to LF in the repo and working tree (golden reports compare bytes).
+* text=auto eol=lf
+
+# Windows scripts keep CRLF.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files.
+*.png binary
+*.dds binary
+*.DDS binary
+*.ico binary
+*.gz binary
+*.zip binary
+*.aoe2snap binary
