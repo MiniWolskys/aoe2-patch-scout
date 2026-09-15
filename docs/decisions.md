@@ -296,7 +296,7 @@ The window has no navigation rail. A **version list** on the left replaces the s
 ### D-42 Window size: Decided
 Chosen by the maintainer on 2026-09-15, in the app shell spec.
 - The window opens at **1440×900**, centred on the primary screen, when that screen has room for it (at least 1440×980, leaving space for the title bar and the taskbar); otherwise it opens maximized.
-- **Which screen:** the size is chosen for, and the window is placed on, the primary screen. With no screen information at all (an empty screen list), it opens maximized at the preferred size instead.
+- **With no screen information at all** (an empty screen list), it opens maximized at the preferred size instead.
 - **Minimum size: 1120×640.** It fits 1366×768 screens and 1080p laptops at 150% scaling, which have about 1280×680 of usable space.
 - **Units:** logical pixels; pywebview multiplies them by the screen's scaling factor.
 - **Consequence for M4:** the comparison must work at 1120px wide. Collapsing the version list frees 216px.

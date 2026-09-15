@@ -52,7 +52,7 @@ a = Analysis(
 
 - **DPI awareness before start:** before `webview.start` runs, the process isn't DPI-aware: `IsProcessDPIAware()` returns false. pywebview only calls `SetProcessDPIAware` inside `start` (`webview/platforms/winforms.py`, around lines 819–820).
 - **Consequence:** `webview.screens`, read before `start` to size and place the window (D-42), reports sizes in logical pixels, not physical ones.
-- Measured 2026-09-15 with pywebview 6.2.1, on screens `2560x1440 at 0,0 1.50x` and `1920x1080 at -1920,1065`.
+- Measured 2026-09-15 with pywebview 6.2.1: `webview.screens` reported `2560x1440 at 0,0 1.50x` and `1920x1080 at -1920,1065` — that's `webview.screen.Screen.__repr__`'s own format, `{width}x{height} at {x},{y}`, then the scale factor (omitted when it's `1.00x`, as for the second screen), all in logical pixels.
 - **Re-check in the frozen build (M5),** whose manifest may set DPI awareness differently.
 
 ## Serving the frontend
