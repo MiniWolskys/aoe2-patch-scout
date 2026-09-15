@@ -6,8 +6,12 @@ repos:
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+        # Vendored files stay exactly as published (CONTRIBUTING.md).
+        exclude: ^src/patch_scout/gui/web/vendor/
       - id: end-of-file-fixer
+        exclude: ^src/patch_scout/gui/web/vendor/
       - id: mixed-line-ending
+        exclude: ^src/patch_scout/gui/web/vendor/
       - id: check-yaml
       - id: check-toml
       - id: check-json

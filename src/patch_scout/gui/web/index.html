@@ -4,6 +4,115 @@
   <head>
     <meta charset="utf-8">
     <meta name="color-scheme" content="dark">
+    <!-- An empty inline icon: without one, WebView2 requests /favicon.ico and logs a 404. -->
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles/theme.css">
+    <link rel="stylesheet" href="styles/fonts.css">
+    <link rel="stylesheet" href="styles/app.css">
+    <script type="module" src="js/app.js"></script>
   </head>
-  <body></body>
+  <body>
+    <aside class="version-list" id="version-list">
+      <div class="version-list__top">
+        <span class="version-list__brand" data-i18n="app.title"></span>
+        <button
+          type="button"
+          class="button icon-button"
+          id="version-list-toggle"
+          aria-controls="version-list"
+          aria-expanded="true"
+          data-i18n-attr="aria-label:version_list.collapse title:version_list.collapse"
+        >
+          <span class="icon icon--collapse" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="version-list__actions">
+        <button
+          type="button"
+          class="button button--accent"
+          disabled
+          data-i18n-attr="aria-label:version_list.capture"
+        >
+          <span class="icon icon--capture" aria-hidden="true"></span>
+          <span class="button__label" data-i18n="version_list.capture"></span>
+        </button>
+        <button
+          type="button"
+          class="button button--ghost"
+          disabled
+          data-i18n-attr="aria-label:version_list.import"
+        >
+          <span class="icon icon--import" aria-hidden="true"></span>
+          <span class="button__label" data-i18n="version_list.import"></span>
+        </button>
+      </div>
+
+      <section class="version-list__versions" aria-labelledby="versions-heading">
+        <h2 class="version-list__heading">
+          <span class="label" id="versions-heading" data-i18n="version_list.heading"></span>
+          <span class="label num" id="versions-count"></span>
+        </h2>
+        <ul class="version-list__rows" id="version-rows"></ul>
+        <p class="help version-list__empty" id="versions-empty" data-i18n="version_list.empty"></p>
+      </section>
+
+      <div class="version-list__bottom">
+        <button
+          type="button"
+          class="button button--ghost button--small"
+          disabled
+          data-i18n-attr="aria-label:version_list.diagnostics"
+        >
+          <span class="icon icon--diagnostics" aria-hidden="true"></span>
+          <span class="button__label" data-i18n="version_list.diagnostics"></span>
+        </button>
+        <button
+          type="button"
+          class="button button--ghost button--small"
+          disabled
+          data-i18n-attr="aria-label:version_list.settings"
+        >
+          <span class="icon icon--settings" aria-hidden="true"></span>
+          <span class="button__label" data-i18n="version_list.settings"></span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="first-launch" id="first-launch" aria-labelledby="first-launch-title">
+        <p class="label" data-i18n="first_launch.label"></p>
+        <h1 class="first-launch__title" id="first-launch-title" data-i18n="first_launch.title"></h1>
+        <p class="first-launch__intro" data-i18n="first_launch.intro"></p>
+
+        <div class="first-launch__cards">
+          <article class="card">
+            <h2 class="card__title" data-i18n="first_launch.capture.title"></h2>
+            <p class="card__text" data-i18n="first_launch.capture.text"></p>
+            <button
+              type="button"
+              class="button button--accent"
+              disabled
+              data-i18n="first_launch.capture.action"
+            ></button>
+          </article>
+          <article class="card">
+            <h2 class="card__title" data-i18n="first_launch.import.title"></h2>
+            <p class="card__text" data-i18n="first_launch.import.text"></p>
+            <button
+              type="button"
+              class="button button--ghost"
+              disabled
+              data-i18n="first_launch.import.action"
+            ></button>
+          </article>
+        </div>
+
+        <p class="first-launch__warning">
+          <span class="icon icon--warning" aria-hidden="true"></span>
+          <span data-i18n="first_launch.preview_warning"></span>
+        </p>
+      </section>
+    </main>
+  </body>
 </html>

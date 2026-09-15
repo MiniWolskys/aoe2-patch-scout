@@ -1,0 +1,47 @@
+/*
+ * Bundled fonts: the app has no network access (D-02).
+ * Licences: vendor/fonts/<family>/OFL.txt (SIL Open Font License 1.1).
+ */
+
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../vendor/fonts/barlow-semi-condensed/BarlowSemiCondensed-Regular.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url("../vendor/fonts/barlow-semi-condensed/BarlowSemiCondensed-Medium.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url("../vendor/fonts/barlow-semi-condensed/BarlowSemiCondensed-SemiBold.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("../vendor/fonts/barlow-semi-condensed/BarlowSemiCondensed-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Marcellus SC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../vendor/fonts/marcellus-sc/MarcellusSC-Regular.ttf") format("truetype");
+}

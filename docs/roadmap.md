@@ -1,6 +1,6 @@
 # Roadmap
 
-**Status on 2026-09-15:** M0 done. Scaffolding and the parse, files and packaging spikes are finished; the checks that need a PUP branch or a Store install are deferred. Next: M1, which starts with an approved spec and plan (D-28).
+**Status on 2026-09-15:** M0 done. M1 is in progress: slice 1, the app shell, is done. The M0 checks that need a PUP branch or a Store install are deferred.
 
 **How milestones run:**
 - Design that goes beyond `docs/design/` is agreed in an issue first, then recorded in `docs/design/` and `docs/decisions.md` together with the code.
@@ -62,6 +62,12 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - Decisions affected by the findings are updated in [decisions.md](decisions.md).
 
 ## M1: App shell and files-tier capture
+
+**Slices** (each with its own spec, plan and pull request, D-28):
+1. [x] App shell: WebView2 check, window size, Forge theme, collapsible version list, first-launch screen.
+2. [ ] Snapshot schema, store and library index; version details.
+3. [ ] Readers, capture dialog and progress.
+4. [ ] Diagnostics window.
 
 **Scope**
 - **GUI shell:** one window with the version list (D-32), the Forge theme (D-35), WebView2 check.

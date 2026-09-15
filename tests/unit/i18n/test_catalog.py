@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+import json
 from pathlib import Path
+from typing import NotRequired, TypedDict
 
 import pytest
 
@@ -99,3 +101,29 @@ def test_messages_returns_a_copy_that_leaves_the_catalog_unchanged() -> None:
     catalog.messages()["app.title"] = "Changed"
 
     assert catalog.text("app.title") == "Patch Scout"
+
+
+class FormatCase(TypedDict):
+    name: str
+    template: str
+    values: dict[str, object]
+    expected: NotRequired[str]
+    error: NotRequired[bool]
+
+
+FORMAT_CASES: list[FormatCase] = json.loads(
+    (Path(__file__).parents[2] / "fixtures" / "i18n" / "format-cases.json").read_text(
+        encoding="utf-8"
+    )
+)
+
+
+@pytest.mark.parametrize("case", FORMAT_CASES, ids=[case["name"] for case in FORMAT_CASES])
+def test_text_follows_the_shared_format_cases(case: FormatCase) -> None:
+    catalog = Catalog({"case": case["template"]})
+
+    if case.get("error"):
+        with pytest.raises(MessageFormatError):
+            catalog.text("case", **case["values"])
+    else:
+        assert catalog.text("case", **case["values"]) == case["expected"]

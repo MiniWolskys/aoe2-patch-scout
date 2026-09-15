@@ -154,6 +154,7 @@ flowchart TD
 
 - **Shell:** a pywebview window. The frontend is plain HTML/CSS/JS in `patch_scout/gui/web/` with no build step (P-16). Third-party JS (e.g. the image export library) is vendored as a single file.
 - **Python ↔ JS:** one API object (`gui/api.py`) exposed through pywebview's `js_api`; pywebview exposes every public attribute of that object, not only its methods, so `Api` keeps its state underscored. The page first calls `get_startup()`: language, resolved messages (English fallback applied in Python), app version and versions. Capture and diff run in worker threads and report progress to the page.
+- **Page startup:** `js/api.js` waits for pywebview's bridge; `js/app.js` calls `get_startup()`, sets the page language, fills every `data-i18n` element and `data-i18n-attr` attribute through `js/i18n.js`, sets up the version list, then shows the page. `t()` follows D-36: named placeholders only, and a missing key or value throws.
 
 **One window** (D-32). Layout, behaviour, colours and theme tokens are in [ui.md](ui.md).
 
@@ -228,10 +229,11 @@ src/patch_scout/
 ├── report/      text.py, html.py
 ├── i18n/        catalog.py, en.json
 └── gui/         app.py, api.py, webview2.py, window.py, web_files.py, diagnostics.py,
-                 web/ (index.html, app.js, styles.css, vendor/, assets/)
+                 web/ (index.html, js/, styles/, vendor/)
 tests/
 ├── unit/        synthetic inputs, one test module per source module
 ├── fixtures/    small synthetic game-file trees + snapshot pairs from public builds (P-09)
 ├── golden/      expected change-set JSON and plain-text exports for fixture pairs
+├── ui/          the page in headless Chromium with a fake pywebview bridge (Playwright, D-41)
 └── game/        tests needing a real install (skipped unless AOE2DE_PATH is set)
 ```

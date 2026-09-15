@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping! This project has finished **M0, foundations**, and M1 is next (see [docs/roadmap.md](docs/roadmap.md)). The commands below work, and CI runs the same checks on every pull request.
+Thanks for helping! This project has finished **M0, foundations**, and **M1** is in progress (see [docs/roadmap.md](docs/roadmap.md)). The commands below work, and CI runs the same checks on every pull request.
 
 Using an AI coding agent? It follows [AGENTS.md](AGENTS.md) in addition to this guide, and you remain responsible for everything you submit.
 
@@ -28,12 +28,14 @@ git clone https://github.com/MiniWolskys/aoe2-patch-scout.git
 cd aoe2-patch-scout
 uv sync
 uv run pre-commit install
+uv run playwright install chromium
 ```
 
 - `uv sync` installs Python 3.12 if needed, creates `.venv\`, and installs runtime and dev dependencies from `uv.lock`.
 - `pre-commit install` sets up the git hooks, once per clone.
   - The hooks run ruff through `uv run`, so its version comes from `uv.lock`, and Biome from your PATH.
   - A safety hook (`tools/check_forbidden_files.py`) refuses game files, snapshots, `.private/` and `CLAUDE.local.md`. Synthetic game files are allowed under `tests/fixtures/`, but `.dat` files never are.
+- `playwright install chromium` downloads the headless browser the UI tests use (D-41), once per clone.
 
 | Task | Command |
 |---|---|
@@ -42,6 +44,7 @@ uv run pre-commit install
 | All hooks on all files (ruff, Biome, file checks, safety hooks) | `uv run pre-commit run --all-files` |
 | Type check | `uv run mypy` |
 | Tests with coverage report (no game needed) | `uv run pytest` |
+| UI tests only (headless Chromium) | `uv run pytest tests/ui` |
 | Game tests | `$env:AOE2DE_PATH = "<game folder>"; uv run pytest -m game` |
 | Add a dependency | `uv add <package>` (runtime) · `uv add --dev <package>` (dev) |
 | Build the Windows app (M5) | `uv run pyinstaller packaging\patch-scout.spec` |
@@ -146,8 +149,8 @@ A change is done when all of these hold:
 ### Frontend (HTML, CSS, JavaScript)
 - **Plain technology:** HTML, CSS and JavaScript ES modules. No framework, no bundler, no npm (P-16).
 - **Biome** lints and formats JS and CSS (D-26); its configuration is in `biome.json`.
-  - Third-party files are vendored in `gui/web/vendor/`, never edited, and excluded from Biome.
-- **Theme:** colours, fonts and sizes come from the Forge tokens in [docs/design/ui-theme.css](docs/design/ui-theme.css) (D-35). No colour literals in component CSS. Red and green only mean old and new (D-34).
+  - Third-party files (JS libraries, fonts, icons) are vendored in `gui/web/vendor/`, never edited, and excluded from Biome and the whitespace hooks.
+- **Theme:** colours, fonts and sizes come from the Forge tokens in [theme.css](src/patch_scout/gui/web/styles/theme.css) (D-35). No colour literals in component CSS. Red and green only mean old and new (D-34).
 - **JSDoc** types on exported functions.
 - **Text:** every label comes from the i18n catalog.
 - **Talking to Python:** only through the exposed API object. No network requests.
@@ -162,13 +165,14 @@ A change is done when all of these hold:
 | Layer | What it covers | Location | Needs the game |
 |---|---|---|---|
 | Unit | Parsers, normalization, collapsing, effect sentences, formatting, on synthetic inputs | `tests/unit/` | No |
+| UI | The page in headless Chromium with a fake pywebview bridge: text, controls, keyboard, layout (D-41) | `tests/ui/` | No |
 | Fixture trees | Capturing small **synthetic** game-folder trees: hand-written JSON and strings, generated placeholder DDS/PNG icons | `tests/fixtures/` | No |
 | Snapshot pairs + golden outputs | Diffing committed snapshot pairs; change-set JSON and plain-text export compared to expected files | `tests/fixtures/`, `tests/golden/` | No |
 | Game | Capturing a real install: gates, layout substitution (the version bytes are changed in memory only), sanity values, determinism | `tests/game/`, marker `game` | Yes (`AOE2DE_PATH`) |
 
 **Conventions:**
 - **Layout and naming:** pytest. Test files mirror the source layout (`tests/unit/<package path>/test_<module>.py`). Names describe behaviour, e.g. `test_collapse_groups_civs_by_value_pair`. One behaviour per test.
-- **No outside dependencies:** use `tmp_path` for files. No network, no game files, no sleeps.
+- **No outside dependencies:** use `tmp_path` for files. No network (the UI tests' local server on 127.0.0.1 is the one exception, D-41), no game files, no sleeps.
 - **Coverage** (line and branch) is reported by every test run, with no minimum (D-25).
 - **Fixtures:**
   - snapshots come from **public** builds only (P-09) and live in `tests/fixtures/game-derived/` with its `NOTICE`, because game content isn't GPL (P-22);

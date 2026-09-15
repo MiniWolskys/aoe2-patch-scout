@@ -1,0 +1,32 @@
+[
+  { "name": "plain text", "template": "Patch Scout", "values": {}, "expected": "Patch Scout" },
+  {
+    "name": "one placeholder",
+    "template": "Reading {file}",
+    "values": { "file": "civilizations.json" },
+    "expected": "Reading civilizations.json"
+  },
+  {
+    "name": "several placeholders",
+    "template": "{done} of {total}",
+    "values": { "done": 3, "total": 7 },
+    "expected": "3 of 7"
+  },
+  {
+    "name": "same placeholder twice",
+    "template": "{n} and {n}",
+    "values": { "n": "x" },
+    "expected": "x and x"
+  },
+  {
+    "name": "doubled braces",
+    "template": "{{literal}} {name}",
+    "values": { "name": "N" },
+    "expected": "{literal} N"
+  },
+  { "name": "missing value", "template": "Reading {file}", "values": {}, "error": true },
+  { "name": "single opening brace", "template": "a { b", "values": {}, "error": true },
+  { "name": "single closing brace", "template": "a } b", "values": {}, "error": true },
+  { "name": "positional field", "template": "{0}", "values": {}, "error": true },
+  { "name": "empty field", "template": "{}", "values": {}, "error": true }
+]

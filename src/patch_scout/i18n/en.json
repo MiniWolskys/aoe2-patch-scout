@@ -1,5 +1,23 @@
 {
   "app.title": "Patch Scout",
+  "version_list.capture": "Capture new version",
+  "version_list.import": "Import",
+  "version_list.heading": "Versions",
+  "version_list.empty": "No versions yet.",
+  "version_list.collapse": "Collapse the version list",
+  "version_list.expand": "Expand the version list",
+  "version_list.diagnostics": "Diagnostics",
+  "version_list.settings": "Settings",
+  "first_launch.label": "Getting started",
+  "first_launch.title": "You need two versions of the game to compare",
+  "first_launch.intro": "Capture the game installed on this computer. If the game has already updated and you missed the version before, import a baseline pack from the release page.",
+  "first_launch.capture.title": "Capture your game",
+  "first_launch.capture.text": "Reads the game folder on this computer. Nothing in the game folder is changed.",
+  "first_launch.capture.action": "Capture new version",
+  "first_launch.import.title": "Import a version",
+  "first_launch.import.text": "A baseline pack from the release page, or a version someone exported for you.",
+  "first_launch.import.action": "Import",
+  "first_launch.preview_warning": "Getting a preview build? Capture the live version before you switch Steam to it.",
   "webview2.missing.title": "Patch Scout needs WebView2",
   "webview2.missing.text": "Patch Scout shows its window with the Microsoft Edge WebView2 Runtime. It comes with Windows 11 and most Windows 10 PCs, but it isn't working on this one.\n\nOpen Microsoft's download page in your browser?"
 }

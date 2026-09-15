@@ -13,7 +13,7 @@ It's for streamers and YouTubers who get pre-release builds without patch notes.
 
 - **Stack:** Python core, pywebview GUI (plain HTML/CSS/JS, no CLI), PyInstaller Windows build, [genieutils-py](https://github.com/SiegeEngineers/genieutils-py) for the `.dat`. Licence GPL-3.0-or-later.
 - **Names:** Python package `patch_scout`, entry point `patch-scout`.
-- **Status:** M0 done: project scaffold, i18n catalog, pre-commit hooks, CI and the verification spikes are in place; no features yet. Next step: M1 in [docs/roadmap.md](docs/roadmap.md), starting with a spec.
+- **Status:** M0 done. M1 in progress: slice 1, the app shell (WebView2 check, window, Forge-themed version list and first-launch screen), is done. Next step: slice 2 in [docs/roadmap.md](docs/roadmap.md), starting with a spec.
 
 ## Where things are documented
 
@@ -22,7 +22,7 @@ It's for streamers and YouTubers who get pre-release builds without patch notes.
 | Git workflow, commit format, code standards, Definition of Done | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | What was decided, and what is still Proposed or Open | [docs/decisions.md](docs/decisions.md) |
 | Components, dependency rules, capture and diff flows, GUI overview | [docs/design/architecture.md](docs/design/architecture.md) |
-| Window layout and behaviour, colours, theme tokens | [docs/design/ui.md](docs/design/ui.md), [ui-theme.css](docs/design/ui-theme.css) |
+| Window layout and behaviour, colours, theme tokens | [docs/design/ui.md](docs/design/ui.md), [theme.css](src/patch_scout/gui/web/styles/theme.css) |
 | Snapshot JSON schema, library index, raw backups | [docs/design/snapshot-format.md](docs/design/snapshot-format.md) |
 | What counts as a change, effect sentences, exports | [docs/design/diff-rules.md](docs/design/diff-rules.md) |
 | Reading game files: locations, formats, ID mappings | [docs/reference/game-files.md](docs/reference/game-files.md) |
@@ -89,6 +89,7 @@ Details in CONTRIBUTING.md.
 ```powershell
 uv sync                              # env + deps
 uv run pre-commit install            # once per clone: git hooks
+uv run playwright install chromium   # once per clone: browser for the UI tests
 uv run patch-scout --debug           # run the app with WebView dev tools
 uv run pre-commit run --all-files    # ruff, Biome, file checks, safety hooks
 uv run mypy
