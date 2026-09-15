@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping! This project has finished **M0, foundations**, and M1 is next (see [docs/roadmap.md](docs/roadmap.md)). The commands below work, and CI runs the same checks on every pull request.
+Thanks for helping! This project has finished **M0, foundations**, and **M1** is in progress (see [docs/roadmap.md](docs/roadmap.md)). The commands below work, and CI runs the same checks on every pull request.
 
 Using an AI coding agent? It follows [AGENTS.md](AGENTS.md) in addition to this guide, and you remain responsible for everything you submit.
 
@@ -172,7 +172,7 @@ A change is done when all of these hold:
 
 **Conventions:**
 - **Layout and naming:** pytest. Test files mirror the source layout (`tests/unit/<package path>/test_<module>.py`). Names describe behaviour, e.g. `test_collapse_groups_civs_by_value_pair`. One behaviour per test.
-- **No outside dependencies:** use `tmp_path` for files. No network, no game files, no sleeps.
+- **No outside dependencies:** use `tmp_path` for files. No network (the UI tests' local server on 127.0.0.1 is the one exception, D-41), no game files, no sleeps.
 - **Coverage** (line and branch) is reported by every test run, with no minimum (D-25).
 - **Fixtures:**
   - snapshots come from **public** builds only (P-09) and live in `tests/fixtures/game-derived/` with its `NOTICE`, because game content isn't GPL (P-22);
