@@ -200,3 +200,39 @@ body:not([data-ready]) {
   color: var(--warn);
   font-size: var(--fs-sm);
 }
+
+/* Collapsed strip (data-collapsed): icons only */
+
+.version-list[data-collapsed] {
+  padding-inline: 0;
+}
+
+.version-list[data-collapsed] .version-list__top {
+  justify-content: center;
+}
+
+.version-list[data-collapsed] .version-list__brand,
+.version-list[data-collapsed] .version-list__versions,
+.version-list[data-collapsed] .button__label {
+  display: none;
+}
+
+.version-list[data-collapsed] .icon--collapse {
+  mask-image: url("../vendor/lucide/panel-left-open.svg");
+}
+
+.version-list[data-collapsed] .version-list__actions .icon,
+.version-list[data-collapsed] .version-list__bottom .icon {
+  display: inline-block;
+}
+
+.version-list[data-collapsed] .version-list__actions .button,
+.version-list[data-collapsed] .version-list__bottom .button {
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+}
+
+.version-list[data-collapsed] .version-list__bottom {
+  flex-direction: column;
+}

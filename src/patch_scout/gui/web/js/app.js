@@ -3,6 +3,7 @@
 
 import { connect } from "./api.js";
 import { applyTranslations, createTranslator } from "./i18n.js";
+import { initVersionList } from "./version-list.js";
 
 async function start() {
   const api = await connect();
@@ -10,6 +11,7 @@ async function start() {
   document.documentElement.lang = startup.language;
   const t = createTranslator(startup.messages);
   applyTranslations(document, t);
+  initVersionList(document.getElementById("version-list"), { t, versions: startup.versions });
   document.getElementById("first-launch").hidden = startup.versions.length > 0;
   document.body.dataset.ready = "";
 }
