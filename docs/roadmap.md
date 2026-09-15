@@ -37,7 +37,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - [x] **How civ bonuses are encoded:** effect command types used, how descriptive effect names are. This feeds the effect sentence templates (O-5).
 - [x] Unit slot count and snapshot size with every non-empty unit slot stored as base + overrides (P-03).
 - [x] Units that matter but aren't in the tech trees or building offers (transform and dismount forms…) → reachability rules.
-  - Findings are in [game-files.md §7](reference/game-files.md#7-futuravailableunitsjson--paphosfutureavailableunitsjson), and the rules in D-37 ([diff-rules.md](design/diff-rules.md#reachability-d-37)). Links through unit tasks stay open.
+  - Findings are in [game-files.md §7](reference/game-files.md#7-futuravailableunitsjson--paphosfutureavailableunitsjson), and the rules in D-37 ([diff-rules.md](design/diff-rules.md#reachability-d-37)). Unit task links aren't followed. How the Spartan Polemarch variants become reachable stays open until M3.
 
 **Files layer**
 - [x] Pillow decodes all three DDS variants (no FourCC, DXT1, DXT5).
@@ -113,7 +113,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 ## M4: Compare UI and exports
 
 **Scope**
-- Comparison: the Compare button, Ctrl+click and Compare with… (D-32); navigation by civilization (D-33); civ bonus and unit stats views (D-20); filters and search. Opening the new version compared with the previous one when a capture finishes.
+- Comparison: the Compare button, Ctrl+click and Compare with… (D-32); navigation by civilization (D-33), with the Chronicles civs kept apart (D-38); civ bonus and unit stats views (D-20); filters and search. Opening the new version compared with the previous one when a capture finishes.
 - Exports: plain text (clipboard and `.txt`), self-contained HTML, PNG image. Spike: modern-screenshot vs html-to-image, and tall views exported in parts.
 - Export/import of snapshot archives; baseline pack import and first-launch screen (P-21).
 
@@ -137,6 +137,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 ## After v1.0
 
 - Apply to the SignPath Foundation; add the code signing policy page and the signing step to the release workflow (O-6).
+- **Civ overview** (D-39): one civ's full tech tree, bonuses and stats in a version, with a comparison's changes highlighted.
 
 ## Later (not v1)
 

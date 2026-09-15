@@ -96,12 +96,9 @@ For each civ, the diff reports only the units that civ can actually get. Reachab
    - `Building.annexes` and `Building.head_unit`;
    - `Building.stack_unit_id`;
    - the reverse of `Creatable.train_locations`, i.e. the units trained at a reachable building;
-   - object swaps from `objreplacement.json`. The replacements that matter (Port, Mule Cart, Settlement) are already tech tree nodes of their civs, and the female Villager is a variant of the Villager, not reported on its own.
-5. **Open:**
-   - links through unit tasks (`Bird.tasks`), such as the Spartan Polemarch variants reached from the Hippeus;
-   - the Town Center replacement (444) from `objreplacement.json`, which no tech tree lists.
-
-   Until they're decided, these units count as unreachable.
+   - object swaps from `objreplacement.json`. The replacements that matter (Port, Mule Cart, Settlement) are already tech tree nodes of their civs. The female Villager and the Town Center replacement (444) are variants present in every civ, and aren't reported on their own;
+   - unit tasks (`Bird.tasks`). Their links to other units (task type 155) point to the units an ability affects, e.g. Centurion → infantry or Monaspa → Knights, not to unit forms (inferred from the targets).
+5. **Open:** how the Spartan Polemarch variants become reachable. They should count for the Spartans (D-37), but none of the followed links leads to them. Until their source is found (M3), they count as unreachable.
 
 **Field names** are those of genieutils-py 0.1.2 ([genieutils-py.md](../reference/genieutils-py.md#where-things-are-verified-012)). Snapshot field names start out as these ([snapshot-format.md](snapshot-format.md)).
 

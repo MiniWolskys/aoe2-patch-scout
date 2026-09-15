@@ -119,7 +119,8 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 - **Civ list** (236px, D-33):
   - **Overall** comes first, with its change count;
   - then each civ with changes, with its emblem and count;
-  - a civ added in the new build shows a **NEW** tag instead of a count.
+  - a civ added in the new build shows a **NEW** tag instead of a count;
+  - the Chronicles civs are kept apart from the base civs (D-38); how is open question 9.
 - **Page title:** the civ, or "Overall". "Overall" has the subtitle "Changes to every civilization, with exceptions noted". A legend on the right names the old and new versions.
 - **Change row:**
 
@@ -148,6 +149,9 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 6. **PNG export of a selected section:** how is a section selected?
 7. **Collapsed list during a capture:** show progress on the Capture button.
 8. **Minimum window size:** the mockups are 1440×900; check at 1366×768.
+9. **Chronicles civs (D-38):**
+   - Do they get their own group at the end of the civ list, or sit behind a filter?
+   - Does "all civs" in Overall count them, or would every base-civ change read "all civs except" the six Chronicles civs?
 
 ## Theme: Forge (D-35)
 
