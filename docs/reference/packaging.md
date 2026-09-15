@@ -46,7 +46,14 @@ a = Analysis(
 - **What the app does (D-40, `gui/webview2.py`, `gui/app.py`):**
   1. Before `webview.start`, it reads both `pv` values above. A missing or empty value, or `0.0.0.0`, means not installed.
   2. If the runtime is missing, a native Windows message box (`MessageBoxW`, text from the i18n catalog) offers to open the download page. **Yes** hands the URL to the user's default browser; either way the app exits with code 1 and opens no window. The app itself makes no network access (D-02).
-  3. After start, if `webview.renderer` isn't `"edgechromium"`, the same message shows and the window closes.
+  3. After start, if `webview.renderer` isn't `"edgechromium"`, the window closes first, then the same message shows (the box is always on top), and the app exits with code 1.
+
+### Screens and scaling [verified]
+
+- **DPI awareness before start:** before `webview.start` runs, the process isn't DPI-aware: `IsProcessDPIAware()` returns false. pywebview only calls `SetProcessDPIAware` inside `start` (`webview/platforms/winforms.py`, around lines 819–820).
+- **Consequence:** `webview.screens`, read before `start` to size and place the window (D-42), reports sizes in logical pixels, not physical ones.
+- Measured 2026-09-15 with pywebview 6.2.1, on screens `2560x1440 at 0,0 1.50x` and `1920x1080 at -1920,1065`.
+- **Re-check in the frozen build (M5),** whose manifest may set DPI awareness differently.
 
 ## Serving the frontend
 

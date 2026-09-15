@@ -215,7 +215,7 @@ Chosen by the maintainer on 2026-09-15, in the app shell spec.
 - **When it's missing:**
   - before opening the window, the app checks Microsoft's documented registry values;
   - a native message box explains it and offers to open Microsoft's download page in the user's browser, then the app exits. The app itself makes no connection (D-02);
-  - if pywebview still falls back to another engine after start, the same message shows and the window closes.
+  - if pywebview still falls back to another engine after start, the window closes, then the same message shows, and the app exits with code 1.
 - **Details:** [packaging.md](reference/packaging.md#webview2-engine-detection-verified).
 
 ### D-19 Never assume where the game is installed: Decided
@@ -295,7 +295,8 @@ The window has no navigation rail. A **version list** on the left replaces the s
 
 ### D-42 Window size: Decided
 Chosen by the maintainer on 2026-09-15, in the app shell spec.
-- The window opens at **1440×900** when the primary screen has room for it (at least 1440×980, leaving space for the title bar and the taskbar); otherwise it opens maximized.
+- The window opens at **1440×900**, centred on the primary screen, when that screen has room for it (at least 1440×980, leaving space for the title bar and the taskbar); otherwise it opens maximized.
+- **Which screen:** the size is chosen for, and the window is placed on, the primary screen. With no screen information at all (an empty screen list), it opens maximized at the preferred size instead.
 - **Minimum size: 1120×640.** It fits 1366×768 screens and 1080p laptops at 150% scaling, which have about 1280×680 of usable space.
 - **Units:** logical pixels; pywebview multiplies them by the screen's scaling factor.
 - **Consequence for M4:** the comparison must work at 1120px wide. Collapsing the version list frees 216px.

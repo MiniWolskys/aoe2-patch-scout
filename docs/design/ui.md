@@ -32,7 +32,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 
 - **Version list:** 280px wide; it collapses to a 64px strip holding Capture, Import, Diagnostics and Settings.
 - **The main area** fills the rest of the window.
-- **Window size** (D-42): 1440×900, or maximized when the screen is smaller; minimum 1120×640.
+- **Window size** (D-42): 1440×900, centred on the primary screen when it's at least 1440×980; maximized otherwise; minimum 1120×640.
 
 ## Behaviour
 
