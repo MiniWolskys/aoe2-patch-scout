@@ -15,3 +15,6 @@
 *.gz binary
 *.zip binary
 *.aoe2snap binary
+
+# Vendored third-party files stay byte-for-byte as published.
+src/patch_scout/gui/web/vendor/** -text

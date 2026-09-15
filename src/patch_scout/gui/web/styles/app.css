@@ -92,6 +92,7 @@ body:not([data-ready]) {
   gap: 8px;
 }
 
+/* Icons show only in the collapsed strip (see the end of this file). */
 .version-list__actions .icon,
 .version-list__bottom .icon {
   display: none;

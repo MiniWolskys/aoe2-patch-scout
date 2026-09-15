@@ -34,7 +34,7 @@ function setCollapsed(element, toggle, t, collapsed) {
   toggle.title = label;
   for (const button of element.querySelectorAll(ACTION_BUTTONS)) {
     if (collapsed) {
-      button.title = button.getAttribute("aria-label");
+      button.title = button.getAttribute("aria-label") ?? "";
     } else {
       button.removeAttribute("title");
     }
