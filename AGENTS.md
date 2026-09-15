@@ -114,7 +114,7 @@ uv run pytest -m game                # needs $env:AOE2DE_PATH; never runs in CI
   - **Builds shared privately with creators** may be under embargo.
   - The user ticks pre-release; the app may prefill it from Steam's branch info (P-23).
 - **Baseline pack:** a release asset holding a snapshot of the current live build and its icons. Kept separate from the app zip.
-- **Reachable unit:** a unit appearing in a civ's tech tree or building offers. Computed at diff time, never used to filter a capture.
+- **Reachable unit:** a unit in a civ's tech tree or building offers, or one of their transform or dismount forms (D-37). Computed at diff time, never used to filter a capture.
 
 ## Gotchas (verified on build 101.103.48987.0)
 

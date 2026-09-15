@@ -36,8 +36,8 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - [x] Sanity values against Advanced Genie Editor / in-game: Knight HP, a Blacksmith tech cost.
 - [x] **How civ bonuses are encoded:** effect command types used, how descriptive effect names are. This feeds the effect sentence templates (O-5).
 - [x] Unit slot count and snapshot size with every non-empty unit slot stored as base + overrides (P-03).
-- [ ] Units that matter but aren't in the tech trees or building offers (transform and dismount forms…) → reachability rules.
-  - Findings are in [game-files.md §7](reference/game-files.md#7-futuravailableunitsjson--paphosfutureavailableunitsjson); the rules still need a decision.
+- [x] Units that matter but aren't in the tech trees or building offers (transform and dismount forms…) → reachability rules.
+  - Findings are in [game-files.md §7](reference/game-files.md#7-futuravailableunitsjson--paphosfutureavailableunitsjson), and the rules in D-37 ([diff-rules.md](design/diff-rules.md#reachability-d-37)). Links through unit tasks stay open.
 
 **Files layer**
 - [ ] Pillow decodes all three DDS variants (no FourCC, DXT1, DXT5).

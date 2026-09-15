@@ -234,7 +234,7 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
   - The tech trees and building offers name 333 unit and building IDs. Following the unit link fields reaches 315 more.
   - Examples: Konnik → Konnik (Dismounted) through `blood_unit_id`; Trebuchet ↔ Trebuchet (Packed) through `building.transform_unit`; Archer → its projectile through `type_50.projectile_unit_id`.
   - Many of the others are corpses, rubble and projectiles.
-  - Which links make a unit reachable for the diff is still to be decided (diff-rules.md).
+  - Which of these links count for the diff is decided in D-37 ([diff-rules.md](../design/diff-rules.md#reachability-d-37)).
 
 ## 8. Helper JSONs
 
