@@ -75,13 +75,26 @@ def test_read_registry_value_returns_none_for_a_missing_key() -> None:
 
 @pytest.mark.skipif(sys.platform != "win32", reason="reads the Windows registry")
 def test_read_registry_value_reads_a_real_key() -> None:
+    # The skipif above already keeps this from running elsewhere; this guard additionally
+    # lets mypy prune the win32-only `winreg` calls below under `--platform linux`, the way
+    # `read_registry_value` itself does.
+    if sys.platform != "win32":
+        return
+    import winreg
+
     key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
 
     product_name = read_registry_value("HKEY_LOCAL_MACHINE", key_path, "ProductName")
     assert isinstance(product_name, str)
     assert product_name != ""
 
-    # CurrentMajorVersionNumber is a REG_DWORD; read_registry_value only returns strings.
+    # Confirm CurrentMajorVersionNumber really is a REG_DWORD, so the assertion below tests
+    # that read_registry_value (which only returns strings) reports it as absent, not that
+    # the value happens to be missing.
+    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path) as key:
+        _, value_type = winreg.QueryValueEx(key, "CurrentMajorVersionNumber")
+    assert value_type == winreg.REG_DWORD
+
     major_version = read_registry_value("HKEY_LOCAL_MACHINE", key_path, "CurrentMajorVersionNumber")
     assert major_version is None
 
