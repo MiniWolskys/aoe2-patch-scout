@@ -59,6 +59,7 @@ More detail in [docs/design/architecture.md](docs/design/architecture.md).
 | [Diff rules](docs/design/diff-rules.md) | What counts as a change and how it's shown |
 | [Game files reference](docs/reference/game-files.md) | How the game data is laid out |
 | [genieutils-py reference](docs/reference/genieutils-py.md) | The `.dat` reader and its version handling |
+| [Packaging reference](docs/reference/packaging.md) | How the Windows build is made and checked |
 | [Legal](docs/legal.md) | Licences, Microsoft's content rules, embargo |
 | [Contributing](CONTRIBUTING.md) | Dev setup, workflow, testing |
 

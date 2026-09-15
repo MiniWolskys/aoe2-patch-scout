@@ -40,18 +40,22 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
   - Findings are in [game-files.md §7](reference/game-files.md#7-futuravailableunitsjson--paphosfutureavailableunitsjson), and the rules in D-37 ([diff-rules.md](design/diff-rules.md#reachability-d-37)). Links through unit tasks stay open.
 
 **Files layer**
-- [ ] Pillow decodes all three DDS variants (no FourCC, DXT1, DXT5).
-- [ ] Map the stat icons in `widgetui\textures\ingame\staticons\` to stat keys.
+- [x] Pillow decodes all three DDS variants (no FourCC, DXT1, DXT5).
+  - Pillow is slow on uncompressed DDS, about 110 ms per file; see [game-files.md §10](reference/game-files.md#tech-tree-icons-verified).
+- [x] Map the stat icons in `widgetui\textures\ingame\staticons\` to stat keys.
 - [ ] Which duplicate string the game actually shows.
-- [ ] Meaning of the fifth `eras.json` age entry; role of `key-value-modded-strings-utf8.txt`.
-- [ ] Inspect `sharedbuildings.json`, `dropsites.json`, `objreplacement.json`.
+  - The data agrees with "last one wins" ([game-files.md §9](reference/game-files.md#9-string-files-key-value)). The in-game check needs the game in English, e.g. the Pirotechnia tooltip (+15% or +25%).
+- [x] Meaning of the fifth `eras.json` age entry; role of `key-value-modded-strings-utf8.txt`.
+- [x] Inspect `sharedbuildings.json`, `dropsites.json`, `objreplacement.json`.
 - [ ] **Steam PUP branch:** what the app manifest records when a beta branch is selected (P-23), and whether the exe version and the `.dat` differ.
+  - **Deferred:** this needs a live PUP branch. Switching Steam to it overwrites the live install, so back that up first.
 
 **Packaging**
-- [ ] Minimal pywebview window frozen with PyInstaller (one-folder) on Windows, Python 3.12.
-- [ ] WebView2 engine detection and the fallback message.
-- [ ] genieutils-py kept as loose, replaceable files (see [legal.md](legal.md)).
+- [x] Minimal pywebview window frozen with PyInstaller (one-folder) on Windows, Python 3.12.
+- [x] WebView2 engine detection and the fallback message.
+- [x] genieutils-py kept as loose, replaceable files (see [legal.md](legal.md)).
 - [ ] SmartScreen and antivirus behaviour of the unsigned build.
+  - The Defender scan found no threats. SmartScreen still needs a test with a downloaded zip. Details: [packaging.md](reference/packaging.md).
 
 **Exit criteria**
 - Every `[to verify]` in [game-files.md](reference/game-files.md) is resolved or explicitly deferred.

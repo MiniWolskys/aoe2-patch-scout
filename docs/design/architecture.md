@@ -95,7 +95,7 @@ The capture dialog has a **Game folder** field:
 
 **Detection sources:**
 - Steam: registry → every library → app `813780`, with the uninstall registry entry as a fallback.
-- Microsoft Store / Xbox app: `.GamingRoot` library folders and the app package (to verify; see [game-files.md §1](../reference/game-files.md#1-locating-an-install)).
+- Microsoft Store / Xbox app: `.GamingRoot` library folders and the app package (unverified; deferred until someone with that version can check, see [game-files.md §1](../reference/game-files.md#1-locating-an-install)).
 - Folders used before.
 
 When detection finds nothing, that's a normal outcome, not an error. No code, test or default setting hardcodes an install path; tests read it from `AOE2DE_PATH`.
@@ -190,7 +190,7 @@ flowchart TD
 
    Developers can also start the app with `--debug` to get the WebView developer tools.
 
-**WebView2 check.** At startup, confirm that pywebview is using the Edge Chromium engine. If it falls back to MSHTML, show a clear message with the WebView2 Runtime download link instead of running on the deprecated engine.
+**WebView2 check.** At startup, confirm that pywebview is using the Edge Chromium engine. If it falls back to MSHTML, show a clear message with the WebView2 Runtime download link instead of running on the deprecated engine. pywebview falls back to MSHTML silently, so the app has to check for itself; the verified detection methods are in [packaging.md](../reference/packaging.md#webview2-engine-detection-verified).
 
 ## Packaging (v1, D-16)
 
@@ -198,6 +198,7 @@ flowchart TD
 - **Why one folder:** it starts faster, triggers fewer antivirus false positives, and keeps genieutils-py replaceable as loose files (LGPLv3 §4; see [legal.md](../legal.md)).
 - **Bundled:** `LICENSE`, `THIRD_PARTY_NOTICES` and the source tag link. **No game content.** The current baseline snapshot and its icons are a separate *baseline pack* on the same release page, imported with the Import button (D-10, P-21). This keeps GPL software and Microsoft game content apart (P-22) and meets SignPath's no-proprietary-components rule.
 - **Build Python:** pinned by `.python-version` (P-12).
+- **Verified in M0:** the one-folder build, genieutils-py as loose files, and the Defender scan. Details: [packaging.md](../reference/packaging.md).
 
 ## Local data layout (P-10)
 

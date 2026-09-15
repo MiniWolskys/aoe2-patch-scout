@@ -150,7 +150,7 @@ Direct normalized copies of the helper JSONs (snake_case keys, `extra` for unkno
 - Text is stored raw, with tags and placeholders intact.
 
 ### `stat_icons`
-Maps a stat key to an icon ref. The game's stat icons come from `widgetui\textures\ingame\staticons\` (D-09), e.g. `{ "hp": {…}, "melee_armor": {…} }`. The stat keys are ours; the file mapping is decided in M1. The UI falls back to text labels when an icon is missing.
+Maps a stat key to an icon ref. The game's stat icons come from `widgetui\textures\ingame\staticons\` (D-09), e.g. `{ "hp": {…}, "melee_armor": {…} }`. The stat keys are ours; the file mapping is decided in M1, from the files M0 found ([game-files.md §10](../reference/game-files.md#other-icon-sets)). Line of sight and train time have no game icon. The UI falls back to text labels when an icon is missing.
 
 ## Stats-tier section
 
