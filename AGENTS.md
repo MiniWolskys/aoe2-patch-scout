@@ -13,7 +13,7 @@ It's for streamers and YouTubers who get pre-release builds without patch notes.
 
 - **Stack:** Python core, pywebview GUI (plain HTML/CSS/JS, no CLI), PyInstaller Windows build, [genieutils-py](https://github.com/SiegeEngineers/genieutils-py) for the `.dat`. Licence GPL-3.0-or-later.
 - **Names:** Python package `patch_scout`, entry point `patch-scout`.
-- **Status:** documentation phase, no code yet. Next step: M0 in [docs/roadmap.md](docs/roadmap.md).
+- **Status:** M0 in progress: project scaffold and i18n catalog in place, no features yet. Next steps: the rest of M0 in [docs/roadmap.md](docs/roadmap.md).
 
 ## Where things are documented
 

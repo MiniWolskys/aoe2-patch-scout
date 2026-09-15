@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping! This project is in its **documentation phase**: the commands and tooling below take effect once the M0 scaffolding lands (see [docs/roadmap.md](docs/roadmap.md)).
+Thanks for helping! This project is in **M0, foundations** (see [docs/roadmap.md](docs/roadmap.md)). The uv, mypy and pytest commands below work; pre-commit hooks and CI land later in M0.
 
 Using an AI coding agent? It follows [AGENTS.md](AGENTS.md) in addition to this guide, and you remain responsible for everything you submit.
 
@@ -119,7 +119,7 @@ A change is done when all of these hold:
 ## Code standards
 
 ### Python
-- **Version and typing:** Python 3.12, type hints on everything, `mypy --strict` on `src/`.
+- **Version and typing:** Python 3.12, type hints on everything, `mypy --strict` on `src/` and `tests/`.
   - Avoid `Any`.
   - A `cast` or `# type: ignore[code]` needs a comment explaining why.
 - **Format and lint:** `ruff format` (line length 100) and `ruff check`, both run by pre-commit.

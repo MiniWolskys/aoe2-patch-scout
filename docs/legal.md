@@ -32,7 +32,8 @@ Everything derived from the game belongs to Microsoft and is used under the Game
 |---|---|---|---|
 | [genieutils-py](https://github.com/SiegeEngineers/genieutils-py) | LGPLv3 | Yes | See the obligations below. |
 | [pywebview](https://github.com/r0x0r/pywebview) | BSD-3-Clause | Yes | |
-| pythonnet (pywebview dependency on Windows) | MIT *(confirm when added)* | Yes | |
+| pywebview dependencies on Windows: pythonnet, clr-loader, cffi, pycparser | MIT, MIT, MIT-0, BSD-3-Clause | Yes | Checked in the installed metadata and licence files, 2026-09-15. |
+| Other pywebview dependencies: proxy-tools, bottle, typing-extensions | MIT, MIT, PSF-2.0 | Yes | Checked in the installed metadata and licence files, 2026-09-15. |
 | Pillow | MIT-CMU *(confirm when added)* | Yes | Wheels bundle native libraries with their own notices. |
 | Image export JS library (e.g. modern-screenshot or html-to-image) | MIT *(confirm when chosen)* | Yes | Vendored single file (P-16). |
 | CPython | PSF License | Yes (frozen runtime) | Includes third-party notices of its own. |

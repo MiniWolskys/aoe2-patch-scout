@@ -58,6 +58,13 @@ v1 is distributed as a Windows build on GitHub Releases, so users don't need Pyt
 - Game names are looked up in the chosen language, falling back to English.
 - Steam's app manifest records the game's language, which a later language selector can use as its default.
 
+### D-36 Message catalog format: Decided
+- **One flat JSON object per language** in `patch_scout/i18n/`, e.g. `en.json`. Dotted keys such as `capture.dialog.title` map to messages.
+- **Placeholders** use Python `str.format` syntax with names only: `"Reading {file}"`. Literal braces are doubled.
+- **Missing text:** a message missing from a language falls back to English. A key missing from English, or a placeholder without a value, raises an error.
+- **Why:** Python and the frontend can read the same files, with no dependency and no build step (P-16).
+- **Chosen over** nested JSON, and gettext `.po` files, which need a compile step and are awkward in JavaScript.
+
 ### O-7 Project home: Decided
 Hosted under `MiniWolskys` for now; a move (e.g. to SiegeEngineers) may be considered later.
 
