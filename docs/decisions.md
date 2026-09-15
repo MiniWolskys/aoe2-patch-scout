@@ -1,0 +1,279 @@
+# Decision log
+
+One entry per decision, grouped by topic. **IDs are permanent.** The prefix (`D` design, `P` proposal, `O` open question) only records how an entry started; the status says where it stands.
+
+**Statuses:**
+- **Decided:** agreed; change only with a new entry or an explicit amendment.
+- **Proposed:** suggested, waiting for maintainer approval.
+- **Open:** needs a maintainer decision.
+- **Rejected:** considered and declined; kept for the record.
+
+---
+
+## Product and scope
+
+### D-01 Goal and audience: Decided
+The tool diffs AoE2:DE game data between two builds and reports every gameplay-relevant change. Its main users are streamers and YouTubers who get pre-release builds without patch notes. Most use Windows and aren't developers.
+
+### D-02 Offline, read-only, private: Decided
+- No network access at runtime, no telemetry, no automatic upload of anything.
+- The game folder is strictly read-only.
+- Captured data stays on the user's machine unless the user exports it.
+
+### D-14 Game content in scope: Decided
+- **In scope:** the main game, including the Chronicles (`antiquity` era) civs that live in the main `.dat`.
+- **Out of scope for v1:** Return of Rome (`modes\Pompeii`, with its own `VER 8.8` `.dat`). The reader takes a "data root" so it can be added later.
+
+### D-15 GUI in v1: Decided
+v1 ships a pywebview desktop GUI.
+
+### P-08 Developer CLI: Rejected
+There is no CLI. The GUI has a **Diagnostics window** instead:
+- environment information;
+- capture log with timings;
+- gate details (version string, layout used, round-trip result, sanity checks);
+- snapshot inspector;
+- Copy diagnostics.
+
+Tests call the Python API directly, and developers can start the app with `--debug` for the WebView developer tools.
+
+### D-16 Standalone Windows executable from v1: Decided
+v1 is distributed as a Windows build on GitHub Releases, so users don't need Python. The LGPLv3 obligations for bundling genieutils-py apply from the first release (see [legal.md](legal.md)).
+
+### P-13 Presentation and exports: Decided (amended)
+- **In the app:** the UI is the main output, good enough to show directly in a video.
+- **Exports:**
+  - **plain text** (Unicode bullets, no markup) for descriptions and chat;
+  - **self-contained HTML**;
+  - **PNG image** of the current view or a selected section.
+- **No Markdown export**: most users wouldn't know what to do with it.
+
+
+### O-3 Languages: Decided
+**English only for v1**, but designed for more languages from the start (P-20).
+
+### P-20 Designed for several languages: Decided
+- Snapshots store string tables per language (`strings.tables.<lang>`).
+- Every user-visible label and generated sentence comes from an i18n message catalog; no hardcoded English in code.
+- Game names are looked up in the chosen language, falling back to English.
+- Steam's app manifest records the game's language, which a later language selector can use as its default.
+
+### O-7 Project home: Decided
+Hosted under `MiniWolskys` for now; a move (e.g. to SiegeEngineers) may be considered later.
+
+### P-11 Project name: Decided
+**Patch Scout.**
+
+| Thing | Name |
+|---|---|
+| Product | Patch Scout |
+| GitHub repo | `MiniWolskys/aoe2-patch-scout` (renamed from `aoe2-techtree-diff-tool` on 2026-09-15) |
+| Python package | `patch_scout` |
+| Entry point | `patch-scout` |
+| Data folder | `%LOCALAPPDATA%\PatchScout\` |
+
+- **Availability**, checked on GitHub and PyPI on 2026-09-15: `aoe2-patch-scout` and `patch-scout` were free. An unrelated academic security project is called "PatchScout".
+- **Constraints:** no "Age of Empires" in the product name, and nothing implying an official tool (Microsoft's rules). The "aoe2" repo prefix follows community practice.
+
+
+---
+
+## Architecture and data
+
+### D-03 `.dat` reader: genieutils-py: Decided
+- Use [genieutils-py](https://github.com/SiegeEngineers/genieutils-py) as a normal dependency with a version floor (currently `>=0.1.2`).
+- Never vendor or fork it; format fixes go upstream.
+- Tapsa/genieutils (C++) is a reference only.
+
+### D-04 Two tiers: Decided
+- The **files tier** (JSON, strings, icons) always runs.
+- The **stats tier** (`.dat`) is attempted and gated.
+
+Partial output is acceptable; wrong output is not.
+
+### D-05 Capture and diff are separate stages: Decided
+Capture writes a normalized, versioned snapshot; the diff compares two snapshots. Snapshots contain plain JSON values only, never library objects.
+
+### D-06 Round-trip gate is mandatory: Decided
+Refined by P-01 and P-02.
+
+### P-01 Where the round-trip gate runs: Decided
+- It runs during capture, on the **decompressed** stream.
+- The result is stored in the snapshot.
+- The diff compares stats only when both snapshots passed.
+
+### P-02 Unknown version strings and sanity checks: Decided (amended)
+The version string carries no game data; it only selects the parser layout. When it's unknown:
+1. The tool overwrites it **in memory** with a known version, newest first, and parses (**layout substitution**).
+2. The layout is accepted only if:
+   - the round trip is byte-exact, and
+   - the **sanity cross-checks** against the files tier pass: civ count and order, tech tree references resolve, name IDs resolve, values in plausible ranges.
+3. Stats are then available, flagged `format_verified: false`, and the UI shows a mild notice naming the layout used.
+
+**Never:** adding enum members at runtime, which avoids genieutils-py's string-comparison bug.
+
+Details: [genieutils-py.md](reference/genieutils-py.md#unknown-version-strings-layout-substitution). Entities are matched by ID across versions (P-07), and snapshot fields are looked up by name, so field order never matters.
+
+### P-03 Capture wide, filter at diff time: Decided
+- Every non-empty unit slot of every civ is stored, as base + per-civ overrides.
+- Reachability and the allowlist are applied at diff time.
+
+### D-07 Per-civ collapsing: Decided
+A change is grouped by value across civs: "(all civs)", "(Franks only)"…, based on raw unit values (D-20).
+
+### D-08 Diff fields come from an allowlist: Decided
+
+### D-20 Raw data only; civ bonuses never applied to units: Decided
+- Snapshots store raw game data: unit records, techs, effects (including civ and team bonuses), civ records.
+- Civ bonuses are **never applied to unit stats** in v1, neither at capture nor at compare. Bonuses can depend on age, researched techs and unit class, and applying them would add a lot of complexity.
+- The app shows bonuses and units separately, as the game does:
+  - a **civ bonuses** view (bonus text + effect sentences);
+  - a **units** view (raw stats).
+- Showing how a unit is affected by its civ's bonuses may come later.
+
+
+### P-17 Effective (bonus-applied) stats: Decided, not in v1
+Superseded by D-20. Kept on the roadmap under "Later".
+
+### O-5 Showing bonus and effect changes: Decided
+For every changed effect:
+1. the game's own text diff, when the bonus or help text changed;
+2. a **generated sentence** when a template exists for the command type;
+3. otherwise, the **raw effect command**.
+
+
+### P-04 Full English string tables in every snapshot: Decided
+
+### P-05 Fingerprint all inputs: Decided
+A new capture counts as identical only if every input file's hash matches.
+
+### P-06 Icon identity uses full-size pixels: Decided
+
+### P-07 Entity identity: Decided
+- Units, techs and effects are matched by numeric ID.
+- Civs by `internal_name`.
+- Tech tree nodes by (civ, `Use Type`, `Node ID`).
+- A name change under the same ID is a rename.
+
+### P-15 Snapshot schema migrations: Decided
+
+### P-16 Frontend without a build step: Decided
+Third-party JavaScript, e.g. an image export library, is vendored as a single file.
+
+### D-13 Stack: Decided
+- Python backend.
+- UI in HTML/CSS/JS through pywebview.
+- Extraction is isolated: the UI never reads game files.
+
+### D-19 Never assume where the game is installed: Decided
+- Detection (Steam; Microsoft Store / Xbox app; folders used before) only **proposes** a folder in an editable field.
+- The user can always browse to another folder, and every folder is validated.
+- When detection finds nothing, that's a normal outcome.
+- No hardcoded install paths anywhere.
+
+
+### P-18 Editable metadata in a library index: Decided
+Snapshot files are immutable. Labels, the pre-release flag and notes live in `library.json`, so renaming or re-ticking never rewrites a snapshot. The index can be rebuilt from the snapshot files.
+
+### P-19 Raw backups on by default, content-addressed: Decided
+- A build's type can't be detected reliably, so every capture keeps a raw backup (~15 MB per new build) of its input files.
+- Files are stored by hash, so unchanged files are stored once.
+- Backups can be turned off or purged in Settings.
+
+Amends D-12.
+
+### D-12 Optional raw backup: Decided
+The raw `.dat`, JSON and string files are kept as a safety net against extractor bugs, and never exported. Default: see P-19.
+
+### P-10 Local data location: Decided
+`%LOCALAPPDATA%\PatchScout\`, changeable in settings.
+
+---
+
+## Library and pre-release builds
+
+### P-14 Labels and pre-release flag: Decided (amended)
+- A **pre-release tickbox** at capture, editable later in the Library screen.
+- **Click a snapshot's name to rename it.**
+- Default label: `<game build> · <date>`.
+
+
+### P-23 Prefill the pre-release tickbox from Steam: Decided
+Steam's Public Update Preview (PUP) is a **beta branch of the same app**: switching overwrites the live install in place.
+- **Prefill:** if Steam's app manifest shows a beta branch is selected, prefill the tickbox. Whether and where the manifest records that is to verify while on the PUP branch; on the live branch no such field exists.
+- **Reminder:** the Capture screen reminds users to capture the live build *before* switching branches.
+
+---
+
+## Icons and game content
+
+### D-09 Icons: Decided (amended)
+- **Extraction:** all icons, including the game's **stat icons** (HP, attack, armour…), are extracted at capture from the install being captured and kept in the shared content-addressed icon store.
+- **No self-drawn stat icons:** an earlier plan to draw our own pictograms, to avoid game art, was dropped once game icons were allowed (O-1).
+- **App assets:** the app bundles only simple UI assets of its own (placeholder image, badges).
+- **Fallback:** text labels when an icon is missing.
+
+### O-1 Game icons in exports and baselines: Decided (option B)
+Exports and baseline snapshots include the converted game icons, so users recognise what they know from the game.
+
+**Legal context** (not legal advice): Microsoft's Game Content Usage Rules allow game content in free, non-commercial, ad-free items that carry their notice. aoe2techtree (~555 icons), aoe2companion and the community wiki host game icons that way.
+
+**Conditions:** see P-22.
+
+### P-22 Keep game content apart from GPL code: Decided
+Game-derived content (icons, strings, data values) is © Microsoft and can't be licensed under the GPL, which allows commercial use; Microsoft's rules don't.
+- It lives in separate files or folders with a notice saying so, both in the repo (fixture snapshots) and in releases (baseline pack).
+- The app zip contains no game content.
+
+Details: [legal.md](legal.md).
+
+### D-10 Baseline snapshots: Decided
+Every release publishes a snapshot of the current live build, so a user who installs after a patch can still diff.
+
+### O-4 Baseline delivery: Decided (A + B)
+- (A) A new release when a game patch needs it.
+- (B) Baseline snapshots are also published as separate downloads that users import in the Library screen.
+
+### P-21 Baseline pack is a separate download: Decided
+The baseline (snapshot + icons) is a separate **baseline pack** on the release page, not inside the app zip. Together with P-22, this keeps the GPL software free of game content and satisfies SignPath's rule against proprietary components in signed packages. First-run screen: "No snapshots yet: import the baseline pack from the release page, or capture your game."
+
+### O-2 The "no reverse engineering" clause: Decided (accepted risk)
+The clause: *"You can't reverse engineer our games to access the assets"* (Microsoft, Game Content Usage Rules).
+- **Position:** reading the game's data files is accepted as common community practice (aoe2techtree, genieutils-py, the modding tools Microsoft ships with the game).
+- **Response plan:** if Microsoft objects, we comply.
+
+
+---
+
+## Development, licensing and releases
+
+### D-17 Licence: GPL-3.0-or-later: Decided
+Covers our code only; game content is excluded (P-22).
+
+### D-18 Development tooling: uv: Decided
+
+### P-12 Python version: Decided
+- Python **3.12** for development and builds: `.python-version` 3.12, `requires-python = ">=3.12"`.
+- **3.13 status (checked 2026-09-15):** every dependency declares support and ships wheels, but pywebview's own CI tests Windows on 3.12 only.
+- **When to revisit:** after an M5 build smoke test on 3.13. Avoid free-threaded builds.
+
+### D-11 Testing and CI: Decided (amended)
+- **CI:** GitHub Actions on GitHub-hosted runners, which are free for public repositories, runs `ruff format --check`, `ruff check`, `mypy` and `pytest` on `windows-latest` and `ubuntu-latest`.
+- **Game tests** need a real install and run locally only.
+- **Fixtures:** the diff layer is covered by committed snapshot-pair fixtures.
+
+
+### P-09 Fixtures come from public builds only: Decided
+Fixture snapshots come from released live builds, and icons in fixtures are synthetic.
+
+### O-6 Code signing: Decided (option B, after the first release)
+- **Plan:** SignPath Foundation's free signing for open-source projects.
+- **Timing:** SignPath requires an existing public release and does a reputation check, so **v1.0 ships unsigned** and we apply afterwards.
+- **Requirements to prepare:**
+  - release builds on GitHub-hosted runners;
+  - a code signing policy page with team roles;
+  - MFA for team members;
+  - a privacy statement ("the app sends no data");
+  - product name and version metadata in the exe;
+  - no proprietary components in the signed package (P-21).
+

@@ -1,0 +1,56 @@
+name: Bug report
+description: Something doesn't work or a change list is wrong.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not post data from privately shared pre-release builds** (snapshots, exports, stat values, text, screenshots).
+        If the bug only happens on such a build, describe it without the data.
+  - type: input
+    id: tool-version
+    attributes:
+      label: Tool version
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: game-build
+    attributes:
+      label: Game build(s) involved
+      description: Public builds only. Shown in the Library screen, e.g. 101.103.48987.0.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Finding the game folder
+        - Capture
+        - Compare (change list content)
+        - Export (text / HTML / image)
+        - Library (rename, pre-release, import / export)
+        - Installation / startup
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, and what you saw.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Copied diagnostics
+      description: Diagnostics window → Copy diagnostics. Remove anything you don't want public.
+      render: text
