@@ -34,6 +34,8 @@ Everything derived from the game belongs to Microsoft and is used under the Game
 | [pywebview](https://github.com/r0x0r/pywebview) | BSD-3-Clause | Yes | |
 | pywebview dependencies on Windows: pythonnet, clr-loader, cffi, pycparser | MIT, MIT, MIT-0, BSD-3-Clause | Yes | Checked in the installed metadata and licence files, 2026-09-15. |
 | Other pywebview dependencies: proxy-tools, bottle, typing-extensions | MIT, MIT, PSF-2.0 | Yes | Checked in the installed metadata and licence files, 2026-09-15. |
+| Barlow Semi Condensed and Marcellus SC fonts | SIL OFL 1.1 | Yes | Bundled in `gui/web/vendor/fonts/` with their `OFL.txt`, from the google/fonts repository, 2026-09-15. |
+| [Lucide](https://lucide.dev) icons | ISC; MIT for the Feather-derived icons | Yes | Seven SVGs bundled unedited in `gui/web/vendor/lucide/` with `LICENSE`, release 1.46.0, 2026-09-15 (D-43). |
 | Pillow | MIT-CMU *(confirm when added)* | Yes | Wheels bundle native libraries with their own notices. |
 | Image export JS library (e.g. modern-screenshot or html-to-image) | MIT *(confirm when chosen)* | Yes | Vendored single file (P-16). |
 | CPython | PSF License | Yes (frozen runtime) | Includes third-party notices of its own. |

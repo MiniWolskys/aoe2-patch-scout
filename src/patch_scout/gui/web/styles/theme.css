@@ -1,9 +1,7 @@
 /*
  * Patch Scout: Forge theme (D-35).
  *
- * Design reference: docs/design/ui.md. This file is the starting point for the
- * frontend stylesheet in src/patch_scout/gui/web/; copy it there when the
- * frontend exists.
+ * Design reference: docs/design/ui.md.
  *
  * Rules:
  * - Component CSS uses these custom properties, never colour literals.

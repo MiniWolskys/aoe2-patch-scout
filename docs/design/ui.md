@@ -1,6 +1,6 @@
 # User interface
 
-**Status: draft v1, 2026-09-15.** Follows D-32 to D-35 in [decisions.md](../decisions.md). The theme tokens are in [ui-theme.css](ui-theme.css), the starting point for the frontend stylesheet.
+**Status: draft v1, 2026-09-15.** Follows D-32 to D-35 in [decisions.md](../decisions.md). The theme tokens are in the app's stylesheet, [theme.css](../../src/patch_scout/gui/web/styles/theme.css).
 
 The screens were designed in three rounds of mockups with sample data. The mockups aren't in the repository.
 
@@ -209,6 +209,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
   - square, 2px radius;
   - a 1px `bg-app` gap, then a 1px `line-strong` ring;
   - no rounded corners, shadows or glows.
+- **Interface icons** come from Lucide (D-43), drawn in the text colour of their control.
 
 ### Contrast
 
@@ -255,7 +256,7 @@ WCAG 2 contrast ratios. Body text needs 4.5:1; large text and UI components need
 | Section labels | **Marcellus SC** | Small caps with 0.07em letter spacing; labels only, never body text |
 | Raw commands, paths | Cascadia Mono, then Consolas | System fonts, not bundled |
 
-- **Licence:** both web fonts are under the SIL Open Font License *(confirm when added)*. They're bundled with the app, which has no network access (D-02), and listed in `THIRD_PARTY_NOTICES`.
+- **Licence:** both fonts are under the SIL Open Font License 1.1 (checked 2026-09-15). They're bundled in `gui/web/vendor/fonts/` with their `OFL.txt`, because the app has no network access (D-02), and listed in `THIRD_PARTY_NOTICES`.
 - **Numbers** use tabular figures (`.num`) wherever they line up.
 
 | Token | Size | Use |
@@ -289,7 +290,7 @@ WCAG 2 contrast ratios. Body text needs 4.5:1; large text and UI components need
 | `notice-height` | 40px | Notice bar |
 | `dialog-width` | 600px | Capture dialog |
 
-### Components in ui-theme.css
+### Components in theme.css
 
 | Class | Component |
 |---|---|

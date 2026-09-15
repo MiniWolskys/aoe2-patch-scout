@@ -290,7 +290,7 @@ The window has no navigation rail. A **version list** on the left replaces the s
 ### D-35 Dark theme, Forge: Decided
 - The app has one dark theme, **Forge**: warm iron neutrals with a brass accent. Game icons are the only other colour.
 - **Status colours avoid red and green:** success is a neutral check, warnings and pre-release are orange, notices are steel blue.
-- **Tokens:** [ui-theme.css](design/ui-theme.css). Typography, sizes and contrast: [ui.md](design/ui.md).
+- **Tokens:** [theme.css](../src/patch_scout/gui/web/styles/theme.css). Typography, sizes and contrast: [ui.md](design/ui.md).
 - **Chosen over:** a light editorial theme, an icon-tile theme, and three other dark palettes (Keep, Byzantium, Graphite).
 
 ### D-42 Window size: Decided
@@ -308,8 +308,15 @@ Chosen by the maintainer on 2026-09-15, in the app shell spec.
 ### D-09 Icons: Decided (amended)
 - **Extraction:** all icons, including the game's **stat icons** (HP, attack, armour…), are extracted at capture from the install being captured and kept in the shared content-addressed icon store.
 - **No self-drawn stat icons:** an earlier plan to draw our own pictograms, to avoid game art, was dropped once game icons were allowed (O-1).
-- **App assets:** the app bundles only simple UI assets of its own (placeholder image, badges).
+- **App assets:** the app bundles simple UI assets: its own (placeholder image, badges), and interface icons vendored from Lucide (D-43).
 - **Fallback:** text labels when an icon is missing.
+
+### D-43 Interface icons from Lucide: Decided
+Chosen by the maintainer on 2026-09-15, in the app shell spec. Amends D-09's "App assets" bullet.
+- **What:** the interface's own icons (collapse, capture, import, diagnostics, settings, warning) are SVG files copied unedited from [Lucide](https://lucide.dev) into `src/patch_scout/gui/web/vendor/lucide/`, with its licence.
+- **Licence:** ISC; the icons derived from Feather are MIT. Both notices go into `THIRD_PARTY_NOTICES` ([legal.md](legal.md)).
+- **How they're shown:** as a CSS mask filled with `currentColor`, so they take the theme colours without editing the files.
+- **Chosen over** drawing our own icons, and Unicode glyphs.
 
 ### O-1 Game icons in exports and baselines: Decided (option B)
 Exports and baseline snapshots include the converted game icons, so users recognise what they know from the game.

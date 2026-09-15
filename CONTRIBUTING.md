@@ -149,8 +149,8 @@ A change is done when all of these hold:
 ### Frontend (HTML, CSS, JavaScript)
 - **Plain technology:** HTML, CSS and JavaScript ES modules. No framework, no bundler, no npm (P-16).
 - **Biome** lints and formats JS and CSS (D-26); its configuration is in `biome.json`.
-  - Third-party files are vendored in `gui/web/vendor/`, never edited, and excluded from Biome.
-- **Theme:** colours, fonts and sizes come from the Forge tokens in [docs/design/ui-theme.css](docs/design/ui-theme.css) (D-35). No colour literals in component CSS. Red and green only mean old and new (D-34).
+  - Third-party files (JS libraries, fonts, icons) are vendored in `gui/web/vendor/`, never edited, and excluded from Biome and the whitespace hooks.
+- **Theme:** colours, fonts and sizes come from the Forge tokens in [theme.css](src/patch_scout/gui/web/styles/theme.css) (D-35). No colour literals in component CSS. Red and green only mean old and new (D-34).
 - **JSDoc** types on exported functions.
 - **Text:** every label comes from the i18n catalog.
 - **Talking to Python:** only through the exposed API object. No network requests.
