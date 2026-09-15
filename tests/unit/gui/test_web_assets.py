@@ -51,7 +51,8 @@ PAGE_LINK = re.compile(r'(?:href|src)="([^"]+)"')
 
 
 def page_links() -> list[str]:
-    return PAGE_LINK.findall((web_root() / "index.html").read_text(encoding="utf-8"))
+    links = PAGE_LINK.findall((web_root() / "index.html").read_text(encoding="utf-8"))
+    return [link for link in links if not link.startswith("data:")]
 
 
 def test_the_page_loads_its_stylesheets_and_script() -> None:
@@ -66,3 +67,8 @@ def test_the_page_loads_its_stylesheets_and_script() -> None:
 @pytest.mark.parametrize("link", page_links())
 def test_every_page_link_points_to_a_bundled_file(link: str) -> None:
     assert (web_root() / link).is_file()
+
+
+def test_the_page_declares_an_inline_icon() -> None:
+    page = (web_root() / "index.html").read_text(encoding="utf-8")
+    assert '<link rel="icon" href="data:,">' in page
