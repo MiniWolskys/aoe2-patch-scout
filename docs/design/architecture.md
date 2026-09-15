@@ -31,7 +31,7 @@ flowchart LR
 
     DIFF["diff engine (pure)<br/>collapse, effect sentences"]
     REP["renderers<br/>plain text / HTML"]
-    GUI["GUI (pywebview)<br/>Library · Capture · Compare · Export"]
+    GUI["GUI (pywebview)<br/>version list · capture · comparison · export"]
     DIAG["Diagnostics window"]
 
     LOC --> FT & ST & IC
@@ -84,9 +84,9 @@ There is **no CLI** (P-08, rejected). The GUI is the only interface; what a `ver
 
 The tool **never assumes where the game is installed**. Detection only *proposes*; the user sees the folder and can always change it.
 
-The Capture screen has a **Game folder** field:
+The capture dialog has a **Game folder** field:
 
-1. When the screen opens, detection runs in the background:
+1. When the dialog opens, detection runs in the background:
    - one candidate → the field is prefilled;
    - several candidates → a dropdown;
    - none → the field stays empty with "Couldn't find the game automatically. Click **Browse** and pick the game folder."
@@ -141,7 +141,7 @@ flowchart TD
 ## Diff flow
 
 1. **Load and migrate.** Both snapshots are migrated in memory to the current schema (P-15).
-2. **Decide what can be compared.** Stats are compared only if both snapshots have them (P-01); otherwise the Compare screen opens with a notice explaining why.
+2. **Decide what can be compared.** Stats are compared only if both snapshots have them (P-01); otherwise the comparison opens with a notice explaining why.
 3. **Compare.**
    - Match entities by identity (P-07) and compare raw values.
    - Collapse per civ.
@@ -155,32 +155,33 @@ flowchart TD
 - **Shell:** a pywebview window. The frontend is plain HTML/CSS/JS in `patch_scout/gui/web/` with no build step (P-16). Third-party JS (e.g. the image export library) is vendored as a single file.
 - **Python ↔ JS:** one API object exposed through pywebview's `js_api`. Capture and diff run in worker threads and report progress to the page.
 
-**Screens:**
+**One window** (D-32). Layout, behaviour, colours and theme tokens are in [ui.md](ui.md).
 
-1. **Library.** Every snapshot with its label, build, capture date, pre-release tickbox and stats status.
-   - Click a label to rename it.
-   - Tick or untick pre-release at any time.
-   - Delete, and import/export snapshot archives, including the baseline pack (P-21).
-   - With no snapshots yet, a first-run panel: import the baseline pack from the release page, or capture your game.
-2. **Capture.**
+1. **Version list**, on the left.
+   - Every snapshot with its label, build and capture date. Icons flag pre-release versions and versions without stats.
+   - **Capture new version** and **Import** at the top. Import takes snapshot archives and the baseline pack (P-21).
+   - Diagnostics and Settings at the bottom.
+   - Click a version to open its details. To compare it with another, use that version's **Compare** button (shown on hover), Ctrl+click, or **Compare with…** in the details.
+   - A running capture shows as a row at the top of the list. The list can collapse to a narrow strip.
+2. **First launch.** With no snapshots yet: capture your game, or import the baseline pack from the release page.
+3. **Capture dialog.**
    - The Game folder field (above).
    - A label, defaulting to `<game build> · <date>`.
    - A pre-release tickbox, prefilled when Steam reports a beta branch such as PUP (P-23); the user can always change it.
    - A reminder that switching Steam to the PUP branch overwrites the live build, so capture live first.
-   - A progress bar, then a result summary showing stats status and any reasons.
-3. **Compare.** Pick the old and new snapshots, then switch between three views:
-   - **Changes:** every change, grouped by category and priority, with icons.
-   - **Civ bonuses:** like the in-game civ bonus list. For each civ, its bonus text with changes marked, and its changed bonus effects as sentences.
-   - **Units:** like the in-game unit screen. All allowlisted stats of a unit in both builds, with changed values highlighted and per-civ differences grouped. Raw values only: civ bonuses are not applied (P-17).
-
-   Filters in every view: civ, category, low-priority, unreachable units. Text search.
-4. **Export** (P-13):
+   - Progress shows in the list and in a progress view, then a result with the stats status and any reasons. When the capture finishes, the new version opens compared with the previous newest version.
+4. **Version details.** Label (click to rename), build, capture date, source, stats status, pre-release tickbox (editable at any time), notes. Actions: **Compare with…**, export as a snapshot archive, delete, open in Diagnostics.
+5. **Comparison.**
+   - **Header:** old and new pickers, swap, **Export report**. Old and new are assigned by game build.
+   - **Navigation by civilization** (D-33): Overall first, then each civ with changes; NEW marks an added civ.
+   - **Still to design in this layout:** the civ bonus text and effect sentences, the unit stats view with per-civ differences (D-20, raw values only, P-17), filters (low-priority, unreachable units, all fields) and text search.
+6. **Export** (P-13):
    - Plain text: copy to clipboard or save as `.txt`.
    - Self-contained HTML.
    - PNG image of the current view or a selected section. Rendered by a vendored MIT library (modern-screenshot or html-to-image, chosen in M4) and saved through Python. Very tall views are exported in parts because of browser canvas size limits.
 
    If either snapshot is ticked pre-release, the user gets an embargo reminder first.
-5. **Diagnostics window**, opened from the menu at any time:
+7. **Diagnostics window**, opened from the bottom of the version list at any time:
    - **Environment:** app version, genieutils-py version, Python, WebView engine, Windows version.
    - **Capture log** with per-phase timings and warnings.
    - **Gate details:** version string, layout used, round-trip result and mismatch offset, each sanity check.
@@ -195,7 +196,7 @@ flowchart TD
 
 - **Build:** PyInstaller one-folder build on a GitHub-hosted Windows runner, published on GitHub Releases as a zip with SHA-256 checksums. v1.0 ships unsigned; SignPath code signing is added after the first public release (O-6).
 - **Why one folder:** it starts faster, triggers fewer antivirus false positives, and keeps genieutils-py replaceable as loose files (LGPLv3 §4; see [legal.md](../legal.md)).
-- **Bundled:** `LICENSE`, `THIRD_PARTY_NOTICES` and the source tag link. **No game content.** The current baseline snapshot and its icons are a separate *baseline pack* on the same release page, imported from the Library screen (D-10, P-21). This keeps GPL software and Microsoft game content apart (P-22) and meets SignPath's no-proprietary-components rule.
+- **Bundled:** `LICENSE`, `THIRD_PARTY_NOTICES` and the source tag link. **No game content.** The current baseline snapshot and its icons are a separate *baseline pack* on the same release page, imported with the Import button (D-10, P-21). This keeps GPL software and Microsoft game content apart (P-22) and meets SignPath's no-proprietary-components rule.
 - **Build Python:** pinned by `.python-version` (P-12).
 
 ## Local data layout (P-10)

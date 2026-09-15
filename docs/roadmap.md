@@ -58,12 +58,12 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 ## M1: App shell and files-tier capture
 
 **Scope**
-- **GUI shell:** window, navigation, WebView2 check.
-- **Library screen:** list, click-to-rename, pre-release tickbox, delete (P-14, P-18).
-- **Capture screen:**
+- **GUI shell:** one window with the version list (D-32), the Forge theme (D-35), WebView2 check.
+- **Version list and details:** click to open, rename, pre-release tickbox, notes, delete (P-14, P-18).
+- **Capture dialog:**
   - game folder detection (Steam; Microsoft Store / Xbox app), Browse, validation and root suggestion (D-19);
   - label, pre-release tickbox with the PUP reminder;
-  - progress and result summary.
+  - progress row in the list, progress view and result summary.
 - **Diagnostics window:** environment, capture log, snapshot inspector, Copy diagnostics.
 - **Readers:** `locate`, string file parser, `civilizations.json`, CivTechTrees, building offers, helper JSONs.
 - **Storage:** icon pipeline (tech tree, emblems, unique units, stat icons) and icon store; snapshot schema v1 for the files tier; library index; raw backups (P-19).
@@ -106,9 +106,9 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 ## M4: Compare UI and exports
 
 **Scope**
-- Compare screen with its three views (Changes, Civ bonuses, Units), filters and search.
+- Comparison: the Compare button, Ctrl+click and Compare with… (D-32); navigation by civilization (D-33); civ bonus and unit stats views (D-20); filters and search. Opening the new version compared with the previous one when a capture finishes.
 - Exports: plain text (clipboard and `.txt`), self-contained HTML, PNG image. Spike: modern-screenshot vs html-to-image, and tall views exported in parts.
-- Export/import of snapshot archives; baseline pack import and first-run screen (P-21).
+- Export/import of snapshot archives; baseline pack import and first-launch screen (P-21).
 
 **Exit criteria**
 - A streamer-style walkthrough works end to end: capture live, capture PUP, compare, export an image and a text summary.

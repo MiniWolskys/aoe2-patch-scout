@@ -219,7 +219,7 @@ Maps a stat key to an icon ref. The game's stat icons come from `widgetui\textur
   "version": 1,
   "entries": {
     "<capture_id>": {
-      "label": "PUP September",           // click-to-rename in the Library screen
+      "label": "PUP September",           // renamed from the version details
       "prerelease": true,                  // tickbox, editable any time
       "notes": "",
       "origin": "captured",                // "captured" | "imported" | "baseline"

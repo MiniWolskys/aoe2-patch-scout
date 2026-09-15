@@ -193,15 +193,52 @@ The raw `.dat`, JSON and string files are kept as a safety net against extractor
 ## Library and pre-release builds
 
 ### P-14 Labels and pre-release flag: Decided (amended)
-- A **pre-release tickbox** at capture, editable later in the Library screen.
-- **Click a snapshot's name to rename it.**
+- A **pre-release tickbox** at capture, editable later in the version details (D-32).
+- **Click a version's name in its details to rename it.**
 - Default label: `<game build> · <date>`.
 
 
 ### P-23 Prefill the pre-release tickbox from Steam: Decided
 Steam's Public Update Preview (PUP) is a **beta branch of the same app**: switching overwrites the live install in place.
 - **Prefill:** if Steam's app manifest shows a beta branch is selected, prefill the tickbox. Whether and where the manifest records that is to verify while on the PUP branch; on the live branch no such field exists.
-- **Reminder:** the Capture screen reminds users to capture the live build *before* switching branches.
+- **Reminder:** the capture dialog and the first-launch screen remind users to capture the live build *before* switching branches.
+
+---
+
+## User interface
+
+Chosen by the maintainer on 2026-09-15 after three rounds of mockups. Details: [ui.md](design/ui.md).
+
+### D-32 One window with a version list: Decided
+The window has no navigation rail. A **version list** on the left replaces the separate Library, Capture and Compare screens.
+- **Top:** **Capture new version** and **Import**. **Bottom:** Diagnostics and Settings. The list can collapse to a narrow strip.
+- **Click a version** to open its details: rename, pre-release tickbox, notes, export, delete.
+- **To compare two versions:**
+  - hover another version and click its **Compare** button;
+  - or Ctrl+click it;
+  - or use **Compare with…** in the details.
+- **In a comparison:**
+  - both versions are tagged OLD and NEW in the list;
+  - the header pickers change either side or swap them;
+  - clicking a version in the list opens its details, with a link back to the comparison.
+- **Old and new are assigned automatically:** the lower game build is old; for the same build, the earlier capture is old.
+- **Capture** opens a dialog: game folder, label, pre-release tickbox. The capture then runs as a row at the top of the list, and the app stays usable. When it finishes, the new version opens compared with the previous newest version.
+
+### D-33 Comparisons are navigated by civilization: Decided
+- The comparison lists **Overall** first: changes to every civ, with exceptions noted. Then comes each civ that has changes.
+- A civ added in the new build is marked **NEW**.
+- This replaces navigation by change category. The change set keeps its categories and ordering ([diff-rules.md](design/diff-rules.md)); how they show inside a civ's page is still to be designed.
+
+### D-34 Red means old, green means new: Decided
+- **Red marks the old value and green the new value**, whatever the direction of the change. The same colours mark removed and added text, the OLD/NEW tags and the NEW civ badge, and nothing else.
+- **The app doesn't judge changes as buffs or nerfs:** many changes can't be judged reliably, and a wrong judgement would be wrong output. A buff/nerf indicator may come later; it isn't planned.
+- **Colour is never the only signal:** the old value always comes first, before an arrow, and removed text is struck through.
+
+### D-35 Dark theme, Forge: Decided
+- The app has one dark theme, **Forge**: warm iron neutrals with a brass accent. Game icons are the only other colour.
+- **Status colours avoid red and green:** success is a neutral check, warnings and pre-release are orange, notices are steel blue.
+- **Tokens:** [ui-theme.css](design/ui-theme.css). Typography, sizes and contrast: [ui.md](design/ui.md).
+- **Chosen over:** a light editorial theme, an icon-tile theme, and three other dark palettes (Keep, Byzantium, Graphite).
 
 ---
 
@@ -232,10 +269,10 @@ Every release publishes a snapshot of the current live build, so a user who inst
 
 ### O-4 Baseline delivery: Decided (A + B)
 - (A) A new release when a game patch needs it.
-- (B) Baseline snapshots are also published as separate downloads that users import in the Library screen.
+- (B) Baseline snapshots are also published as separate downloads that users import with the **Import** button (D-32).
 
 ### P-21 Baseline pack is a separate download: Decided
-The baseline (snapshot + icons) is a separate **baseline pack** on the release page, not inside the app zip. Together with P-22, this keeps the GPL software free of game content and satisfies SignPath's rule against proprietary components in signed packages. First-run screen: "No snapshots yet: import the baseline pack from the release page, or capture your game."
+The baseline (snapshot + icons) is a separate **baseline pack** on the release page, not inside the app zip. Together with P-22, this keeps the GPL software free of game content and satisfies SignPath's rule against proprietary components in signed packages. The first-launch screen offers both: capture your game, or import the baseline pack from the release page (D-32).
 
 ### O-2 The "no reverse engineering" clause: Decided (accepted risk)
 The clause: *"You can't reverse engineer our games to access the assets"* (Microsoft, Game Content Usage Rules).
