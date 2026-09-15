@@ -258,7 +258,12 @@ Covers our code only; game content is excluded (P-22).
 - **When to revisit:** after an M5 build smoke test on 3.13. Avoid free-threaded builds.
 
 ### D-11 Testing and CI: Decided (amended)
-- **CI:** GitHub Actions on GitHub-hosted runners, which are free for public repositories, runs `ruff format --check`, `ruff check`, `mypy` and `pytest` on `windows-latest` and `ubuntu-latest`.
+- **CI:** GitHub Actions on GitHub-hosted runners (free for public repositories), on `windows-latest` and `ubuntu-latest`:
+  - pre-commit on all files: ruff, Biome, file checks, safety hooks (D-24, D-26);
+  - `mypy`;
+  - `pytest` with a coverage report (D-25).
+
+  PR titles are checked against Conventional Commits (D-22).
 - **Game tests** need a real install and run locally only.
 - **Fixtures:** the diff layer is covered by committed snapshot-pair fixtures.
 
@@ -277,3 +282,60 @@ Fixture snapshots come from released live builds, and icons in fixtures are synt
   - product name and version metadata in the exe;
   - no proprietary components in the signed package (P-21).
 
+---
+
+## Development process
+
+### D-21 Git workflow: Decided
+- **GitHub flow:** short-lived branches from `main`, one topic per pull request.
+- **Squash merges:** the PR title becomes the commit subject on `main`, and the branch is deleted after merging.
+- **Enforced by GitHub** (repository settings, 2026-09-15):
+  - squash merge is the only merge method, and merged branches are deleted automatically;
+  - on `main`: a pull request is required, history must be linear, and conversations must be resolved;
+  - no force pushes or deletions on `main`;
+  - the rules apply to admins too.
+
+### D-22 Conventional Commits: Decided
+Commit messages and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/) (`type(scope): summary`).
+- CI checks PR titles, because they become the commits on `main`.
+- It also makes generated release notes and version bumps possible later.
+
+### D-23 Review and merge: Decided
+- Every change to `main` goes through a pull request with green CI and resolved conversations.
+- **The maintainer reviews and merges every pull request.** Agents never merge.
+- **GitHub requires 0 approvals:** agents open PRs with the maintainer's account, and GitHub doesn't let authors approve their own PRs. Revisit when a second maintainer joins.
+- **Required status checks** are added to branch protection once the CI jobs exist and have run (M0).
+
+### D-24 Pre-commit hooks: Decided
+pre-commit is a dev dependency, installed in each clone. It runs:
+- ruff and Biome;
+- file hygiene checks;
+- safety hooks that refuse game data files, `.private/` and `CLAUDE.local.md`.
+
+CI runs the same hooks on all files as a backstop.
+
+### D-25 Coverage is reported, not gated: Decided
+CI reports line and branch coverage (pytest-cov). There is no minimum.
+
+### D-26 Frontend checks with Biome: Decided
+The Biome standalone binary lints and formats JavaScript and CSS, locally through pre-commit and in CI, without any Node toolchain.
+
+### D-27 Dependency updates with Dependabot: Decided
+- **Security:** alerts and automatic security-fix PRs are enabled (2026-09-15).
+- **Version updates:** one grouped PR a week per ecosystem (uv, GitHub Actions) for minor and patch updates. Major updates come as separate PRs. Commit prefix `chore(deps)`.
+- **Setup:** configured in M0, once `uv.lock` exists.
+
+### D-28 Agent approval gates: Decided
+- **Features and design changes:** an approved spec, then an approved implementation plan, before coding.
+- **Bug fixes and chores:** an approved short plan.
+- Nothing starts without explicit approval.
+
+### D-29 Agent git autonomy: Decided
+- **Allowed:** commit on the task branch, push it, open a pull request.
+- **Never, without an explicit request:** commit to `main`, merge, force-push, bypass hooks or branch protection, change repository settings.
+
+### D-30 One working copy, no worktrees: Decided
+Agents work in the main working copy, one task branch at a time. Worktrees would lack the maintainer's local, untracked files.
+
+### D-31 Issues are optional: Decided
+Pull request descriptions carry the context; an issue is linked when one exists.

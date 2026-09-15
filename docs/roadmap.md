@@ -17,8 +17,15 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
   - GUI entry point;
   - ruff, mypy and pytest configuration.
 - [ ] `.python-version` (3.12), `uv.lock`, `src/patch_scout/` skeleton, `tests/` layout, i18n catalog skeleton.
-- [ ] GitHub Actions: ruff + mypy + pytest on `windows-latest` and `ubuntu-latest` (D-11).
-- [ ] Branch protection on `main`: PR and green CI required.
+- [ ] Dev tooling: pre-commit config with ruff, Biome and safety hooks (D-24, D-26); `biome.json`; pytest-cov (D-25).
+- [ ] GitHub Actions on `windows-latest` and `ubuntu-latest` (D-11):
+  - pre-commit on all files;
+  - mypy;
+  - pytest with a coverage report;
+  - a PR title check (D-22).
+- [ ] Dependabot version updates (D-27), once `uv.lock` exists.
+- [x] Merge settings and branch protection on `main` (D-21, D-23).
+- [ ] Add the CI jobs as required status checks once they have run (D-23).
 
 **Parse layer** (on the live install, read-only)
 - [ ] genieutils-py 0.1.2 parses the live `VER 8.9` file; the round trip on the decompressed stream is byte-exact.
@@ -113,6 +120,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - `THIRD_PARTY_NOTICES`, the release checklist from [legal.md](legal.md), exe metadata.
 - Baseline pack as a separate release asset with `NOTICE` (P-21, P-22).
 - README install section.
+- Release notes and versioning: evaluate release-please, which builds them from Conventional Commits. It needs a token other than `GITHUB_TOKEN`, so that its release PRs trigger CI.
 - Smoke test of the build on Python 3.13 (P-12).
 - First public release **`v1.0.0`, unsigned**.
 

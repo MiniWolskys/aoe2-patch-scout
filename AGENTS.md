@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for AI coding agents working on Patch Scout; also a quick orientation for humans. The full contributor guide is [CONTRIBUTING.md](CONTRIBUTING.md).
+Instructions for AI coding agents working on Patch Scout; also a quick orientation for humans. The full contributor guide is [CONTRIBUTING.md](CONTRIBUTING.md): its git conventions, code standards and Definition of Done apply to agents too.
 
 ## Project
 
@@ -19,6 +19,7 @@ It's for streamers and YouTubers who get pre-release builds without patch notes.
 
 | Need | Read |
 |---|---|
+| Git workflow, commit format, code standards, Definition of Done | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | What was decided, and what is still Proposed or Open | [docs/decisions.md](docs/decisions.md) |
 | Components, dependency rules, capture and diff flows, GUI screens | [docs/design/architecture.md](docs/design/architecture.md) |
 | Snapshot JSON schema, library index, raw backups | [docs/design/snapshot-format.md](docs/design/snapshot-format.md) |
@@ -26,7 +27,6 @@ It's for streamers and YouTubers who get pre-release builds without patch notes.
 | Reading game files: locations, formats, ID mappings | [docs/reference/game-files.md](docs/reference/game-files.md) |
 | genieutils-py API, version handling, layout substitution | [docs/reference/genieutils-py.md](docs/reference/genieutils-py.md) |
 | Licences, Microsoft content rules, embargo | [docs/legal.md](docs/legal.md) |
-| Dev setup, commands, workflow, testing, style | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ## Hard rules
 
@@ -47,26 +47,52 @@ It's for streamers and YouTubers who get pre-release builds without patch notes.
 9. **Facts in `docs/reference/` hold for one build.** If a real install contradicts them, update the doc with `[verified]` and the build number; don't silently special-case.
 10. **Proposed and Open decisions are not settled.** Don't build on them, or change a Decided one, without the maintainer's agreement.
 
+## Agent workflow
+
+### 1. Get approval before coding (D-28)
+- **Features and design changes:** discuss the options with the maintainer, then get a written **spec** approved, then an **implementation plan** approved.
+- **Bug fixes and chores:** get a short plan approved in the conversation.
+- **No approval, no code.** If the approved plan turns out to be wrong while coding, stop and ask.
+- Issues are optional (D-31); reference one in the pull request when it exists.
+
+### 2. Work on one branch in the main working copy (D-30)
+- One task at a time, on a branch named `<type>/<short-topic>` (e.g. `feat/steam-detection`) created from an up-to-date `main`.
+- **No git worktrees:** the maintainer's private local files exist only in the main working copy.
+- **Test-driven:** write the failing test first, then the code.
+- **Small commits** in Conventional Commits format, e.g. `feat(capture): detect Steam libraries`. See [CONTRIBUTING.md](CONTRIBUTING.md#commit-messages-and-pr-titles).
+- **Hooks must pass.** Never use `--no-verify`, and never weaken a hook, check or test to get a commit through.
+
+### 3. Before opening a pull request
+- **Run the checks and read their output:** `uv run pre-commit run --all-files`, `uv run mypy`, `uv run pytest`. Add `uv run pytest -m game` when capture code changed.
+- **Self-review the whole diff** and fix or explicitly answer every finding.
+- **Update the docs** the change affects: design docs, `docs/decisions.md`, `docs/reference/`.
+- **Check the [Definition of Done](CONTRIBUTING.md#definition-of-done).**
+
+### 4. Git and GitHub: what agents may do (D-29)
+- **Allowed:**
+  - commit on the task branch and push that branch;
+  - open a pull request with a Conventional Commit title and the template filled in: what and why, a design summary, tests run with results, risks.
+- **Never, unless the maintainer asks for that specific action:**
+  - commit to or push `main`;
+  - merge or approve a pull request;
+  - force-push, or rebase or amend commits that are already pushed;
+  - bypass hooks, CI or branch protection;
+  - change repository settings, create tags or releases, delete remote branches.
+- **The maintainer reviews and merges every pull request** (D-23).
+
 ## Commands
 
 Available after M0 scaffolding; details in CONTRIBUTING.md.
 
 ```powershell
-uv sync                         # env + deps
-uv run patch-scout --debug      # run the app with WebView dev tools
-uv run pytest                   # tests without the game (CI runs these too)
-uv run pytest -m game           # needs $env:AOE2DE_PATH; never runs in CI
-uv run ruff format . ; uv run ruff check . ; uv run mypy
+uv sync                              # env + deps
+uv run pre-commit install            # once per clone: git hooks
+uv run patch-scout --debug           # run the app with WebView dev tools
+uv run pre-commit run --all-files    # ruff, Biome, file checks, safety hooks
+uv run mypy
+uv run pytest                        # tests without the game, with a coverage report
+uv run pytest -m game                # needs $env:AOE2DE_PATH; never runs in CI
 ```
-
-## Development process
-
-- **Branches:** work on a branch (`feat/`, `fix/`, `docs/`, `chore/`), never on `main`. Changes land through PRs.
-- **Design first:** design changes are agreed in an issue before coding, then recorded in `docs/design/` and `docs/decisions.md` in the same PR as the code.
-- **Test-driven:** write a failing test first; bug fixes start with a test that reproduces the bug.
-- **Verification:** run ruff, mypy and pytest (plus the game tests when capture code changed) and read the output before claiming anything passes.
-- **Docs travel with the change:** a new format fact goes into [game-files.md](docs/reference/game-files.md), and a behaviour change into the design doc it affects.
-- **Exploratory scripts** against a real install live outside the repo or in the git-ignored `scratch/` folder. The findings go into the docs; the scripts don't get committed.
 
 ## Glossary
 
