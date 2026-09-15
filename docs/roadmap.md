@@ -1,6 +1,6 @@
 # Roadmap
 
-**Status on 2026-09-15:** M0 in progress: project scaffold, pre-commit hooks, CI and the first parse spike done.
+**Status on 2026-09-15:** M0 nearly done: scaffolding and the parse, files and packaging spikes are finished. The SmartScreen test remains, and the checks that need a PUP branch or a Store install are deferred.
 
 **How milestones run:**
 - Design that goes beyond `docs/design/` is agreed in an issue first, then recorded in `docs/design/` and `docs/decisions.md` together with the code.
@@ -43,8 +43,8 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - [x] Pillow decodes all three DDS variants (no FourCC, DXT1, DXT5).
   - Pillow is slow on uncompressed DDS, about 110 ms per file; see [game-files.md §10](reference/game-files.md#tech-tree-icons-verified).
 - [x] Map the stat icons in `widgetui\textures\ingame\staticons\` to stat keys.
-- [ ] Which duplicate string the game actually shows.
-  - The data agrees with "last one wins" ([game-files.md §9](reference/game-files.md#9-string-files-key-value)). The in-game check needs the game in English, e.g. the Pirotechnia tooltip (+15% or +25%).
+- [x] Which duplicate string the game actually shows.
+  - The last one, as the parser assumes: the Pirotechnia tooltip shows +15% ([game-files.md §9](reference/game-files.md#9-string-files-key-value)).
 - [x] Meaning of the fifth `eras.json` age entry; role of `key-value-modded-strings-utf8.txt`.
 - [x] Inspect `sharedbuildings.json`, `dropsites.json`, `objreplacement.json`.
 - [ ] **Steam PUP branch:** what the app manifest records when a beta branch is selected (P-23), and whether the exe version and the `.dat` differ.
