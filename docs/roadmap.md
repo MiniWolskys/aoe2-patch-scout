@@ -1,6 +1,6 @@
 # Roadmap
 
-**Status on 2026-09-15:** M0 in progress: project scaffold, pre-commit hooks and the first parse spike done.
+**Status on 2026-09-15:** M0 in progress: project scaffold, pre-commit hooks, CI and the first parse spike done.
 
 **How milestones run:**
 - Design that goes beyond `docs/design/` is agreed in an issue first, then recorded in `docs/design/` and `docs/decisions.md` together with the code.
@@ -18,12 +18,12 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
   - ruff, mypy and pytest configuration.
 - [x] `.python-version` (3.12), `uv.lock`, `src/patch_scout/` skeleton, `tests/` layout, i18n catalog skeleton (D-36).
 - [x] Dev tooling: pre-commit config with ruff, Biome and safety hooks (D-24, D-26); `biome.json`; pytest-cov (D-25).
-- [ ] GitHub Actions on `windows-latest` and `ubuntu-latest` (D-11):
+- [x] GitHub Actions on `windows-latest` and `ubuntu-latest` (D-11):
   - pre-commit on all files;
   - mypy;
   - pytest with a coverage report;
   - a PR title check (D-22).
-- [ ] Dependabot version updates (D-27), once `uv.lock` exists.
+- [x] Dependabot version updates (D-27), once `uv.lock` exists.
 - [x] Merge settings and branch protection on `main` (D-21, D-23).
 - [ ] Add the CI jobs as required status checks once they have run (D-23).
 
