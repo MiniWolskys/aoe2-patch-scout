@@ -54,7 +54,7 @@ Every release (D-16) must meet these points.
 - [ ] **LGPLv3 §4 for genieutils-py:**
   - (a) A prominent notice that genieutils-py is used and is covered by the LGPLv3 (About screen + `THIRD_PARTY_NOTICES`).
   - (b) Copies of the GPL and LGPL texts (above).
-  - (d0) Users must be able to rebuild with a modified genieutils-py. Our full source and build script are public, which covers this. Additionally, the one-folder build keeps the `genieutils` package as **loose, replaceable `.py` files** outside PyInstaller's archive (to verify in the M0 packaging spike).
+  - (d0) Users must be able to rebuild with a modified genieutils-py. Our full source and build script are public, which covers this. Additionally, the one-folder build keeps the `genieutils` package as **loose, replaceable `.py` files** outside PyInstaller's archive. This was verified in the M0 packaging spike with PyInstaller's `module_collection_mode`: an edited file takes effect without rebuilding ([packaging.md](reference/packaging.md#genieutils-py-as-loose-replaceable-files-lgplv3-4-verified)).
 - [ ] **No game content in the app zip.** The baseline pack is a separate asset with its own `NOTICE` (P-21, P-22).
 - [ ] The Microsoft notice on the About screen and the release page.
 - [ ] SHA-256 checksums of the release assets.

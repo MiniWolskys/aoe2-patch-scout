@@ -6,6 +6,7 @@ This page describes how to read the game data the tool uses.
 
 - **[verified]:** checked read-only on 2026-09-15 against Steam build `101.103.48987.0` (Steam build ID `24094652`, `.dat` SHA-256 `ce3530df…22b4cf`).
 - **[to verify]:** not yet checked; tracked under M0 in [roadmap.md](../roadmap.md).
+- **[deferred]:** can't be checked in M0; the note says what it needs.
 
 **Conventions**
 
@@ -29,18 +30,18 @@ This page describes how to read the game data the tool uses.
   1. Registry `HKCU\Software\Valve\Steam` → `SteamPath`, e.g. `c:/program files (x86)/steam`. [verified]
   2. `<SteamPath>\steamapps\libraryfolders.vdf` lists every library's `path`. [verified]
   3. The library holding `steamapps\appmanifest_813780.acf` is the right one; the game is in `<library>\steamapps\common\<installdir>`, where `installdir` is `AoE2DE`. [verified]
-  4. **Fallback:** `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 813780` → `InstallLocation`. [to verify]
+  4. **Fallback:** `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 813780` → `InstallLocation`. [verified] The key is in the 64-bit registry view, not under `WOW6432Node`, and `InstallLocation` is the install root.
 - **App manifest fields:**
   - `buildid` [verified];
   - `UserConfig` / `MountedConfig` → `language`, e.g. `english`: the game language, useful for O-3 [verified];
-  - on the live branch there is no beta-branch field [verified]. What the manifest records when a beta branch is selected is [to verify] (P-23).
+  - on the live branch there is no beta-branch field [verified]. What the manifest records when a beta branch is selected is [deferred] (P-23). Checking it needs a live PUP branch, and switching to it overwrites the live install, so back that up first.
 - **Pre-release (PUP) builds.** Per the official "Public Update Preview" support article (updated 2026-03-06), the PUP is a **Steam beta branch of app 813780**, not a separate app.
   - Users select it under Properties → Game Versions & Betas.
   - **Switching branches overwrites the live install in place**, so capture the live build first.
   - Builds shared privately with content creators aren't publicly documented. They may also be branches, or folders installed anywhere; manual folder choice covers them.
 
 ### Microsoft Store / Xbox app (Game Pass)
-**[to verify]:** no test install yet. The sources are community tools and forums.
+**[deferred]:** no test install is available, and the sources below are community tools and forums. Checking needs someone with the Store / Game Pass version (M1 "Help wanted").
 - **Newer installs:** a library folder, by default `<drive>:\XboxGames\<game name>\Content`. Game files there are readable by normal programs.
   - **Finding library folders:** each drive root may hold a hidden **binary** `.GamingRoot` file: 4-byte magic, uint32 version = 1, then UTF-16LE library path(s) relative to the drive.
   - **Identifying the game:** `Content\MicrosoftGame.Config` → `Identity/@Name`.
@@ -54,9 +55,9 @@ Store all of these in the snapshot metadata.
 
 | Identifier | Source | Example | Notes |
 |---|---|---|---|
-| Game build | `AoE2DE_s.exe` PE FileVersion | `101.103.48987.0` | [verified] If the exe is missing or named differently (pre-release, Store version) [to verify], record "unknown" and carry on. |
+| Game build | `AoE2DE_s.exe` PE FileVersion | `101.103.48987.0` | [verified] If the exe is missing or named differently (pre-release, Store version) [deferred: no such build to test], record "unknown" and carry on. |
 | Steam build ID | `appmanifest_813780.acf` → `buildid` | `24094652` | [verified] Steam installs only. |
-| Steam branch | App manifest beta-branch field | e.g. a `pup…` branch | [to verify] Used only to prefill the pre-release tickbox (P-23). |
+| Steam branch | App manifest beta-branch field | e.g. a `pup…` branch | [deferred: needs a live PUP branch] Used only to prefill the pre-release tickbox (P-23). |
 | `.dat` format version | First 8 bytes of the **decompressed** `.dat` | `VER 8.9` | [verified] The raw bytes are `VER 8.9\0`; strip trailing NULs. This is the file layout version, not the patch. |
 | Input fingerprints | SHA-256 + size of **every** input file | — | Not only the `.dat`: a hotfix can change strings or JSON alone. |
 
@@ -79,7 +80,7 @@ Store all of these in the snapshot metadata.
 | Non-localized strings | `resources\_common\strings\key-value\non-localized-key-value-strings-utf8.txt` | Text | §9 |
 | Icons | `widgetui\textures\ingame\{units,tech,buildings}\` and more | DDS / PNG | §10 |
 
-**Not inspected yet** [to verify]: `sharedbuildings.json`, `dropsites.json`, `objreplacement.json`.
+**Also inspected** [verified]: `sharedbuildings.json`, `objreplacement.json` and `dropsites.json`; see §8.
 
 **Other languages:** `resources\<lang>\strings\key-value\…` for `br de en es fr hi it jp ko ms mx pl ru tr tw vi zh`. See decision O-3.
 
@@ -94,7 +95,7 @@ Store all of these in the snapshot metadata.
 - **Other string files:**
   - Campaign strings (`*-campaign-key-value-strings-utf8.txt`).
   - `tournament-key-value-strings-utf8.txt`.
-  - `key-value-modded-strings-utf8.txt`: its role is [to verify].
+  - `key-value-modded-strings-utf8.txt`: a template for mods, 605 bytes of comments with no keys, in every language. Never read it. [verified]
 - **Also ignored:**
   - `resources\<lang>\strings\history\` (flavour text).
   - `widgetui\*.json` (screen layouts).
@@ -246,9 +247,19 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
   - Mostly Chronicles civ choices and doctrines.
 - **`linkedUnits.json`:** `{ Data: [ { Name, Units: [...] } ] }`, groups of equivalent units (heroes, villager variants).
 - **`unitcategories.json`:** category → `[ {Name, ID} ]` overrides (SiegeWeapons, Monks…).
+- **`sharedbuildings.json`:** `{ Data: [ { Name, Units: [ { FirstUnitID, FirstBuildingID, SecondUnitID, SecondBuildingID } ] } ] }`, 11 entries. [verified]
+  - A unit trained at a second building uses a separate unit ID there.
+  - Examples: Huskarl is 41 at the Castle (82) and 759 at the Barracks (12); Tarkan is 755 at the Castle and 886 at the Stable (101).
+- **`objreplacement.json`:** `{ objects: [ { name, object_id, object_override: { replacement_object?, technology?, … } } ] }`, 8 entries: objects the game swaps for other objects. [verified]
+  - Villager (83) ↔ Villager (Female) (293), and Town Center (Base) (109) → 444.
+  - Lumber Camp (562) and Mining Camp (584) → 1808, through techs 932 and 940.
+  - Mill (68) → 2556 through tech 1353, and Dock (45) → 2172 through tech 1142.
+  - D-37 doesn't say yet whether these replacement objects count as reachable.
+- **`dropsites.json`:** `{ drop_site_list: [ … ] }`, 30 entries: which buildings accept which resources. This is economy data, not availability. [verified]
 - **`eras.json`:** `[ { Name: "base" | "antiquity", Ages: [ { NameId, TechTreeIconMaterialName?, ShieldMaterialName?, PrerequisiteStringId? } ] } ]`. [verified]
   - Each era has **5** age entries.
-  - The fifth has only a `NameId` (4205 base, 407088 antiquity); its meaning is [to verify].
+  - The fifth has only a `NameId` (4205 base, 407088 antiquity). Both resolve to "Post-Imperial Age". [verified]
+  - The game's help texts describe it as a game-setup choice: the Imperial Age with every tech already researched. It isn't a tech tree age and doesn't matter for the diff.
 
 ## 9. String files (key-value)
 
@@ -269,7 +280,13 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
 **Duplicates** [verified]
 - Main file: 19,391 numeric entries but 19,380 unique IDs, e.g. 13170, 13171, 15556, 5323.
 - Non-numeric keys also repeat.
-- Rule: **last one wins**, and the duplicates are logged. Which entry the game uses is [to verify].
+- **Counts** [verified]: the main file has 16 duplicate keys (11 numeric, 5 non-numeric), 6 with identical texts and 10 with different texts. The paphos, non-localized and modded files have none.
+- **Four differing duplicates are used by game data** [verified]. Their second entries sit near the end of the main file:
+  - 5323: "Pile of Wood" (line 1086), then "Cao Cao" (line 24790); `civilizations.json` uses 5323 as a name ID.
+  - 6897: "Build Yurt", then "Build Chief's Yurt".
+  - 8084 and 28084, Pirotechnia's description and tech tree help: "+25% pass through damage", then "+15%".
+- **Rule: last one wins,** and the duplicates are logged. The data agrees with it: "Cao Cao" is the sensible text for a name ID.
+- **Whether the game also shows the last text** is [to verify] in-game, e.g. the Pirotechnia tooltip in the Italians tech tree (+15% or +25%). The check needs the game in English.
 
 **Main vs paphos file** [verified]
 - The paphos file has 1,708 numeric and 46 non-numeric keys.
@@ -286,14 +303,26 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
   - `Unit` → `units\`, `Tech` → `tech\`, `Building` → `buildings\`.
   - All 10,167 nodes resolve to exactly one file.
   - Every index number exists in several folders, so `Picture Index` alone is ambiguous.
-- **DDS compression:** no DX10 header (so no BC7). Files are either not block-compressed (no FourCC) or `DXT1` / `DXT5`.
-  - Checked: all tech and building icons, 400 of 755 unit icons.
-  - Pillow should decode these [to verify].
+- **DDS formats** [verified, all 1,166 files]: no DX10 header (so no BC7).
+  - 9 files are `DXT1`, 308 are `DXT5`, and 849 are uncompressed 32-bit with alpha.
+  - The uncompressed files use two channel orders, 836 R,G,B,A and 13 B,G,R,A, so read the colour masks in the header.
+  - **Pillow 12.3 decodes all of them correctly,** but slowly for uncompressed files: about 110 ms each, 93 s for all 849, against under 1 ms for a DXT file. In the M0 spike, reading those pixels directly (`Image.frombuffer` with the header's channel order) took 0.18 s for all 849.
+  - Because of the two channel orders, hash decoded RGBA pixels, never the raw file bytes (P-06).
 
 ### Other icon sets
 - Unique unit PNGs: `resources\_common\wpfg\resources\uniticons\NNN_50730.png` (95 files). [verified]
 - Civ emblems: `resources\_common\wpfg\resources\civ_emblems\` (62) and `widgetui\textures\ingame\emblems\` (59). [verified]
-- Stat icons: `widgetui\textures\ingame\staticons\` (29 files). **Not used**: the app draws its own stat icons (D-09).
+- Stat icons: `widgetui\textures\ingame\staticons\`: 29 PNGs, 66×66 (two are 69×66). They are extracted at capture (D-09). [verified]
+  - **Name → stat**, checked against how each icon looks:
+    - `hp`;
+    - `damage` (melee attack), `pierceAttack`;
+    - `armor` (melee armour), `range-armor` (pierce armour);
+    - `range`, `movementSpeed`, `reloadTime`;
+    - `food`, `wood`, `gold`, `stone`;
+    - `garrison`, `convert`, `workrate`, `blastRadius`, `hpRegen`, `hpLoss`.
+  - **Less certain:** `transport`, the bleed and bypass damage variants, and six `powerup*` icons.
+  - **Missing:** this folder has no icon for line of sight or train time; those need text labels (D-09 fallback).
+  - File name case varies (`reloadTime.png`), so match names case-insensitively.
 - Age and legend icons: `widgetui\textures\menu\techtree\`.
 
 ### Handling

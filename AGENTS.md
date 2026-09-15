@@ -27,6 +27,7 @@ It's for streamers and YouTubers who get pre-release builds without patch notes.
 | What counts as a change, effect sentences, exports | [docs/design/diff-rules.md](docs/design/diff-rules.md) |
 | Reading game files: locations, formats, ID mappings | [docs/reference/game-files.md](docs/reference/game-files.md) |
 | genieutils-py API, version handling, layout substitution | [docs/reference/genieutils-py.md](docs/reference/genieutils-py.md) |
+| PyInstaller build, loose genieutils files, WebView2 detection | [docs/reference/packaging.md](docs/reference/packaging.md) |
 | Licences, Microsoft content rules, embargo | [docs/legal.md](docs/legal.md) |
 
 ## Hard rules
