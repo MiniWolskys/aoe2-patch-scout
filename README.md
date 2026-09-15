@@ -2,7 +2,7 @@
 
 Find out what changed in *Age of Empires II: Definitive Edition* between two game builds, without waiting for patch notes.
 
-> **Status: design phase.** No release yet. This README describes the planned v1; progress is tracked in the [roadmap](docs/roadmap.md).
+> **Status: early development.** No release yet. This README describes the planned v1; progress is tracked in the [roadmap](docs/roadmap.md).
 
 ## Why
 

@@ -53,4 +53,8 @@ a = Analysis(
 ## Antivirus and SmartScreen
 
 - **Microsoft Defender** [verified]: a custom scan without elevation (`MpCmdRun -Scan -ScanType 3`) found no threats in the build folder or its zip. A local scan isn't the same as the reputation check Windows runs on a downloaded file.
-- **SmartScreen** [to verify]: it only reacts to files that carry the Mark of the Web, e.g. a zip downloaded from GitHub. Still to test with a downloaded zip.
+- **SmartScreen** [verified by the maintainer]: it only reacts to files that carry the Mark of the Web, e.g. a zip downloaded from GitHub.
+  - **How it was tested:** the mark (`Zone.Identifier` stream, `ZoneId=3`) was added to a copy of the spike zip, which was then extracted with Explorer's Extract All.
+  - **First run:** "Windows protected your PC" appeared, and **Run anyway** worked.
+  - **Later runs:** no warning for that extracted copy.
+  - **So** every user of an unsigned build sees the warning once. The release notes need to explain it (see [legal.md](../legal.md#code-signing-o-6)).
