@@ -33,10 +33,11 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
   - **Result:** VER 8.9 is accepted and the older layouts are rejected. A corrupted byte is rejected only when it breaks the structure: most flipped values re-encode unchanged, so only the sanity checks can catch them ([genieutils-py.md](reference/genieutils-py.md#measured-on-the-live-build)).
 - [x] Parse time and peak memory, including the cost of a failed attempt.
 - [x] `.dat` civ order matches `civilizations.json` (Gaia = 0).
-- [ ] Sanity values against Advanced Genie Editor / in-game: Knight HP, a Blacksmith tech cost.
-- [ ] **How civ bonuses are encoded:** effect command types used, how descriptive effect names are. This feeds the effect sentence templates (O-5).
-- [ ] Unit slot count and snapshot size with every non-empty unit slot stored as base + overrides (P-03).
+- [x] Sanity values against Advanced Genie Editor / in-game: Knight HP, a Blacksmith tech cost.
+- [x] **How civ bonuses are encoded:** effect command types used, how descriptive effect names are. This feeds the effect sentence templates (O-5).
+- [x] Unit slot count and snapshot size with every non-empty unit slot stored as base + overrides (P-03).
 - [ ] Units that matter but aren't in the tech trees or building offers (transform and dismount forms…) → reachability rules.
+  - Findings are in [game-files.md §7](reference/game-files.md#7-futuravailableunitsjson--paphosfutureavailableunitsjson); the rules still need a decision.
 
 **Files layer**
 - [ ] Pillow decodes all three DDS variants (no FourCC, DXT1, DXT5).

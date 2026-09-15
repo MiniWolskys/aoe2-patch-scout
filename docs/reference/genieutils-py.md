@@ -42,6 +42,19 @@ Facts about the `.dat` reader this project depends on, checked on 2026-09-15 aga
 
 **There is no top-level unit list.** Units live per civ in `civ.units: list[Unit | None]`. Both `civ.units` and `graphics` contain `None` holes.
 
+### Where things are [verified 0.1.2]
+Checked in the installed source during M0; the line numbers are for 0.1.2.
+
+| What | Field | Source |
+|---|---|---|
+| A civ's tech tree and team bonus effects | `Civ.tech_tree_id`, `Civ.team_bonus_id` | civ.py:12–13 |
+| The civ a tech belongs to (−1 on shared techs such as Fletching) | `Tech.civ` | tech.py:59 |
+| Tech cost, effect and research locations | `Tech.resource_costs`, `Tech.effect_id`, `Tech.research_locations` | tech.py:57, 63, 70 |
+| Effect commands | `Effect` holds `EffectCommand`s with `type`, `a`, `b`, `c`, `d` | effect.py:8–13, 36 |
+| Unit sub-records, each optional | `Unit.dead_fish`, `bird`, `type_50`, `projectile`, `creatable`, `building` | unit.py:1128–1133 |
+| Hit points | `Unit.hit_points` | unit.py:1061 |
+| Links to other units | `Unit.dead_unit_id`, `Unit.blood_unit_id`; `Bird.tasks`; `Type50.projectile_unit_id`; `Creatable.train_locations`, `charge_projectile_unit`, `secondary_projectile_unit`; `Building.transform_unit` | unit.py:1069–1070, 143, 225, 476, 491, 504, 926 |
+
 ## Version handling
 
 ### Supported versions
