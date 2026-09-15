@@ -89,6 +89,7 @@ Details in CONTRIBUTING.md.
 ```powershell
 uv sync                              # env + deps
 uv run pre-commit install            # once per clone: git hooks
+uv run playwright install chromium   # once per clone: browser for the UI tests
 uv run patch-scout --debug           # run the app with WebView dev tools
 uv run pre-commit run --all-files    # ruff, Biome, file checks, safety hooks
 uv run mypy

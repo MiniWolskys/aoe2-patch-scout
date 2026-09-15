@@ -28,12 +28,14 @@ git clone https://github.com/MiniWolskys/aoe2-patch-scout.git
 cd aoe2-patch-scout
 uv sync
 uv run pre-commit install
+uv run playwright install chromium
 ```
 
 - `uv sync` installs Python 3.12 if needed, creates `.venv\`, and installs runtime and dev dependencies from `uv.lock`.
 - `pre-commit install` sets up the git hooks, once per clone.
   - The hooks run ruff through `uv run`, so its version comes from `uv.lock`, and Biome from your PATH.
   - A safety hook (`tools/check_forbidden_files.py`) refuses game files, snapshots, `.private/` and `CLAUDE.local.md`. Synthetic game files are allowed under `tests/fixtures/`, but `.dat` files never are.
+- `playwright install chromium` downloads the headless browser the UI tests use (D-41), once per clone.
 
 | Task | Command |
 |---|---|
@@ -42,6 +44,7 @@ uv run pre-commit install
 | All hooks on all files (ruff, Biome, file checks, safety hooks) | `uv run pre-commit run --all-files` |
 | Type check | `uv run mypy` |
 | Tests with coverage report (no game needed) | `uv run pytest` |
+| UI tests only (headless Chromium) | `uv run pytest tests/ui` |
 | Game tests | `$env:AOE2DE_PATH = "<game folder>"; uv run pytest -m game` |
 | Add a dependency | `uv add <package>` (runtime) · `uv add --dev <package>` (dev) |
 | Build the Windows app (M5) | `uv run pyinstaller packaging\patch-scout.spec` |
@@ -162,6 +165,7 @@ A change is done when all of these hold:
 | Layer | What it covers | Location | Needs the game |
 |---|---|---|---|
 | Unit | Parsers, normalization, collapsing, effect sentences, formatting, on synthetic inputs | `tests/unit/` | No |
+| UI | The page in headless Chromium with a fake pywebview bridge: text, controls, keyboard, layout (D-41) | `tests/ui/` | No |
 | Fixture trees | Capturing small **synthetic** game-folder trees: hand-written JSON and strings, generated placeholder DDS/PNG icons | `tests/fixtures/` | No |
 | Snapshot pairs + golden outputs | Diffing committed snapshot pairs; change-set JSON and plain-text export compared to expected files | `tests/fixtures/`, `tests/golden/` | No |
 | Game | Capturing a real install: gates, layout substitution (the version bytes are changed in memory only), sanity values, determinism | `tests/game/`, marker `game` | Yes (`AOE2DE_PATH`) |

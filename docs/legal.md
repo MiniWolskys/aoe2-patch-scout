@@ -39,6 +39,7 @@ Everything derived from the game belongs to Microsoft and is used under the Game
 | CPython | PSF License | Yes (frozen runtime) | Includes third-party notices of its own. |
 | PyInstaller | GPL-2.0-or-later with bootloader exception | Build tool only | The exception allows distributing frozen apps under any licence. |
 | ruff, mypy, pytest, pytest-cov, pre-commit, uv, Biome | Various permissive | No | Dev-only. |
+| pytest-playwright, Playwright (and the Chromium it downloads) | Apache-2.0 | No | Dev-only, for the UI tests (D-41). Checked on PyPI, 2026-09-15. |
 
 **Using an LGPLv3 library from a GPL-3.0-or-later program is allowed.** LGPLv3 is GPLv3 plus extra permissions. See the [GNU licence compatibility FAQ](https://www.gnu.org/licenses/gpl-faq.html#AllCompatibility).
 

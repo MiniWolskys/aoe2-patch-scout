@@ -360,6 +360,7 @@ Covers our code only; game content is excluded (P-22).
   - pre-commit on all files: ruff, Biome, file checks, safety hooks (D-24, D-26);
   - `mypy`;
   - `pytest` with a coverage report (D-25).
+  - Playwright UI tests in headless Chromium, run by pytest (D-41).
 
   PR titles are checked against Conventional Commits (D-22).
 - **Game tests** need a real install and run locally only.
@@ -368,6 +369,15 @@ Covers our code only; game content is excluded (P-22).
 
 ### P-09 Fixtures come from public builds only: Decided
 Fixture snapshots come from released live builds, and icons in fixtures are synthetic.
+
+### D-41 Frontend tests with Playwright: Decided
+Chosen by the maintainer on 2026-09-15, in the app shell spec.
+- **How:** `pytest-playwright` loads the real page in headless Chromium, the engine WebView2 is built on. A local HTTP server serves `gui/web/`, and a fake pywebview bridge stands in for Python. The tests live in `tests/ui/` and run with plain `uv run pytest`.
+- **Setup:** `uv run playwright install chromium` once per clone. CI installs it on both runners, without a cache: Playwright advises against caching browsers.
+- **Shared cases:** `tests/fixtures/i18n/format-cases.json` runs in both the Python catalog tests and the JS `t()` tests, so both follow D-36 the same way.
+- **Why:** it tests the DOM, CSS and keyboard behaviour without Node (D-26).
+- **Limit:** headless Chromium isn't WebView2, so UI pull requests also include a manual run of the app, with screenshots.
+- **Chosen over** Python-only tests with manual UI checks, and Node's built-in test runner.
 
 ### O-6 Code signing: Decided (option B, after the first release)
 - **Plan:** SignPath Foundation's free signing for open-source projects.

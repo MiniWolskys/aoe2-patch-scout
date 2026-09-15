@@ -35,6 +35,10 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
+      # Headless Chromium for the UI tests (D-41). Playwright advises against caching browsers.
+      - name: Install Chromium for Playwright
+        run: uv run playwright install --with-deps chromium
+
       - name: pre-commit (all files)
         run: uv run pre-commit run --all-files --show-diff-on-failure
 
