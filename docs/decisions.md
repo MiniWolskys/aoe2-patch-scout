@@ -281,6 +281,13 @@ The window has no navigation rail. A **version list** on the left replaces the s
 - **Tokens:** [ui-theme.css](design/ui-theme.css). Typography, sizes and contrast: [ui.md](design/ui.md).
 - **Chosen over:** a light editorial theme, an icon-tile theme, and three other dark palettes (Keep, Byzantium, Graphite).
 
+### D-42 Window size: Decided
+Chosen by the maintainer on 2026-09-15, in the app shell spec.
+- The window opens at **1440×900** when the primary screen has room for it (at least 1440×980, leaving space for the title bar and the taskbar); otherwise it opens maximized.
+- **Minimum size: 1120×640.** It fits 1366×768 screens and 1080p laptops at 150% scaling, which have about 1280×680 of usable space.
+- **Units:** logical pixels; pywebview multiplies them by the screen's scaling factor.
+- **Consequence for M4:** the comparison must work at 1120px wide. Collapsing the version list frees 216px.
+
 ---
 
 ## Icons and game content
