@@ -7,7 +7,7 @@ import logging
 import threading
 import webbrowser
 from collections.abc import Callable, Sequence
-from typing import Final, Protocol
+from typing import Final, Protocol, cast
 
 import webview
 
@@ -20,7 +20,14 @@ from patch_scout.gui.webview2 import (
     installed_runtime_version,
     read_registry_value,
 )
-from patch_scout.gui.window import MIN_SIZE, window_geometry
+from patch_scout.gui.window import (
+    MIN_SIZE,
+    PREFERRED_SIZE,
+    Geometry,
+    Screen,
+    primary_screen,
+    window_geometry,
+)
 from patch_scout.i18n.catalog import Catalog, load_catalog
 
 logger = logging.getLogger(__name__)
@@ -31,7 +38,7 @@ BACKGROUND_COLOR: Final = "#15120f"
 
 type AskToOpen = Callable[[str, str], bool]
 type OpenUrl = Callable[[str], object]
-type ScreenSize = Callable[[], tuple[int, int]]
+type ChooseScreen = Callable[[], Screen | None]
 
 
 class Closable(Protocol):
@@ -40,10 +47,11 @@ class Closable(Protocol):
     def destroy(self) -> None: ...
 
 
-def primary_screen_size() -> tuple[int, int]:
-    """Return the primary screen's size in logical pixels."""
-    screen = webview.screens[0]
-    return screen.width, screen.height
+def default_screen() -> webview.Screen | None:
+    """Return the primary screen from `webview.screens`, before `webview.start` (D-42)."""
+    # `webview.screens` is a proxy_tools `module_property`; proxy_tools ships no type
+    # information, so mypy sees it as Any. It actually returns list[webview.Screen].
+    return primary_screen(cast(Sequence[webview.Screen], webview.screens))
 
 
 def offer_download_page(catalog: Catalog, ask_to_open: AskToOpen, open_url: OpenUrl) -> None:
@@ -78,7 +86,7 @@ def main(
     argv: Sequence[str] | None = None,
     *,
     read_value: RegistryReader = read_registry_value,
-    screen_size: ScreenSize = primary_screen_size,
+    choose_screen: ChooseScreen = default_screen,
     ask_to_open: AskToOpen = ask_to_open_download_page,
     open_url: OpenUrl = webbrowser.open,
 ) -> int:
@@ -101,17 +109,35 @@ def main(
         return 1
     logger.info("WebView2 Runtime %s", runtime)
 
-    geometry = window_geometry(*screen_size())
-    window = webview.create_window(
-        catalog.text("app.title"),
-        url=str(web_root() / "index.html"),
-        js_api=Api(catalog, LANGUAGE, importlib.metadata.version("patch-scout")),
-        width=geometry.width,
-        height=geometry.height,
-        maximized=geometry.maximized,
-        min_size=MIN_SIZE,
-        background_color=BACKGROUND_COLOR,
-    )
+    screen = choose_screen()
+    if screen is None:
+        # No screen information: open at the preferred size, maximized (D-42).
+        geometry = Geometry(*PREFERRED_SIZE, maximized=True)
+        window = webview.create_window(
+            catalog.text("app.title"),
+            url=str(web_root() / "index.html"),
+            js_api=Api(catalog, LANGUAGE, importlib.metadata.version("patch-scout")),
+            width=geometry.width,
+            height=geometry.height,
+            maximized=geometry.maximized,
+            min_size=MIN_SIZE,
+            background_color=BACKGROUND_COLOR,
+        )
+    else:
+        geometry = window_geometry(screen.width, screen.height)
+        window = webview.create_window(
+            catalog.text("app.title"),
+            url=str(web_root() / "index.html"),
+            js_api=Api(catalog, LANGUAGE, importlib.metadata.version("patch-scout")),
+            width=geometry.width,
+            height=geometry.height,
+            maximized=geometry.maximized,
+            min_size=MIN_SIZE,
+            background_color=BACKGROUND_COLOR,
+            # `screen` is a Screen protocol so tests can supply fakes; the real callable
+            # always returns pywebview's own Screen, which create_window expects.
+            screen=cast(webview.Screen, screen),
+        )
     if window is None:  # pywebview returns None only when a handler cancels the window
         logger.error("the main window wasn't created")
         return 1

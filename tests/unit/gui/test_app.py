@@ -2,6 +2,7 @@
 import mimetypes
 import threading
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,19 @@ from patch_scout.gui.webview2 import DOWNLOAD_URL
 from patch_scout.i18n.catalog import load_catalog
 
 WEBVIEW2_TITLE = "Patch Scout needs WebView2"
+
+
+@dataclass(frozen=True, slots=True)
+class FakeScreen:
+    """A screen in logical pixels, standing in for `webview.screen.Screen` in tests."""
+
+    x: int
+    y: int
+    width: int
+    height: int
+
+
+DEFAULT_SCREEN = FakeScreen(x=0, y=0, width=1920, height=1080)
 
 
 class FakeWindow:
@@ -106,14 +120,14 @@ def run(
     argv: Sequence[str] = (),
     *,
     installed: bool = True,
-    screen: tuple[int, int] = (1920, 1080),
+    screen: FakeScreen | None = DEFAULT_SCREEN,
     dialog: Dialog | None = None,
     browser: Browser | None = None,
 ) -> int:
     return app.main(
         list(argv),
         read_value=runtime_installed if installed else runtime_missing,
-        screen_size=lambda: screen,
+        choose_screen=lambda: screen,
         ask_to_open=dialog if dialog is not None else Dialog(answer=False),
         open_url=browser if browser is not None else Browser(),
     )
@@ -148,16 +162,32 @@ def test_main_sets_the_minimum_size_and_dark_background(fake_webview: FakeWebvie
 
 
 def test_main_opens_at_the_preferred_size_on_a_large_screen(fake_webview: FakeWebview) -> None:
-    run(screen=(1920, 1080))
+    run(screen=FakeScreen(x=0, y=0, width=1920, height=1080))
 
     window = fake_webview.windows[0]
     assert (window["width"], window["height"], window["maximized"]) == (1440, 900, False)
 
 
 def test_main_opens_maximized_on_a_small_screen(fake_webview: FakeWebview) -> None:
-    run(screen=(1366, 768))
+    run(screen=FakeScreen(x=0, y=0, width=1366, height=768))
 
     assert fake_webview.windows[0]["maximized"] is True
+
+
+def test_main_passes_the_chosen_screen_to_create_window(fake_webview: FakeWebview) -> None:
+    screen = FakeScreen(x=0, y=0, width=1920, height=1080)
+
+    run(screen=screen)
+
+    assert fake_webview.windows[0]["screen"] is screen
+
+
+def test_main_opens_maximized_with_no_screen_information(fake_webview: FakeWebview) -> None:
+    run(screen=None)
+
+    window = fake_webview.windows[0]
+    assert (window["width"], window["height"], window["maximized"]) == (1440, 900, True)
+    assert "screen" not in window
 
 
 def test_main_starts_without_developer_tools_by_default(fake_webview: FakeWebview) -> None:
