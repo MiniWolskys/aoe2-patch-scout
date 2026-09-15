@@ -254,7 +254,11 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
   - Villager (83) ↔ Villager (Female) (293), and Town Center (Base) (109) → 444.
   - Lumber Camp (562) and Mining Camp (584) → 1808, through techs 932 and 940.
   - Mill (68) → 2556 through tech 1353, and Dock (45) → 2172 through tech 1142.
-  - D-37 doesn't say yet whether these replacement objects count as reachable.
+  - **In the tech trees** [verified]:
+    - The tech-triggered replacements are tree nodes of the civs that get them: Mule Cart (1808) for Armenians and Georgians; Settlement (2556) for Incas, Mapuche, Muisca and Tupi; Port (2172) for the six Chronicles civs.
+    - The triggering techs (932, 940, 1353, 1142) aren't tree nodes.
+    - Villager (Female) (293) and the Town Center replacement (444) appear in no tech tree.
+  - Reachability: the swaps aren't followed; see D-37.
 - **`dropsites.json`:** `{ drop_site_list: [ … ] }`, 30 entries: which buildings accept which resources. This is economy data, not availability. [verified]
 - **`eras.json`:** `[ { Name: "base" | "antiquity", Ages: [ { NameId, TechTreeIconMaterialName?, ShieldMaterialName?, PrerequisiteStringId? } ] } ]`. [verified]
   - Each era has **5** age entries.
@@ -286,7 +290,7 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
   - 6897: "Build Yurt", then "Build Chief's Yurt".
   - 8084 and 28084, Pirotechnia's description and tech tree help: "+25% pass through damage", then "+15%".
 - **Rule: last one wins,** and the duplicates are logged. The data agrees with it: "Cao Cao" is the sensible text for a name ID.
-- **Whether the game also shows the last text** is [to verify] in-game, e.g. the Pirotechnia tooltip in the Italians tech tree (+15% or +25%). The check needs the game in English.
+- **The game shows the last text** [verified in-game by the maintainer]: the Pirotechnia tooltip in the Italians tech tree says +15%, the second entry of 28084. So "last one wins" matches the game.
 
 **Main vs paphos file** [verified]
 - The paphos file has 1,708 numeric and 46 non-numeric keys.

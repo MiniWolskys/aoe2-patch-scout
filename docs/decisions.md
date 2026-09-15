@@ -136,7 +136,12 @@ Chosen by the maintainer on 2026-09-15, from the M0 link spike ([game-files.md Â
 - **Also reachable:** transform forms, and named dismount-style forms (`blood_unit_id`). These links are followed until nothing new is added.
 - **Projectiles** are reported on the unit that fires them, not as units of their own.
 - **Not followed:** corpses and rubble, tracking units, drop sites, annexes, stack units, and the reverse train-location link.
-- **Open:** links through unit tasks, such as the Spartan Polemarch variants.
+- **Object swaps** (`objreplacement.json`, added 2026-09-15): not followed.
+  - The replacements that matter, such as Port, Mule Cart and Settlement, are already tech tree nodes of their civs.
+  - The female Villager is a variant of the Villager and isn't reported on its own.
+- **Open:**
+  - links through unit tasks, such as the Spartan Polemarch variants;
+  - the Town Center replacement (444) from `objreplacement.json`, which no tech tree lists.
 
 Details: [diff-rules.md](design/diff-rules.md#reachability-d-37).
 
