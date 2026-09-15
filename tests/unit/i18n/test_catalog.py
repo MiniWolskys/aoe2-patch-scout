@@ -84,3 +84,18 @@ def test_load_catalog_uses_the_language_file_with_english_as_fallback(tmp_path: 
     catalog = load_catalog("fr", directory=tmp_path)
 
     assert (catalog.text("app.quit"), catalog.text("app.title")) == ("Quitter", "Patch Scout")
+
+
+def test_messages_lists_every_message_with_own_messages_overriding_the_fallback() -> None:
+    english = Catalog({"app.title": "Patch Scout", "app.quit": "Quit"})
+    french = Catalog({"app.quit": "Quitter"}, fallback=english)
+
+    assert french.messages() == {"app.title": "Patch Scout", "app.quit": "Quitter"}
+
+
+def test_messages_returns_a_copy_that_leaves_the_catalog_unchanged() -> None:
+    catalog = Catalog({"app.title": "Patch Scout"})
+
+    catalog.messages()["app.title"] = "Changed"
+
+    assert catalog.text("app.title") == "Patch Scout"
