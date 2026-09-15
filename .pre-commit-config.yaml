@@ -1,0 +1,46 @@
+# Install once per clone: uv run pre-commit install
+# CI runs the same hooks on all files. uv and the Biome binary must be on PATH (CONTRIBUTING.md).
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+
+  - repo: local
+    hooks:
+      # Refuses game files and the maintainer's private notes (D-24, docs/legal.md).
+      - id: forbid-game-and-private-files
+        name: refuse game files and private notes
+        entry: uv run --no-sync python tools/check_forbidden_files.py
+        language: system
+      # Ruff runs from the project environment, so its version comes from uv.lock.
+      # Serial: parallel runs contend for ruff's cache files on Windows.
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --no-sync ruff check --fix
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --no-sync ruff format
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      # The Biome standalone binary, so no Node.js is needed (D-26).
+      - id: biome-check
+        name: biome check
+        entry: biome check --write --files-ignore-unknown=true --no-errors-on-unmatched
+        language: system
+        types_or: [javascript, css, json]
+        require_serial: true

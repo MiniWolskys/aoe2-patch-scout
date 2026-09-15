@@ -445,7 +445,9 @@ ins {
 
 .change-row {
   display: grid;
-  grid-template-columns: var(--game-icon-size) minmax(0, 1fr) minmax(0, 0.9fr) 150px minmax(0, 1.1fr);
+  grid-template-columns:
+    var(--game-icon-size) minmax(0, 1fr) minmax(0, 0.9fr)
+    150px minmax(0, 1.1fr);
   column-gap: 14px;
   align-items: center;
   padding: 10px 12px;
