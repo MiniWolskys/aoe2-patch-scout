@@ -50,6 +50,15 @@ a = Analysis(
 
   How the download page gets opened must respect D-02: the app itself makes no network access.
 
+## Serving the frontend
+
+- **pywebview serves local pages through Bottle,** which picks each file's type with Python's `mimetypes`.
+  - On Windows, `mimetypes` also reads the registry, which other software can change.
+  - Chromium refuses ES modules served as `text/plain`.
+- **So the app pins the types it serves** before starting (`gui/web_files.py`): `text/javascript` for `.js`, `text/css`, `image/svg+xml`, `font/ttf`.
+  - On the dev machine (2026-09-15), `.js` already mapped to `text/javascript`, and `.ttf` to nothing.
+- **Page path:** pywebview resolves a relative page path against `sys.argv[0]`, which is `.venv\Scripts` under `uv run` (`webview/util.py`, `get_app_root`). The app passes the absolute path of `index.html`.
+
 ## Antivirus and SmartScreen
 
 - **Microsoft Defender** [verified]: a custom scan without elevation (`MpCmdRun -Scan -ScanType 3`) found no threats in the build folder or its zip. A local scan isn't the same as the reputation check Windows runs on a downloaded file.
