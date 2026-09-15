@@ -66,14 +66,23 @@ def test_strip_buttons_keep_their_names_and_show_them_as_tooltips(open_shell: Op
     assert [buttons.nth(i).get_attribute("title") for i in range(4)] == [None] * 4
 
 
-def test_the_toggle_is_the_first_keyboard_stop_and_works_with_enter(
+def test_the_toggle_is_the_first_keyboard_stop_and_works_with_enter_and_space(
     open_shell: OpenShell,
 ) -> None:
     page = open_shell()
+    toggle = page.locator("#version-list-toggle")
 
     page.keyboard.press("Tab")
-    expect(page.locator("#version-list-toggle")).to_be_focused()
+    expect(toggle).to_be_focused()
     page.keyboard.press("Enter")
+
+    expect(page.locator("#version-list")).to_have_attribute("data-collapsed", "")
+
+    page.keyboard.press("Enter")
+
+    expect(toggle).to_have_attribute("aria-expanded", "true")
+
+    page.keyboard.press("Space")
 
     expect(page.locator("#version-list")).to_have_attribute("data-collapsed", "")
 

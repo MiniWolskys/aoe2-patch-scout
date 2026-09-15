@@ -45,8 +45,9 @@ FAKE_BRIDGE = """
 (() => {
   const api = { get_startup: () => Promise.resolve(%(startup)s) };
   if (%(late)s) {
+    window.pywebview = { api: {} };
     window.addEventListener("load", () => {
-      window.pywebview = { api };
+      Object.assign(window.pywebview.api, api);
       window.dispatchEvent(new CustomEvent("pywebviewready"));
     });
   } else {

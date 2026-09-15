@@ -17,7 +17,7 @@ async ([messages, key, values]) => {
   try {
     return { text: createTranslator(messages)(key, values) };
   } catch (error) {
-    return { error: String(error.message) };
+    return { error: String(error.message), kind: (error.cause ?? error).name };
   }
 }
 """
@@ -34,6 +34,7 @@ def test_t_follows_the_shared_format_cases(blank_page: Page, case: dict[str, obj
 
     if case.get("error"):
         assert "error" in result
+        assert result["kind"] == "Error"
     else:
         assert result == {"text": case["expected"]}
 
