@@ -216,6 +216,7 @@ flowchart TD
 
 ```
 src/patch_scout/
+├── errors.py    PatchScoutError, the base of the project's exceptions
 ├── locate.py
 ├── capture/     files_tier.py, strings.py, stats_tier.py, gates.py, icons.py
 ├── snapshot/    schema.py, io.py, migrations.py

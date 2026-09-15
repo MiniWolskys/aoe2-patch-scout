@@ -12,11 +12,11 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 
 **Scaffolding**
 - [x] Rename the GitHub repository to `aoe2-patch-scout` (P-11).
-- [ ] `pyproject.toml`:
+- [x] `pyproject.toml`:
   - PEP 621 metadata, `license = "GPL-3.0-or-later"`, `requires-python = ">=3.12"`;
   - GUI entry point;
   - ruff, mypy and pytest configuration.
-- [ ] `.python-version` (3.12), `uv.lock`, `src/patch_scout/` skeleton, `tests/` layout, i18n catalog skeleton.
+- [x] `.python-version` (3.12), `uv.lock`, `src/patch_scout/` skeleton, `tests/` layout, i18n catalog skeleton (D-36).
 - [ ] Dev tooling: pre-commit config with ruff, Biome and safety hooks (D-24, D-26); `biome.json`; pytest-cov (D-25).
 - [ ] GitHub Actions on `windows-latest` and `ubuntu-latest` (D-11):
   - pre-commit on all files;
