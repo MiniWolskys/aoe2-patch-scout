@@ -80,11 +80,33 @@ The allowlist names **stat concepts**. The mapping to snapshot field paths is fi
 
 Every allowlist change goes through a PR that adds a fixture case showing the field.
 
+## Reachability (D-37)
+
+For each civ, the diff reports only the units that civ can actually get. Reachability is computed at diff time from both snapshots; captures always keep every unit (P-03).
+
+1. **Seeds:** the unit and building IDs of the civ's tech tree nodes and building offers, in either snapshot.
+2. **Linked forms.** From every reachable unit, follow these links, and repeat until no unit is added:
+   - `Building.transform_unit`: the other form of a transforming unit, e.g. Trebuchet ↔ Trebuchet (Packed);
+   - `Unit.blood_unit_id`, only when the target's `language_dll_name` resolves to a string, e.g. Konnik → Konnik (Dismounted).
+3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it.
+4. **Not followed:**
+   - `Unit.dead_unit_id` (corpses, rubble);
+   - `DeadFish.tracking_unit`;
+   - `Bird.drop_sites`;
+   - `Building.annexes` and `Building.head_unit`;
+   - `Building.stack_unit_id`;
+   - the reverse of `Creatable.train_locations`, i.e. the units trained at a reachable building.
+5. **Open:** links through unit tasks (`Bird.tasks`), such as the Spartan Polemarch variants reached from the Hippeus. Until this is decided, those units count as unreachable.
+
+**Field names** are those of genieutils-py 0.1.2 ([genieutils-py.md](../reference/genieutils-py.md#where-things-are-verified-012)). Snapshot field names start out as these ([snapshot-format.md](snapshot-format.md)).
+
+**Unreachable units** are shown only when "show unreachable" is on.
+
 ## Per-civ collapsing (D-07)
 
 For each unit ID and allowlisted field of the raw unit records:
 
-1. **Scope.** Consider the civs where the unit exists in either snapshot and is **reachable** (tech tree node or building offer in either snapshot). Unreachable civ copies are ignored unless "show unreachable" is on.
+1. **Scope.** Consider the civs where the unit exists in either snapshot and is **reachable** (see [Reachability](#reachability-d-37)). Unreachable civ copies are ignored unless "show unreachable" is on.
 2. **Values.** Compute each civ's old and new value.
 3. **Changed civs.** Collect every civ where old ≠ new.
 4. **Grouping.** Group the changed civs by the (old, new) value pair.

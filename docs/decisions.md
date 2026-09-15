@@ -130,6 +130,16 @@ A change is grouped by value across civs: "(all civs)", "(Franks only)"…, base
 
 ### D-08 Diff fields come from an allowlist: Decided
 
+### D-37 Unit reachability: Decided
+Chosen by the maintainer on 2026-09-15, from the M0 link spike ([game-files.md §7](reference/game-files.md#7-futuravailableunitsjson--paphosfutureavailableunitsjson)).
+- **Seeds:** a civ's tech tree nodes and building offers, in either snapshot.
+- **Also reachable:** transform forms, and named dismount-style forms (`blood_unit_id`). These links are followed until nothing new is added.
+- **Projectiles** are reported on the unit that fires them, not as units of their own.
+- **Not followed:** corpses and rubble, tracking units, drop sites, annexes, stack units, and the reverse train-location link.
+- **Open:** links through unit tasks, such as the Spartan Polemarch variants.
+
+Details: [diff-rules.md](design/diff-rules.md#reachability-d-37).
+
 ### D-20 Raw data only; civ bonuses never applied to units: Decided
 - Snapshots store raw game data: unit records, techs, effects (including civ and team bonuses), civ records.
 - Civ bonuses are **never applied to unit stats** in v1, neither at capture nor at compare. Bonuses can depend on age, researched techs and unit class, and applying them would add a lot of complexity.
