@@ -1,0 +1,532 @@
+/*
+ * Patch Scout: Forge theme (D-35).
+ *
+ * Design reference: docs/design/ui.md. This file is the starting point for the
+ * frontend stylesheet in src/patch_scout/gui/web/; copy it there when the
+ * frontend exists.
+ *
+ * Rules:
+ * - Component CSS uses these custom properties, never colour literals.
+ * - --old and --new only mark old and new values, removed and added text, the
+ *   OLD/NEW tags and the NEW civ badge (D-34).
+ * - Fonts are bundled with the app: it has no network access (D-02).
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces, darkest to lightest */
+  --bg-app: #0e0c0a; /* collapsed strip, scrim base, icon frame gap */
+  --bg-inset: #0c0a08; /* inputs, progress tracks */
+  --bg-base: #15120f; /* main content ground */
+  --bg-panel: #1a1612; /* version list, civ list, side panels */
+  --bg-hover: #1e1a15; /* row hover */
+  --bg-raised: #221d18; /* pickers, dialogs, cards, chips */
+  --bg-selected: #2b241c; /* open or selected item */
+
+  /* Lines */
+  --line-subtle: #241f19; /* row dividers, panel borders */
+  --line: #342c23; /* control borders */
+  --line-strong: #51432f; /* emphasis borders, icon frames */
+
+  /* Text */
+  --text: #ece3d3; /* primary */
+  --text-2: #aa9e8a; /* secondary, metadata, success checks */
+  --text-3: #8a7f6d; /* hints, placeholders, pending steps, checkbox outline */
+  --text-on-accent: #1a140c;
+
+  /* Accent: brass */
+  --accent: #c9a45c; /* primary buttons, ticked checkboxes, progress */
+  --accent-hover: #dcb974;
+  --accent-soft: #2d2518; /* tint behind selected items */
+  --accent-text: #d8b36b; /* links, active labels */
+
+  /* Old and new (D-34) */
+  --old: #e35b50;
+  --old-soft: #2c1a16;
+  --new: #92dcaa;
+  --new-soft: #1b2a20;
+
+  /* Status */
+  --info: #8fb0c9; /* notices */
+  --warn: #f0a03e; /* warnings, pre-release */
+  --warn-soft: #35291a;
+  --focus: #f1d493; /* keyboard focus ring */
+
+  /* Overlays */
+  --scrim: rgb(6 5 4 / 64%);
+  --shadow-dialog: 0 24px 60px rgb(0 0 0 / 60%);
+  --shadow-float: 0 16px 36px rgb(0 0 0 / 50%);
+
+  /* Typography */
+  --font-ui: "Barlow Semi Condensed", "Segoe UI", sans-serif;
+  --font-label: "Marcellus SC", Georgia, serif;
+  --font-mono: "Cascadia Mono", Consolas, monospace;
+
+  --fs-display: 38px; /* first-launch headline */
+  --fs-title: 34px; /* version details, capture progress */
+  --fs-section: 28px; /* comparison page title, e.g. Overall */
+  --fs-dialog: 24px;
+  --fs-lg: 17px; /* old/new values, header version names */
+  --fs-md: 16px; /* body, list rows */
+  --fs-sm: 15px; /* secondary text, buttons */
+  --fs-xs: 13.5px; /* metadata, help text */
+  --fs-label: 12px; /* small-caps section labels */
+  --fs-tag: 11.5px; /* OLD/NEW tags */
+
+  /* Shape */
+  --radius-icon: 2px;
+  --radius-tag: 3px;
+  --radius-control: 4px;
+  --radius-card: 6px;
+  --radius-dialog: 8px;
+
+  /* Sizes */
+  --control-height: 38px;
+  --control-height-sm: 28px;
+  --input-height: 40px;
+  --game-icon-size: 40px;
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 64px;
+  --civ-list-width: 236px;
+  --header-height: 74px;
+  --notice-height: 40px;
+  --dialog-width: 600px;
+}
+
+/* Base */
+
+body {
+  margin: 0;
+  background: var(--bg-base);
+  color: var(--text);
+  font: 400 var(--fs-md) / 1.4 var(--font-ui);
+}
+
+a {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.label {
+  font-family: var(--font-label);
+  font-size: var(--fs-label);
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+}
+
+.help {
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+  color: var(--text-3);
+}
+
+/* Buttons */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--control-height);
+  padding: 0 16px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text);
+  font: 600 var(--fs-sm) var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.button--accent {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.button--accent:hover {
+  background: var(--accent-hover);
+}
+
+.button--ghost {
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.button--ghost:hover {
+  background: var(--bg-hover);
+}
+
+.button--small {
+  height: var(--control-height-sm);
+  padding: 0 10px;
+  gap: 6px;
+  font-size: var(--fs-xs);
+}
+
+.button:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+/* Form controls */
+
+.input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--input-height);
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--text);
+  font: 400 var(--fs-sm) var(--font-ui);
+}
+
+.input::placeholder {
+  color: var(--text-3);
+}
+
+.checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border-radius: var(--radius-tag);
+  box-shadow: inset 0 0 0 1.5px var(--text-3);
+}
+
+.checkbox:checked {
+  background: var(--accent);
+  box-shadow: none;
+}
+
+/* Tags and badges */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--radius-tag);
+  font-size: var(--fs-tag);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.tag--old {
+  color: var(--old);
+  background: var(--old-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--old) 38%, transparent);
+}
+
+.tag--new {
+  color: var(--new);
+  background: var(--new-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--new) 38%, transparent);
+}
+
+.badge-prerelease {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-tag);
+  color: var(--warn);
+  background: var(--warn-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn) 38%, transparent);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Old and new values, text diffs (D-34) */
+
+.value-old {
+  color: var(--old);
+  font-weight: 600;
+}
+
+.value-new {
+  color: var(--new);
+  font-weight: 600;
+}
+
+del {
+  color: var(--old);
+  background: var(--old-soft);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+ins {
+  color: var(--new);
+  background: var(--new-soft);
+  text-decoration: none;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+/* Game icons: game art sits in a quiet, square frame */
+
+.game-icon {
+  display: block;
+  flex: none;
+  width: var(--game-icon-size);
+  height: var(--game-icon-size);
+  border-radius: var(--radius-icon);
+  box-shadow:
+    0 0 0 1px var(--bg-app),
+    0 0 0 2px var(--line-strong);
+  object-fit: cover;
+}
+
+/* Version list */
+
+.version-list {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-width);
+  background: var(--bg-panel);
+  border-right: 1px solid var(--line-subtle);
+}
+
+.version-list[data-collapsed] {
+  width: var(--sidebar-collapsed-width);
+  align-items: center;
+}
+
+.version-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  border-radius: var(--radius-control);
+}
+
+.version-row:hover {
+  background: var(--bg-hover);
+}
+
+/* In the comparison */
+.version-row[data-side] {
+  background: var(--bg-selected);
+}
+
+/* Open in the details view */
+.version-row[aria-current="true"] {
+  background: var(--bg-selected);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.version-row__name {
+  overflow: hidden;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.version-row__meta {
+  overflow: hidden;
+  color: var(--text-3);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Comparison */
+
+.comparison-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--header-height);
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.version-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 50px;
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.legend-dot--old {
+  background: var(--old);
+}
+
+.legend-dot--new {
+  background: var(--new);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--notice-height);
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line-subtle);
+  color: var(--text-2);
+  font-size: 14.5px;
+}
+
+.civ-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: var(--civ-list-width);
+  padding: 18px 12px;
+  box-sizing: border-box;
+  border-right: 1px solid var(--line-subtle);
+}
+
+.civ-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  font-size: var(--fs-md);
+}
+
+.civ-row[aria-current="true"] {
+  background: var(--bg-selected);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-weight: 600;
+}
+
+.civ-row__count {
+  margin-left: auto;
+  color: var(--text-3);
+  font-size: 14px;
+}
+
+.civ-row[aria-current="true"] .civ-row__count {
+  color: var(--accent-text);
+}
+
+.change-row {
+  display: grid;
+  grid-template-columns: var(--game-icon-size) minmax(0, 1fr) minmax(0, 0.9fr) 150px minmax(0, 1.1fr);
+  column-gap: 14px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.change-row:hover {
+  background: var(--bg-hover);
+}
+
+/* Old value, arrow, new value: the arrows line up down the list */
+.change-values {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr);
+  align-items: center;
+  font-size: var(--fs-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.change-values .value-old {
+  text-align: right;
+}
+
+.change-values__arrow {
+  color: var(--text-3);
+  text-align: center;
+}
+
+/* Capture progress */
+
+.progress {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--line-subtle);
+  overflow: hidden;
+}
+
+.progress__bar {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
+  height: 44px;
+  border-bottom: 1px solid var(--line-subtle);
+  color: var(--text-2);
+}
+
+.step[data-state="running"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.step[data-state="pending"] {
+  color: var(--text-3);
+}
+
+/* Dialogs */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--scrim);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: var(--dialog-width);
+  border-radius: var(--radius-dialog);
+  background: var(--bg-raised);
+  box-shadow:
+    inset 0 0 0 1px var(--line-strong),
+    var(--shadow-dialog);
+}

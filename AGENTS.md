@@ -7,7 +7,7 @@ Instructions for AI coding agents working on Patch Scout; also a quick orientati
 **Patch Scout** is a Windows desktop tool for *Age of Empires II: Definitive Edition*:
 - **Capture** reads a game install into a snapshot.
 - **Diff** compares two snapshots.
-- **Compare screen** shows every gameplay change: civs, availability, bonuses, unit stats, techs, texts, icons. It exports as plain text, HTML or image.
+- **Comparison** shows every gameplay change: civs, availability, bonuses, unit stats, techs, texts, icons. It exports as plain text, HTML or image.
 
 It's for streamers and YouTubers who get pre-release builds without patch notes.
 
@@ -21,7 +21,8 @@ It's for streamers and YouTubers who get pre-release builds without patch notes.
 |---|---|
 | Git workflow, commit format, code standards, Definition of Done | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | What was decided, and what is still Proposed or Open | [docs/decisions.md](docs/decisions.md) |
-| Components, dependency rules, capture and diff flows, GUI screens | [docs/design/architecture.md](docs/design/architecture.md) |
+| Components, dependency rules, capture and diff flows, GUI overview | [docs/design/architecture.md](docs/design/architecture.md) |
+| Window layout and behaviour, colours, theme tokens | [docs/design/ui.md](docs/design/ui.md), [ui-theme.css](docs/design/ui-theme.css) |
 | Snapshot JSON schema, library index, raw backups | [docs/design/snapshot-format.md](docs/design/snapshot-format.md) |
 | What counts as a change, effect sentences, exports | [docs/design/diff-rules.md](docs/design/diff-rules.md) |
 | Reading game files: locations, formats, ID mappings | [docs/reference/game-files.md](docs/reference/game-files.md) |

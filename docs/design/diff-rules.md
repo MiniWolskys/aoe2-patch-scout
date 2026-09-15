@@ -162,7 +162,7 @@ Showing how a civ's bonuses affect a unit may come later as a separate feature (
 
 ## Presentation and exports (P-13)
 
-The **Compare screen** is the main output: icons, grouping, filters, expandable raw details. Exports render the same `ChangeSet`, filtered as currently shown on screen:
+The **comparison** in the app is the main output: icons, navigation by civilization (D-33), filters, expandable raw details. Red marks old values and green new ones (D-34); see [ui.md](ui.md). Exports render the same `ChangeSet`, filtered as currently shown on screen:
 
 | Export | Use | Notes |
 |---|---|---|
