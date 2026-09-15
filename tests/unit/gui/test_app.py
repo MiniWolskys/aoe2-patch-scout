@@ -187,7 +187,7 @@ def test_main_opens_maximized_with_no_screen_information(fake_webview: FakeWebvi
 
     window = fake_webview.windows[0]
     assert (window["width"], window["height"], window["maximized"]) == (1440, 900, True)
-    assert "screen" not in window
+    assert window.get("screen") is None
 
 
 def test_main_starts_without_developer_tools_by_default(fake_webview: FakeWebview) -> None:

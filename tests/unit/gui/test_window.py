@@ -26,16 +26,33 @@ def test_sizes_follow_d42() -> None:
     assert (MIN_SIZE, PREFERRED_SIZE) == ((1120, 640), (1440, 900))
 
 
-@pytest.mark.parametrize("screen", [(1920, 1080), (1440, 980), (2560, 1440)])
-def test_window_opens_at_the_preferred_size_when_the_screen_has_room(
-    screen: tuple[int, int],
-) -> None:
-    assert window_geometry(*screen) == Geometry(1440, 900, maximized=False)
+@pytest.mark.parametrize(
+    "screen",
+    [
+        FakeScreen(x=0, y=0, width=1920, height=1080),
+        FakeScreen(x=0, y=0, width=1440, height=980),
+        FakeScreen(x=0, y=0, width=2560, height=1440),
+    ],
+)
+def test_window_opens_at_the_preferred_size_when_the_screen_has_room(screen: FakeScreen) -> None:
+    assert window_geometry(screen) == Geometry(1440, 900, maximized=False)
 
 
-@pytest.mark.parametrize("screen", [(1439, 1080), (1440, 979), (1366, 768), (1280, 720)])
-def test_window_opens_maximized_on_a_smaller_screen(screen: tuple[int, int]) -> None:
-    assert window_geometry(*screen) == Geometry(1440, 900, maximized=True)
+@pytest.mark.parametrize(
+    "screen",
+    [
+        FakeScreen(x=0, y=0, width=1439, height=1080),
+        FakeScreen(x=0, y=0, width=1440, height=979),
+        FakeScreen(x=0, y=0, width=1366, height=768),
+        FakeScreen(x=0, y=0, width=1280, height=720),
+    ],
+)
+def test_window_opens_maximized_on_a_smaller_screen(screen: FakeScreen) -> None:
+    assert window_geometry(screen) == Geometry(1440, 900, maximized=True)
+
+
+def test_window_opens_maximized_with_no_screen_information() -> None:
+    assert window_geometry(None) == Geometry(1440, 900, maximized=True)
 
 
 def test_primary_screen_is_the_one_at_the_origin_even_when_listed_second() -> None:

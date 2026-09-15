@@ -23,13 +23,6 @@ class Geometry:
     maximized: bool
 
 
-def window_geometry(screen_width: int, screen_height: int) -> Geometry:
-    """Open at the preferred size when the screen has room for it, maximized otherwise."""
-    width, height = PREFERRED_SIZE
-    fits = screen_width >= width and screen_height >= height + _VERTICAL_ALLOWANCE
-    return Geometry(width, height, maximized=not fits)
-
-
 class Screen(Protocol):
     """A screen's origin and size, in logical pixels (structurally, `webview.screen.Screen`).
 
@@ -46,6 +39,18 @@ class Screen(Protocol):
     def width(self) -> int: ...
     @property
     def height(self) -> int: ...
+
+
+def window_geometry(screen: Screen | None) -> Geometry:
+    """Open at the preferred size when the screen has room for it, maximized otherwise.
+
+    With no screen information (`screen` is None), open maximized at the preferred size.
+    """
+    width, height = PREFERRED_SIZE
+    if screen is None:
+        return Geometry(width, height, maximized=True)
+    fits = screen.width >= width and screen.height >= height + _VERTICAL_ALLOWANCE
+    return Geometry(width, height, maximized=not fits)
 
 
 def primary_screen[ScreenT: Screen](screens: Sequence[ScreenT]) -> ScreenT | None:

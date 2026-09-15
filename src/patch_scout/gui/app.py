@@ -20,14 +20,7 @@ from patch_scout.gui.webview2 import (
     installed_runtime_version,
     read_registry_value,
 )
-from patch_scout.gui.window import (
-    MIN_SIZE,
-    PREFERRED_SIZE,
-    Geometry,
-    Screen,
-    primary_screen,
-    window_geometry,
-)
+from patch_scout.gui.window import MIN_SIZE, Screen, primary_screen, window_geometry
 from patch_scout.i18n.catalog import Catalog, load_catalog
 
 logger = logging.getLogger(__name__)
@@ -110,34 +103,22 @@ def main(
     logger.info("WebView2 Runtime %s", runtime)
 
     screen = choose_screen()
-    if screen is None:
-        # No screen information: open at the preferred size, maximized (D-42).
-        geometry = Geometry(*PREFERRED_SIZE, maximized=True)
-        window = webview.create_window(
-            catalog.text("app.title"),
-            url=str(web_root() / "index.html"),
-            js_api=Api(catalog, LANGUAGE, importlib.metadata.version("patch-scout")),
-            width=geometry.width,
-            height=geometry.height,
-            maximized=geometry.maximized,
-            min_size=MIN_SIZE,
-            background_color=BACKGROUND_COLOR,
-        )
-    else:
-        geometry = window_geometry(screen.width, screen.height)
-        window = webview.create_window(
-            catalog.text("app.title"),
-            url=str(web_root() / "index.html"),
-            js_api=Api(catalog, LANGUAGE, importlib.metadata.version("patch-scout")),
-            width=geometry.width,
-            height=geometry.height,
-            maximized=geometry.maximized,
-            min_size=MIN_SIZE,
-            background_color=BACKGROUND_COLOR,
-            # `screen` is a Screen protocol so tests can supply fakes; the real callable
-            # always returns pywebview's own Screen, which create_window expects.
-            screen=cast(webview.Screen, screen),
-        )
+    geometry = window_geometry(screen)
+    window = webview.create_window(
+        catalog.text("app.title"),
+        url=str(web_root() / "index.html"),
+        js_api=Api(catalog, LANGUAGE, importlib.metadata.version("patch-scout")),
+        width=geometry.width,
+        height=geometry.height,
+        maximized=geometry.maximized,
+        min_size=MIN_SIZE,
+        background_color=BACKGROUND_COLOR,
+        # `screen` is a Screen protocol so tests can supply fakes; the real callable always
+        # returns pywebview's own Screen, or None (D-42). `screen=None` behaves exactly like
+        # omitting it: `webview.create_window` defaults to it, and winforms only checks
+        # `elif window.screen:` (`webview/platforms/winforms.py`).
+        screen=cast(webview.Screen | None, screen),
+    )
     if window is None:  # pywebview returns None only when a handler cancels the window
         logger.error("the main window wasn't created")
         return 1
