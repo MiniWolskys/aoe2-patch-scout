@@ -23,6 +23,7 @@ _NOT_INSTALLED: Final = frozenset({"", "0.0.0.0"})
 _MB_YESNO: Final = 0x4
 _MB_ICONWARNING: Final = 0x30
 _MB_SETFOREGROUND: Final = 0x10000
+_MB_TOPMOST: Final = 0x40000
 _IDYES: Final = 6
 
 type RegistryReader = Callable[[str, str, str], str | None]
@@ -57,6 +58,6 @@ def ask_to_open_download_page(title: str, text: str) -> bool:
         raise OSError("the WebView2 message box needs Windows")
     import ctypes
 
-    flags = _MB_YESNO | _MB_ICONWARNING | _MB_SETFOREGROUND
+    flags = _MB_YESNO | _MB_ICONWARNING | _MB_SETFOREGROUND | _MB_TOPMOST
     answer: int = ctypes.windll.user32.MessageBoxW(None, text, title, flags)
     return answer == _IDYES

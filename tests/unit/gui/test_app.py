@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import mimetypes
+import threading
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
@@ -34,6 +35,9 @@ class FakeWebview:
         self.start_func: Callable[..., None] | None = None
         self.start_args: Sequence[object] | None = None
         self.debug: bool | None = None
+        # Real pywebview runs `func` on a thread before the window is created; tests that
+        # need the renderer check to actually run opt into calling it synchronously.
+        self.run_func = False
 
     def create_window(self, title: str, **options: object) -> FakeWindow | None:
         self.windows.append({"title": title, **options})
@@ -49,17 +53,25 @@ class FakeWebview:
         self.start_func = func
         self.start_args = args
         self.debug = debug
+        if self.run_func and func is not None:
+            func(*(args or ()))
 
 
 class Dialog:
     """Stands in for the native message box, always giving the same answer."""
 
-    def __init__(self, answer: bool) -> None:
+    def __init__(self, answer: bool, window: FakeWindow | None = None) -> None:
         self.answer = answer
         self.shown: list[tuple[str, str]] = []
+        # When given the window, records whether it was already destroyed each time the
+        # dialog is shown, so tests can check the fallback closes it first.
+        self.window = window
+        self.destroyed_when_shown: list[bool] = []
 
     def __call__(self, title: str, text: str) -> bool:
         self.shown.append((title, text))
+        if self.window is not None:
+            self.destroyed_when_shown.append(self.window.destroyed)
         return self.answer
 
 
@@ -174,6 +186,7 @@ def test_main_runs_the_renderer_check_on_the_window(fake_webview: FakeWebview) -
     assert fake_webview.start_func is app.check_renderer
     assert fake_webview.start_args is not None
     assert fake_webview.start_args[0] is fake_webview.window
+    assert isinstance(fake_webview.start_args[-1], threading.Event)
 
 
 def test_main_without_the_runtime_explains_and_opens_no_window(
@@ -205,25 +218,49 @@ def test_main_returns_1_when_pywebview_cancels_the_window(fake_webview: FakeWebv
     assert fake_webview.started is False
 
 
+def test_main_returns_1_when_pywebview_falls_back_to_another_renderer(
+    fake_webview: FakeWebview, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(webview, "renderer", "mshtml")
+    fake_webview.run_func = True
+
+    assert run() == 1
+
+
+def test_main_returns_0_when_the_renderer_is_edge_chromium(
+    fake_webview: FakeWebview, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(webview, "renderer", "edgechromium")
+    fake_webview.run_func = True
+
+    assert run() == 0
+
+
 def test_check_renderer_leaves_an_edge_chromium_window_alone(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(webview, "renderer", "edgechromium")
     window, dialog = FakeWindow(), Dialog(answer=True)
+    failed = threading.Event()
 
-    app.check_renderer(window, load_catalog("en"), dialog, Browser())
+    app.check_renderer(window, load_catalog("en"), dialog, Browser(), failed)
 
-    assert (window.destroyed, dialog.shown) == (False, [])
+    assert (window.destroyed, dialog.shown, failed.is_set()) == (False, [], False)
 
 
-def test_check_renderer_explains_and_closes_a_fallback_window(
+def test_check_renderer_closes_the_window_before_explaining_a_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(webview, "renderer", "mshtml")
-    window, dialog, browser = FakeWindow(), Dialog(answer=True), Browser()
+    window = FakeWindow()
+    dialog = Dialog(answer=True, window=window)
+    browser = Browser()
+    failed = threading.Event()
 
-    app.check_renderer(window, load_catalog("en"), dialog, browser)
+    app.check_renderer(window, load_catalog("en"), dialog, browser, failed)
 
     assert window.destroyed is True
+    assert dialog.destroyed_when_shown == [True]
+    assert failed.is_set() is True
     assert [title for title, _ in dialog.shown] == [WEBVIEW2_TITLE]
     assert browser.opened == [DOWNLOAD_URL]

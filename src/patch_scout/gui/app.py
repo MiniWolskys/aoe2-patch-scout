@@ -4,6 +4,7 @@
 import argparse
 import importlib.metadata
 import logging
+import threading
 import webbrowser
 from collections.abc import Callable, Sequence
 from typing import Final, Protocol
@@ -53,14 +54,24 @@ def offer_download_page(catalog: Catalog, ask_to_open: AskToOpen, open_url: Open
 
 
 def check_renderer(
-    window: Closable, catalog: Catalog, ask_to_open: AskToOpen, open_url: OpenUrl
+    window: Closable,
+    catalog: Catalog,
+    ask_to_open: AskToOpen,
+    open_url: OpenUrl,
+    failed: threading.Event,
 ) -> None:
-    """Close the window if pywebview fell back to an engine other than Edge Chromium (D-40)."""
+    """Close the window, then explain, if pywebview fell back from Edge Chromium (D-40).
+
+    pywebview starts this check on its own thread before the window exists, so a message
+    box shown first would end up covered by the new window; closing the window first keeps
+    the message on top. `failed` is set so that `main` can report exit code 1.
+    """
     if webview.renderer == "edgechromium":
         return
     logger.error("pywebview is using %s instead of Edge Chromium", webview.renderer)
-    offer_download_page(catalog, ask_to_open, open_url)
+    failed.set()
     window.destroy()
+    offer_download_page(catalog, ask_to_open, open_url)
 
 
 def main(
@@ -71,7 +82,11 @@ def main(
     ask_to_open: AskToOpen = ask_to_open_download_page,
     open_url: OpenUrl = webbrowser.open,
 ) -> int:
-    """Open the main window and return the exit code; `--debug` turns on developer tools."""
+    """Open the main window and return the exit code; `--debug` turns on developer tools.
+
+    Exit codes: 0 means the window closed normally; 1 means the WebView2 Runtime is missing,
+    or pywebview fell back to another engine after start.
+    """
     parser = argparse.ArgumentParser(prog="patch-scout")
     parser.add_argument("--debug", action="store_true")
     debug: bool = parser.parse_args(argv).debug
@@ -100,5 +115,10 @@ def main(
     if window is None:  # pywebview returns None only when a handler cancels the window
         logger.error("the main window wasn't created")
         return 1
-    webview.start(func=check_renderer, args=(window, catalog, ask_to_open, open_url), debug=debug)
-    return 0
+    renderer_failed = threading.Event()
+    webview.start(
+        func=check_renderer,
+        args=(window, catalog, ask_to_open, open_url, renderer_failed),
+        debug=debug,
+    )
+    return 1 if renderer_failed.is_set() else 0
