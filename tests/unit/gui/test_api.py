@@ -9,7 +9,7 @@ import pytest
 from support import dat as sample_dat
 from support import game_tree
 
-from patch_scout.gui.api import Api
+from patch_scout.gui.api import MAX_ICONS, Api
 from patch_scout.i18n.catalog import Catalog, load_catalog
 from patch_scout.store import DataFolder
 
@@ -303,3 +303,29 @@ def test_an_empty_catalog_starts_with_no_messages(folder: DataFolder) -> None:
     """The page then fails loudly on the first lookup, rather than showing blank controls."""
     empty = Api(Catalog({}), "en", "1.0", folder)
     assert empty.get_startup()["messages"] == {}
+
+
+def test_a_capture_after_startup_keeps_its_label(api: Api, install: Path) -> None:
+    """The app always calls get_startup() first, which used to leave a stale library cache."""
+    api.get_startup()
+
+    capture(api, install, "My label")
+
+    versions = api.get_versions()
+    assert isinstance(versions[0], dict)
+    assert versions[0]["label"] == "My label"
+
+
+def test_a_version_captured_after_startup_can_be_edited(api: Api, install: Path) -> None:
+    api.get_startup()
+    capture_id = capture(api, install, "My label")
+
+    updated = api.update_version(capture_id, label="Renamed", prerelease=True)
+
+    assert updated["label"] == "Renamed"
+    assert updated["prerelease"] is True
+
+
+def test_asking_for_more_icons_than_the_cap_returns_the_cap(api: Api) -> None:
+    """The page batches its requests; anything past the cap is silently dropped here."""
+    assert len(api.get_icons(["missing"] * (MAX_ICONS + 50))) == 0

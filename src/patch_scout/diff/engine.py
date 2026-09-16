@@ -65,13 +65,23 @@ class _Run:
     new_names: Names
     old_units: UnitLookup
     new_units: UnitLookup
-    civ_index: dict[str, int] = field(default_factory=dict)
+    # A civ's slot differs between builds as soon as one is added before it, so each snapshot
+    # keeps its own map. Civs themselves are matched by internal name (P-07).
+    old_index: dict[str, int] = field(default_factory=dict)
+    new_index: dict[str, int] = field(default_factory=dict)
     reachable: dict[str, Reachable] = field(default_factory=dict)
     changes: list[Change] = field(default_factory=list)
     notices: list[Notice] = field(default_factory=list)
     attached_strings: set[str] = field(default_factory=set)
     compared_values: int = 0
     changed_values: int = 0
+
+    @property
+    def civ_names(self) -> list[str]:
+        """Every civ in either build, in the new build's order, then any the new build dropped."""
+        names = list(self.new_index)
+        names += [name for name in self.old_index if name not in self.new_index]
+        return names
 
     @property
     def compare_stats(self) -> bool:
@@ -123,6 +133,8 @@ def compare(
     if old.sources and old.sources == new.sources:
         return ChangeSet(old=sides[0], new=sides[1], identical=True)
 
+    run.old_index = _civ_indices(old)
+    run.new_index = _civ_indices(new)
     _notices(run)
     civ_refs = _civilizations(run)
     _availability(run)
@@ -196,9 +208,6 @@ def _civilizations(run: _Run) -> list[CivRef]:
     new_civs = _civ_map(run.new)
     refs: list[CivRef] = []
     for internal_name, civ in new_civs.items():
-        index = civ.get("index")
-        if isinstance(index, int):
-            run.civ_index[internal_name] = index
         name = run.new_names.one_line(civ.get("name_string_id")) or internal_name
         era = civ.get("era")
         icon = civ.get("emblem_icon")
@@ -269,7 +278,7 @@ NODE_FIELDS: Final = (
 
 
 def _availability(run: _Run) -> None:
-    civs = [name for name in run.civ_index if _has_tree(run, name)]
+    civs = [name for name in run.civ_names if _has_tree(run, name)]
     keys: set[tuple[str, int]] = set()
     maps: dict[
         str, tuple[dict[tuple[str, int], JsonObject], dict[tuple[str, int], JsonObject]]
@@ -541,11 +550,8 @@ def _bonus_text(
 
 
 def _civ_resources(run: _Run, internal_name: str, entity: Entity) -> None:
-    index = run.civ_index.get(internal_name)
-    if index is None:
-        return
-    before = _civ_dat(run.old, index)
-    after = _civ_dat(run.new, index)
+    before = _civ_dat(run.old, run.old_index.get(internal_name))
+    after = _civ_dat(run.new, run.new_index.get(internal_name))
     if before is None or after is None:
         return
     old_values = before.get("resources")
@@ -576,11 +582,8 @@ def _civ_resources(run: _Run, internal_name: str, entity: Entity) -> None:
 def _civ_effects(
     run: _Run, internal_name: str, entity: Entity, before: JsonObject, after: JsonObject
 ) -> None:
-    index = run.civ_index.get(internal_name)
-    if index is None:
-        return
-    old_civ_dat = _civ_dat(run.old, index)
-    new_civ_dat = _civ_dat(run.new, index)
+    old_civ_dat = _civ_dat(run.old, run.old_index.get(internal_name))
+    new_civ_dat = _civ_dat(run.new, run.new_index.get(internal_name))
     if old_civ_dat is None or new_civ_dat is None:
         return
     for key, label in (
@@ -604,19 +607,21 @@ def _civ_effects(
 
 
 def _unit_stats(run: _Run) -> None:
-    civs = [(name, index) for name, index in sorted(run.civ_index.items())]
+    civs = [(name, (run.old_index.get(name), run.new_index.get(name))) for name in run.civ_names]
     run.reachable = all_civs(run.old, run.new, civs, (run.old_units, run.new_units))
     unit_ids = sorted(set(run.old_units.unit_ids) | set(run.new_units.unit_ids))
     for unit_id in unit_ids:
         _unit_change(run, unit_id, civs)
 
 
-def _unit_change(run: _Run, unit_id: int, civs: Sequence[tuple[str, int]]) -> None:
+def _unit_change(
+    run: _Run, unit_id: int, civs: Sequence[tuple[str, tuple[int | None, int | None]]]
+) -> None:
     in_scope: list[str] = []
     records: dict[str, tuple[JsonObject | None, JsonObject | None]] = {}
-    for internal_name, index in civs:
-        before = run.old_units.record(unit_id, index)
-        after = run.new_units.record(unit_id, index)
+    for internal_name, (old_slot, new_slot) in civs:
+        before = run.old_units.record(unit_id, old_slot) if old_slot is not None else None
+        after = run.new_units.record(unit_id, new_slot) if new_slot is not None else None
         if before is None and after is None:
             continue
         reach = run.reachable.get(internal_name)
@@ -1073,13 +1078,25 @@ def _effect(snapshot: Snapshot, effect_id: JsonValue) -> JsonObject | None:
     return effect
 
 
-def _civ_dat(snapshot: Snapshot, index: int) -> JsonObject | None:
+def _civ_dat(snapshot: Snapshot, index: int | None) -> JsonObject | None:
     stats = snapshot.stats or {}
     civ_dat = stats.get("civ_dat")
-    if not isinstance(civ_dat, list) or index >= len(civ_dat):
+    if index is None or not isinstance(civ_dat, list) or not 0 <= index < len(civ_dat):
         return None
     entry = civ_dat[index]
     return entry if isinstance(entry, dict) else None
+
+
+def _civ_indices(snapshot: Snapshot) -> dict[str, int]:
+    """One snapshot's internal_name to civ slot map; the slot is only valid for that snapshot."""
+    found: dict[str, int] = {}
+    for civ in snapshot.civs:
+        if not isinstance(civ, dict):
+            continue
+        name, index = civ.get("internal_name"), civ.get("index")
+        if isinstance(name, str) and isinstance(index, int):
+            found[name] = index
+    return found
 
 
 def _unit_icon(run: _Run, unit_id: int) -> JsonObject | None:
@@ -1090,7 +1107,7 @@ def _unit_icon(run: _Run, unit_id: int) -> JsonObject | None:
 def _node_icon(run: _Run, use_type: str, node_id: int) -> JsonObject | None:
     """The icon a tech tree node carries, taken from the first civ that has that node."""
     for names in (run.new_names, run.old_names):
-        for internal_name in run.civ_index:
+        for internal_name in run.civ_names:
             node = names.node(internal_name, use_type, node_id)
             icon = node.get("icon") if node else None
             if isinstance(icon, dict) and icon.get("hash"):

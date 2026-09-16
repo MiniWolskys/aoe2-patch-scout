@@ -18,6 +18,7 @@ from patch_scout.store import (
     SnapshotStore,
 )
 from patch_scout.store.icons import MAX_SIDE, downscale
+from patch_scout.store.library import UnknownVersionError
 from patch_scout.store.paths import default_root
 
 
@@ -180,3 +181,27 @@ def test_purging_removes_every_backup(folder: DataFolder, tmp_path: Path) -> Non
     store.write_manifest("abc", {"a.json": "deadbeef"})
     assert store.purge() == 2
     assert store.purge() == 0
+
+
+def test_the_index_is_reread_when_another_library_added_an_entry(folder: DataFolder) -> None:
+    """A capture writes through its own Library, so a long-lived one must be told (gui/api.py)."""
+    reader = Library(folder)
+    assert reader.entries() == []  # this loads and caches an empty index
+
+    Library(folder).add(LibraryEntry.for_snapshot(make_snapshot()))
+    reader.reload()
+
+    assert [entry.capture_id for entry in reader.entries()] == ["abc"]
+
+
+def test_updating_an_entry_another_library_added_rereads_the_index(folder: DataFolder) -> None:
+    reader = Library(folder)
+    assert reader.entries() == []
+    Library(folder).add(LibraryEntry.for_snapshot(make_snapshot()))
+
+    assert reader.update("abc", label="Renamed").label == "Renamed"
+
+
+def test_updating_an_entry_that_does_not_exist_says_so(folder: DataFolder) -> None:
+    with pytest.raises(UnknownVersionError, match="nope"):
+        Library(folder).update("nope", label="x")

@@ -36,7 +36,10 @@ export function render(view) {
   byId("versions-count").textContent = String(view.versions.length);
   show(byId("versions-empty"), view.versions.length === 0 && view.capture === null);
 
-  if (view.capture !== null) {
+  // A finished capture keeps its row only while it has something to say: an error, a
+  // cancellation, or "identical to a version you already have". Once it produced a version,
+  // that version's own row replaces it.
+  if (view.capture !== null && (view.capture.running || !view.capture.result?.capture_id)) {
     rows.append(captureRow(view));
   }
   for (const version of view.versions) {

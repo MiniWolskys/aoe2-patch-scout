@@ -48,13 +48,21 @@ export function initDetails(deps) {
     }
   }
 
-  byId("details-title").addEventListener("click", () => void rename());
-  byId("details-title").addEventListener("keydown", (event) => {
-    if (event instanceof KeyboardEvent && (event.key === "Enter" || event.key === " ")) {
-      event.preventDefault();
-      void rename();
-    }
-  });
+  /**
+   * Make the title open the rename field, by mouse and by keyboard.
+   * @param {HTMLElement} title
+   */
+  function makeRenameable(title) {
+    title.addEventListener("click", () => void rename());
+    title.addEventListener("keydown", (event) => {
+      if (event instanceof KeyboardEvent && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        void rename();
+      }
+    });
+  }
+
+  makeRenameable(byId("details-title"));
 
   /** Rename the open version in place (P-14). */
   async function rename() {
@@ -73,7 +81,7 @@ export function initDetails(deps) {
       const replacement = el("span", { text: value, attrs: { tabindex: "0", role: "button" } });
       replacement.id = "details-title";
       field.replaceWith(replacement);
-      replacement.addEventListener("click", () => void rename());
+      makeRenameable(replacement);
       if (value !== "" && openId !== null) {
         await deps.api.update_version(openId, value);
         await deps.onChanged();

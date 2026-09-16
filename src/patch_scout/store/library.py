@@ -11,6 +11,7 @@ from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from typing import Final, Literal, Self
 
+from patch_scout.errors import PatchScoutError
 from patch_scout.snapshot import JsonValue, Snapshot
 from patch_scout.store.paths import DataFolder
 from patch_scout.store.snapshots import SnapshotStore
@@ -18,6 +19,11 @@ from patch_scout.store.snapshots import SnapshotStore
 logger = logging.getLogger(__name__)
 
 INDEX_VERSION: Final = 1
+
+
+class UnknownVersionError(PatchScoutError):
+    """The library index has no entry for that capture."""
+
 
 type Origin = Literal["captured", "imported", "baseline"]
 
@@ -60,6 +66,15 @@ class Library:
         self._entries: dict[str, LibraryEntry] = {}
         self._loaded = False
 
+    def reload(self) -> None:
+        """Forget the cached entries, so the next read comes from the file.
+
+        A capture adds its entry through its own `Library`, so a long-lived one, such as the
+        GUI's, has to be told that the file changed.
+        """
+        self._loaded = False
+        self._entries = {}
+
     def entries(self) -> list[LibraryEntry]:
         """Every entry, in capture-ID order."""
         self._ensure_loaded()
@@ -87,6 +102,12 @@ class Library:
     ) -> LibraryEntry:
         """Change the editable fields of one entry."""
         self._ensure_loaded()
+        if capture_id not in self._entries:
+            # Another Library may have added it since this one last read the file.
+            self.reload()
+            self._ensure_loaded()
+        if capture_id not in self._entries:
+            raise UnknownVersionError(capture_id)
         entry = self._entries[capture_id]
         if label is not None:
             entry = replace(entry, label=label)

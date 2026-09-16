@@ -99,10 +99,17 @@ def for_civ(
     old: Snapshot,
     new: Snapshot,
     internal_name: str,
-    civ_index: int,
+    indices: tuple[int | None, int | None],
     lookups: tuple[UnitLookup, UnitLookup],
 ) -> Reachable:
-    """Everything a civ can reach, following transform and dismount links until nothing is added."""
+    """Everything a civ can reach, following transform and dismount links until nothing is added.
+
+    `indices` holds the civ's slot in the old and the new snapshot. They differ whenever a civ was
+    added before it, so each side is read with its own index (P-07).
+    """
+    sides = [
+        (lookup, index) for lookup, index in zip(lookups, indices, strict=True) if index is not None
+    ]
     frontier = seeds(old, internal_name) | seeds(new, internal_name)
     units: set[int] = set()
     while frontier:
@@ -110,7 +117,7 @@ def for_civ(
         if unit_id in units:
             continue
         units.add(unit_id)
-        for lookup in lookups:
+        for lookup, civ_index in sides:
             record = lookup.record(unit_id, civ_index)
             if record is None:
                 continue
@@ -118,7 +125,7 @@ def for_civ(
     projectiles: set[int] = set()
     fired_by: dict[int, list[int]] = {}
     for unit_id in sorted(units):
-        for lookup in lookups:
+        for lookup, civ_index in sides:
             record = lookup.record(unit_id, civ_index)
             if record is None:
                 continue
@@ -163,11 +170,11 @@ def _projectiles(record: JsonObject) -> set[int]:
 def all_civs(
     old: Snapshot,
     new: Snapshot,
-    civs: Sequence[tuple[str, int]],
+    civs: Sequence[tuple[str, tuple[int | None, int | None]]],
     lookups: tuple[UnitLookup, UnitLookup],
 ) -> dict[str, Reachable]:
     """Reachability for every civ, keyed by internal name."""
     return {
-        internal_name: for_civ(old, new, internal_name, civ_index, lookups)
-        for internal_name, civ_index in civs
+        internal_name: for_civ(old, new, internal_name, indices, lookups)
+        for internal_name, indices in civs
     }

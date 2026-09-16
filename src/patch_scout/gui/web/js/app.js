@@ -153,6 +153,8 @@ async function start() {
       // When a capture finishes, open it compared with the previous newest version (D-32).
       const captureId = result.capture_id;
       if (typeof captureId === "string") {
+        await api.clear_capture();
+        state.capture = null;
         const previous = state.versions.find((version) => version.capture_id !== captureId);
         if (previous !== undefined) {
           await openComparison(previous.capture_id, captureId);
@@ -261,10 +263,13 @@ async function start() {
   });
 
   drawVersionList();
-  if (state.capture?.running) {
+  const unfinished = state.capture !== null && !state.capture.result?.capture_id;
+  if (state.capture?.running || unfinished) {
     capture.showProgress(state.capture);
     showView("capture-view");
-    capture.watch();
+    if (state.capture?.running) {
+      capture.watch();
+    }
   } else if (startup.versions.length === 0) {
     showView("first-launch");
   } else if (startup.last_comparison.length === 2 && reopenable(startup)) {

@@ -66,25 +66,25 @@ def test_a_civ_with_no_tech_tree_reaches_nothing(snapshot: Snapshot) -> None:
 
 def test_a_transform_form_is_reachable(snapshot: Snapshot) -> None:
     lookup = UnitLookup(snapshot)
-    reach = for_civ(snapshot, snapshot, "Franks", 0, (lookup, lookup))
+    reach = for_civ(snapshot, snapshot, "Franks", (0, 0), (lookup, lookup))
     assert reach.includes(39)
 
 
 def test_a_named_dismount_form_is_reachable(snapshot: Snapshot) -> None:
     lookup = UnitLookup(snapshot)
-    reach = for_civ(snapshot, snapshot, "Franks", 0, (lookup, lookup))
+    reach = for_civ(snapshot, snapshot, "Franks", (0, 0), (lookup, lookup))
     assert reach.includes(75)
 
 
 def test_a_corpse_is_not_reachable(snapshot: Snapshot) -> None:
     lookup = UnitLookup(snapshot)
-    reach = for_civ(snapshot, snapshot, "Franks", 0, (lookup, lookup))
+    reach = for_civ(snapshot, snapshot, "Franks", (0, 0), (lookup, lookup))
     assert not reach.includes(102)
 
 
 def test_a_projectile_is_not_a_unit_but_is_linked_to_its_shooter(snapshot: Snapshot) -> None:
     lookup = UnitLookup(snapshot)
-    reach = for_civ(snapshot, snapshot, "Franks", 0, (lookup, lookup))
+    reach = for_civ(snapshot, snapshot, "Franks", (0, 0), (lookup, lookup))
     assert not reach.includes(900)
     assert reach.projectiles == frozenset({900})
     assert reach.fired_by[900] == (12,)
@@ -93,14 +93,14 @@ def test_a_projectile_is_not_a_unit_but_is_linked_to_its_shooter(snapshot: Snaps
 def test_reachability_uses_both_snapshots(snapshot: Snapshot) -> None:
     older = replace(snapshot, tech_trees={"Franks": []}, building_offers={})
     lookup = UnitLookup(snapshot)
-    reach = for_civ(older, snapshot, "Franks", 0, (UnitLookup(older), lookup))
+    reach = for_civ(older, snapshot, "Franks", (0, 0), (UnitLookup(older), lookup))
     assert reach.includes(38)
 
 
 def test_a_snapshot_without_stats_still_gives_its_seeds(snapshot: Snapshot) -> None:
     without = replace(snapshot, stats=None)
     lookup = UnitLookup(without)
-    reach = for_civ(without, without, "Franks", 0, (lookup, lookup))
+    reach = for_civ(without, without, "Franks", (0, 0), (lookup, lookup))
     assert reach.units == frozenset({12, 38, 74, 101})
 
 
@@ -110,3 +110,10 @@ def test_the_unit_lookup_lists_what_the_snapshot_stores(snapshot: Snapshot) -> N
     assert lookup.record(38, 0) is not None
     assert lookup.record(4242, 0) is None
     assert lookup.any_record(38) is not None
+
+
+def test_a_civ_missing_from_one_build_is_read_from_the_other(snapshot: Snapshot) -> None:
+    """A civ added in the new build has no slot in the old one, so that side is skipped."""
+    lookup = UnitLookup(snapshot)
+    reach = for_civ(snapshot, snapshot, "Franks", (None, 0), (lookup, lookup))
+    assert reach.includes(39)

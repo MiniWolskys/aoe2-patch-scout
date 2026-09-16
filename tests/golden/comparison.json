@@ -117,44 +117,6 @@
     },
     {
       "category": "unit_stats",
-      "civ": "Ancients",
-      "detail": null,
-      "entity": {
-        "icon": {
-          "category": "units",
-          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
-          "height": 4,
-          "missing_reason": null,
-          "picture_index": 17,
-          "source": "widgetui/textures/ingame/units/017_50730.DDS",
-          "width": 4
-        },
-        "id": "4",
-        "kind": "unit",
-        "name": "Archer",
-        "where": null
-      },
-      "field": {
-        "args": {},
-        "key": "field.hit_points"
-      },
-      "kind": "modified",
-      "low_priority": false,
-      "new": "35",
-      "old": "30",
-      "raw": null,
-      "scope": {
-        "civs": [
-          "Ancients",
-          "Redlanders"
-        ],
-        "kind": "some"
-      },
-      "stat_icon": "hp",
-      "words": []
-    },
-    {
-      "category": "unit_stats",
       "civ": "Redlanders",
       "detail": null,
       "entity": {
@@ -183,8 +145,46 @@
       "raw": null,
       "scope": {
         "civs": [
-          "Ancients",
-          "Redlanders"
+          "Redlanders",
+          "Ancients"
+        ],
+        "kind": "some"
+      },
+      "stat_icon": "hp",
+      "words": []
+    },
+    {
+      "category": "unit_stats",
+      "civ": "Ancients",
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.hit_points"
+      },
+      "kind": "modified",
+      "low_priority": false,
+      "new": "35",
+      "old": "30",
+      "raw": null,
+      "scope": {
+        "civs": [
+          "Redlanders",
+          "Ancients"
         ],
         "kind": "some"
       },

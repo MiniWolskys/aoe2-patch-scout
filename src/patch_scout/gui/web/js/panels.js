@@ -181,13 +181,22 @@ export function initDiagnostics(deps) {
       select.value = captureId;
     }
     const sections = byId("diagnostics-section");
-    if (sections instanceof HTMLSelectElement && sections.options.length === 0) {
-      for (const name of latest.snapshot?.sections ?? ["meta", "flags", "civs"]) {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        sections.append(option);
-      }
+    if (!(sections instanceof HTMLSelectElement)) {
+      return;
+    }
+    // Rebuilt every time: opening Diagnostics without a version gives a short fallback list, and
+    // opening one afterwards must widen it to that snapshot's real sections.
+    const names = latest.snapshot?.sections ?? ["meta", "flags", "civs"];
+    const chosen = sections.value;
+    clear(sections);
+    for (const name of names) {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      sections.append(option);
+    }
+    if (names.includes(chosen)) {
+      sections.value = chosen;
     }
   }
 

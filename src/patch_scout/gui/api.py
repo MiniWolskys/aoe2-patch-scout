@@ -397,6 +397,8 @@ class Api:
             state.result = {"error": f"{type(error).__name__}: {error}"}
         else:
             self._settings.remember_game_folder(request.game_folder)
+            # The capture wrote its library entry through its own Library (capture/runner.py).
+            self._library.reload()
             state.result = {
                 "capture_id": result.snapshot.capture_id if result.snapshot else None,
                 "identical_to": result.identical_to,

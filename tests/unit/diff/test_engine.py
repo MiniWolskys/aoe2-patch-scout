@@ -283,3 +283,98 @@ def test_a_snapshot_pair_with_no_stats_still_compares_the_files_tier(
     ]
     result = compare(stripped[0], stripped[1])
     assert any(change.category == "civ_availability" for change in result.changes)
+
+
+def _civ_record(name: str, index: int) -> JsonValue:
+    return {
+        "internal_name": name,
+        "index": index,
+        "name_string_id": None,
+        "era": "base",
+        "emblem_icon": None,
+        "bonus_string_id": None,
+        "unique_unit_string_ids": [],
+    }
+
+
+def _archer(hit_points_by_civ: dict[int, int], civ_count: int) -> JsonValue:
+    base_civ, base_hit_points = next(iter(hit_points_by_civ.items()))
+    return {
+        "base": {"hit_points": base_hit_points, "language_dll_name": 5004},
+        "base_civs": [base_civ],
+        "overrides": {
+            str(index): {"hit_points": value}
+            for index, value in hit_points_by_civ.items()
+            if index != base_civ
+        },
+        "absent_civs": [index for index in range(civ_count) if index not in hit_points_by_civ],
+    }
+
+
+def _build(civs: list[JsonValue], units: JsonValue) -> Snapshot:
+    tree = [{"use_type": "Unit", "node_id": 4, "node_status": "ResearchedCompleted"}]
+    names = [civ["internal_name"] for civ in civs if isinstance(civ, dict)]
+    return make_snapshot(
+        civs=civs,
+        tech_trees={name: tree for name in names if name != "Gaia"},
+        strings={"tables": {"en": {"5004": "Archer"}}},
+        flags={"stats_available": True},
+        stats={"units": {"4": units}, "techs": {}, "effects": {}, "civ_dat": []},
+    )
+
+
+def test_a_civ_added_before_the_others_does_not_shift_the_rest() -> None:
+    """Each snapshot is read with its own civ slot; civs are matched by name (P-07)."""
+    old = _build(
+        [_civ_record("Gaia", 0), _civ_record("Alpha", 1), _civ_record("Beta", 2)],
+        _archer({1: 10, 2: 20}, 3),
+    )
+    new = _build(
+        [
+            _civ_record("Gaia", 0),
+            _civ_record("Newcomer", 1),
+            _civ_record("Alpha", 2),
+            _civ_record("Beta", 3),
+        ],
+        _archer({1: 99, 2: 10, 3: 20}, 4),
+    )
+
+    result = compare(old, new)
+
+    unchanged = [
+        change
+        for change in result.changes
+        if change.category == "unit_stats" and change.civ in ("Alpha", "Beta")
+    ]
+    assert unchanged == []
+
+
+def test_a_civ_the_new_build_dropped_is_still_compared() -> None:
+    old = _build(
+        [_civ_record("Gaia", 0), _civ_record("Alpha", 1), _civ_record("Beta", 2)],
+        _archer({1: 10, 2: 20}, 3),
+    )
+    new = _build([_civ_record("Gaia", 0), _civ_record("Alpha", 1)], _archer({1: 10}, 2))
+
+    result = compare(old, new)
+
+    removed = [change.entity.id for change in result.changes if change.kind == "removed"]
+    assert "Beta" in removed
+
+
+def test_civ_lists_follow_the_order_of_civilizations_json() -> None:
+    """diff-rules.md: civ lists are sorted in civilizations.json order, not alphabetically."""
+    civs = [
+        _civ_record("Gaia", 0),
+        _civ_record("Zulu", 1),
+        _civ_record("Aztecs", 2),
+        _civ_record("Mayans", 3),
+        _civ_record("Incas", 4),
+    ]
+    # Two of the four in scope change, so naming them beats naming the two that did not.
+    old = _build(civs, _archer({1: 10, 2: 10, 3: 10, 4: 10}, 5))
+    new = _build(civs, _archer({1: 20, 2: 20, 3: 10, 4: 10}, 5))
+
+    changes = [change for change in compare(old, new).changes if change.category == "unit_stats"]
+
+    assert changes[0].scope.civs == ("Zulu", "Aztecs")

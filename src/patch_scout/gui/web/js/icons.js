@@ -4,6 +4,9 @@
 /** @type {Map<string, string>} */
 const cache = new Map();
 
+// Must stay at or below `MAX_ICONS` in gui/api.py, which silently drops anything past it.
+const BATCH = 200;
+
 /**
  * Fetch the icons a view is about to show, keeping what was already fetched.
  * @param {import("./api.js").Api} api
@@ -14,12 +17,12 @@ export async function preload(api, hashes) {
   const wanted = [
     ...new Set(hashes.filter((hash) => typeof hash === "string" && !cache.has(hash))),
   ];
-  if (wanted.length === 0) {
-    return;
-  }
-  const found = await api.get_icons(/** @type {string[]} */ (wanted));
-  for (const [hash, dataUri] of Object.entries(found)) {
-    cache.set(hash, dataUri);
+  // Python answers at most MAX_ICONS at a time, so a big comparison is asked for in batches.
+  for (let start = 0; start < wanted.length; start += BATCH) {
+    const found = await api.get_icons(/** @type {string[]} */ (wanted.slice(start, start + BATCH)));
+    for (const [hash, dataUri] of Object.entries(found)) {
+      cache.set(hash, dataUri);
+    }
   }
 }
 

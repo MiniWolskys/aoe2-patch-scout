@@ -389,3 +389,51 @@ def test_the_comparison_fits_the_minimum_window(page: Page, open_shell: OpenShel
         "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
     )
     assert overflow == 0
+
+
+def test_a_finished_capture_leaves_the_row_to_its_version(open_shell: OpenShell) -> None:
+    """Once a capture produced a version, that version's own row replaces the progress row."""
+    data = with_versions(version("one", "Live build"))
+    data["startup"]["capture"] = {
+        "running": False,
+        "label": "Live build",
+        "phase": "save",
+        "fraction": 1.0,
+        "detail": "",
+        "result": {"capture_id": "one", "stats_available": True},
+    }
+    page = open_shell(data=data)
+
+    expect(page.locator(".version-row--capture")).to_have_count(0)
+    expect(page.locator(".version-row__name")).to_have_text(["Live build"])
+
+
+def test_a_capture_that_produced_nothing_keeps_its_row(open_shell: OpenShell) -> None:
+    data = fixture_data()
+    data["startup"]["capture"] = {
+        "running": False,
+        "label": "Broken",
+        "phase": "files",
+        "fraction": 1.0,
+        "detail": "",
+        "result": {"error": "that folder is not an install"},
+    }
+    page = open_shell(data=data)
+
+    expect(page.locator(".version-row--capture")).to_have_count(1)
+    expect(page.locator("#capture-result")).to_contain_text("that folder is not an install")
+
+
+def test_a_version_can_be_renamed_twice_from_the_keyboard(open_shell: OpenShell) -> None:
+    page = open_shell(data=with_versions(version("one", "Live build")))
+    title = page.locator("#details-title")
+
+    for name in ("First", "Second"):
+        title.focus()
+        page.keyboard.press("Enter")
+        page.locator("#details-view input.input").fill(name)
+        page.keyboard.press("Enter")
+        title = page.locator("#details-title")
+        expect(title).to_have_text(name)
+
+    assert [call[1] for call in calls(page, "update_version")] == ["First", "Second"]
