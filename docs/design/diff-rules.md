@@ -106,6 +106,8 @@ For each civ, the diff reports only the units that civ can actually get. Reachab
 
 ## Per-civ collapsing (D-07)
 
+Collapsing is applied to **every per-civ change**, not only unit stats: a tech tree node's availability, its name and help text, and its icon all go through it. A help text that changed for every civ then reads as one line instead of fifty-nine.
+
 For each unit ID and allowlisted field of the raw unit records:
 
 1. **Scope.** Consider the civs where the unit exists in either snapshot and is **reachable** (see [Reachability](#reachability-d-37)). Unreachable civ copies are ignored unless "show unreachable" is on.
@@ -137,7 +139,7 @@ Every changed effect command is shown in up to three layers, most readable first
    - Templates live in the i18n catalog.
 3. **The raw command.** Always available in an expanded view, and the only form for command types without a template, e.g. (illustrative) `effect 527 "C-Bonus, Cavalry +20% HP" · command 3 · type 5 · a=-1 b=12 c=0 · d=1.2 → 1.15`.
 
-**Mapping tables** (command type numbers, attribute IDs, unit class IDs → names) are built in M3 from genieutils-py and Advanced Genie Editor, never from memory. A command type without a template is not an error; it falls back to layer 3. The effect's own name from the `.dat` is shown when present (how descriptive those names are is checked in M0).
+**Mapping tables** (command type numbers, attribute IDs, unit class IDs → names) are built from genieutils-py and Advanced Genie Editor, never from memory. **They are still empty** (see O-5): AGE keeps the names inside its executable, so every command currently falls back to layer 3, and armour classes and attributes show as `#<id>`. A command type without a template is not an error; it falls back to layer 3. The effect's own name from the `.dat` is shown when present (how descriptive those names are is checked in M0).
 
 **Commands are compared as ordered lists.** Each added, removed or changed command gets its own entry.
 
@@ -164,7 +166,7 @@ Showing how a civ's bonuses affect a unit may come later as a separate feature (
 - **Comparison** is exact on stored values. Floats come from the file's float32 values, so the same bits always give the same Python float.
 - **Display:**
   - Show the shortest decimal form that tells old and new apart: `2.0 → 1.9`, not `2 → 2`.
-  - Resources and armour classes are shown by name.
+  - Resources are shown by name: type 0 is food, 1 wood, 2 stone and 3 gold, checked against costs the game shows in its own interface (game-files.md §4). Armour classes have no verified name table yet, so they show as `#<id>`.
   - Unknown IDs are shown as `#<id>`.
 - **Lists** (e.g. attack entries):
   - Keyed by class when the entries have one: added, removed and changed classes are reported separately.

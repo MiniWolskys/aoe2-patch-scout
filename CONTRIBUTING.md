@@ -47,7 +47,9 @@ uv run playwright install chromium
 | UI tests only (headless Chromium) | `uv run pytest tests/ui` |
 | Game tests | `$env:AOE2DE_PATH = "<game folder>"; uv run pytest -m game` |
 | Add a dependency | `uv add <package>` (runtime) · `uv add --dev <package>` (dev) |
-| Build the Windows app (M5) | `uv run pyinstaller packaging\patch-scout.spec` |
+| Build the Windows app | `uv run pyinstaller packaging\patch-scout.spec --clean --noconfirm` |
+| Refresh `THIRD_PARTY_NOTICES` | `uv run python tools\third_party_notices.py` |
+| Update the golden files | `uv run pytest --update-golden` |
 
 ## Git workflow
 

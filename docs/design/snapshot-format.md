@@ -16,7 +16,7 @@ A snapshot is the **only** thing the diff reads. It must stay readable after any
 ## Container
 
 - **File:** `<capture_id>.snapshot.json.gz`: UTF-8 JSON, gzip-compressed.
-- **Size target:** a few MB, to be measured in M0/M2; revisit above ~20 MB (P-03).
+- **Size target:** a few MB; revisit above ~20 MB (P-03). **Measured on build 101.103.48987.0: 2.41 MB** for a full capture with stats, 60 civs and every string table entry.
 - **Icons:** stored outside the snapshot, in the shared icon store, and referenced by hash.
 
 ## Top level

@@ -176,11 +176,18 @@ Details: [diff-rules.md](design/diff-rules.md#reachability-d-37).
 ### P-17 Effective (bonus-applied) stats: Decided, not in v1
 Superseded by D-20. Kept on the roadmap under "Later".
 
-### O-5 Showing bonus and effect changes: Decided
+### O-5 Showing bonus and effect changes: Decided (layer 2 not built)
 For every changed effect:
 1. the game's own text diff, when the bonus or help text changed;
 2. a **generated sentence** when a template exists for the command type;
 3. otherwise, the **raw effect command**.
+
+**Status, 2026-09-16:** layers 1 and 3 are built. **Layer 2 is not**, and the template table is
+empty. Command types, attribute IDs and unit class IDs are not in genieutils-py and not in any
+data file the game ships: Advanced Genie Editor compiles the names into its executable. Writing
+them from memory is exactly what AGENTS.md rule 7 forbids, and a wrong sentence is wrong output
+(D-04). Every changed command therefore shows as layer 3, next to the effect's own name and the
+game's bonus text diff. Filling the table needs the maintainer to read the names out of AGE.
 
 
 ### P-04 Full English string tables in every snapshot: Decided
@@ -292,6 +299,17 @@ The window has no navigation rail. A **version list** on the left replaces the s
 - **Status colours avoid red and green:** success is a neutral check, warnings and pre-release are orange, notices are steel blue.
 - **Tokens:** [theme.css](../src/patch_scout/gui/web/styles/theme.css). Typography, sizes and contrast: [ui.md](design/ui.md).
 - **Chosen over:** a light editorial theme, an icon-tile theme, and three other dark palettes (Keep, Byzantium, Graphite).
+
+### D-44 Where a change appears in the civ navigation: Proposed
+Taken while building the comparison (M3/M4); it answers open question 3 in
+[ui.md](design/ui.md#open-questions) and needs the maintainer's confirmation.
+- A change limited to **some** civs appears on **each of those civs' pages**, and not in Overall.
+- A change that applies to **all civs**, to all but a few ("all civs except…"), or to nothing
+  civ-specific, appears in **Overall** only.
+- **Why:** "what changed for my civ" is the question users have, and Overall keeps its stated
+  meaning, "changes to every civilization, with exceptions noted".
+- **Cost:** a change shared by three civs is drawn three times. The change set stores it once per
+  civ, so the counts in the civ list stay right.
 
 ### D-42 Window size: Decided
 Chosen by the maintainer on 2026-09-15, in the app shell spec.
