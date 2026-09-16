@@ -163,8 +163,18 @@ PAPHOS_STRINGS = '407088 "Post-Imperial Age"\n'
 NON_LOCALIZED = 'IDS_TOOL "Tool"\n'
 
 
-def write(root: Path, *, dat_bytes: bytes | None = None) -> Path:
-    """Write the synthetic install under `root` and return it."""
+def write(
+    root: Path,
+    *,
+    dat_bytes: bytes | None = None,
+    unavailable_civs: tuple[str, ...] = ("Bluelanders",),
+    strings: str | None = None,
+    icon_colour: tuple[int, int, int, int] = (0, 40, 80, 255),
+) -> Path:
+    """Write the synthetic install under `root` and return it.
+
+    The keyword arguments let a test write a second, slightly different build.
+    """
     dat = root / "resources" / "_common" / "dat"
     dat.mkdir(parents=True, exist_ok=True)
     (dat / "empires2_x2_p1.dat").write_bytes(
@@ -178,7 +188,7 @@ def write(root: Path, *, dat_bytes: bytes | None = None) -> Path:
         name = civ["tech_tree_name"]
         if not name:
             continue
-        nodes = tech_tree_nodes(available=civ["internal_name"] != "Bluelanders")
+        nodes = tech_tree_nodes(available=civ["internal_name"] not in unavailable_civs)
         nodes["civ_id"] = name
         _json(trees / f"{name}.json", nodes)
 
@@ -221,7 +231,9 @@ def write(root: Path, *, dat_bytes: bytes | None = None) -> Path:
 
     english = root / "resources" / "en" / "strings" / "key-value"
     english.mkdir(parents=True, exist_ok=True)
-    (english / "key-value-strings-utf8.txt").write_text(STRINGS, encoding="utf-8")
+    (english / "key-value-strings-utf8.txt").write_text(
+        strings if strings is not None else STRINGS, encoding="utf-8"
+    )
     (english / "key-value-paphos-strings-utf8.txt").write_text(PAPHOS_STRINGS, encoding="utf-8")
     shared = root / "resources" / "_common" / "strings" / "key-value"
     shared.mkdir(parents=True, exist_ok=True)
@@ -240,10 +252,12 @@ def write(root: Path, *, dat_bytes: bytes | None = None) -> Path:
         path = icons / folder
         path.mkdir(parents=True, exist_ok=True)
         for index, name in enumerate(names):
+            red, green, blue, alpha = icon_colour
+            colour = (min(255, red + 9 * index), green, blue, alpha)
             if name.endswith(".png"):
-                (path / name).write_bytes(png_bytes(4, 4, (9 * index, 40, 80, 255)))
+                (path / name).write_bytes(png_bytes(4, 4, colour))
             else:
-                (path / name).write_bytes(dds_bytes(4, 4, (9 * index, 40, 80, 255)))
+                (path / name).write_bytes(dds_bytes(4, 4, colour))
 
     unit_icons = root / "resources" / "_common" / "wpfg" / "resources" / "uniticons"
     unit_icons.mkdir(parents=True, exist_ok=True)

@@ -27,7 +27,9 @@ def files_tier_sections() -> tuple[list[JsonValue], JsonObject, JsonObject]:
             {"node_id": 199, "use_type": "Tech"},
         ]
     }
-    strings: JsonObject = {"tables": {"en": {"5004": "Archer", "5087": "Archery Range"}}}
+    strings: JsonObject = {
+        "tables": {"en": {"5004": "Archer", "5087": "Archery Range", "14199": "Fletching"}}
+    }
     return civs, trees, strings
 
 

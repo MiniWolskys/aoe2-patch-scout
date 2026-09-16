@@ -91,7 +91,13 @@ def make_unit(unit_id: int, name: str, **overrides: Any) -> Unit:
 
 
 def make_tech(
-    name: str, *, effect_id: int = -1, food: int = 0, gold: int = 0, time: int = 0
+    name: str,
+    *,
+    effect_id: int = -1,
+    food: int = 0,
+    gold: int = 0,
+    time: int = 0,
+    name_id: int = 0,
 ) -> Tech:
     """A tech with one research location and up to two resource costs."""
     costs = (
@@ -106,6 +112,7 @@ def make_tech(
         effect_id=effect_id,
         resource_costs=costs,
         research_locations=[build(ResearchLocation, location_id=12, research_time=time)],
+        language_dll_name=name_id,
     )
 
 
@@ -165,25 +172,38 @@ def make_effect(name: str, commands: list[tuple[int, int, int, int, float]]) -> 
     )
 
 
-def sample() -> DatFile:
-    """The `.dat` that matches the synthetic game folder in `game_tree`."""
-    archer = make_unit(4, "Archer", hit_points=30)
-    range_building = make_unit(87, "ArcheryRange", hit_points=1000)
+def sample(
+    *,
+    archer_hp: int = 30,
+    blue_archer_hp: int = 35,
+    range_hp: int = 1000,
+    fletching_food: int = 100,
+    bonus_multiplier: float = 1.2,
+) -> DatFile:
+    """The `.dat` that matches the synthetic game folder in `game_tree`.
+
+    The keyword arguments let a test build a second, slightly different build.
+    """
+    archer = make_unit(4, "Archer", hit_points=archer_hp)
+    range_building = make_unit(87, "ArcheryRange", hit_points=range_hp)
     slots: list[Unit | None] = [None] * 200
     for unit in (archer, range_building):
         slots[unit.id] = unit
     gaia = make_civ("Gaia", [None] * 200, player_type=2)
-    red = make_civ("RedCiv", list(slots), tech_tree_id=0, team_bonus_id=1)
+    red = make_civ("RedCiv", list(slots), tech_tree_id=0, team_bonus_id=2)
     blue_slots = list(slots)
-    blue_archer = dataclasses.replace(archer, hit_points=35)
+    blue_archer = dataclasses.replace(archer, hit_points=blue_archer_hp)
     blue_slots[4] = blue_archer
     blue = make_civ("BlueCiv", blue_slots, tech_tree_id=0, team_bonus_id=1)
     ancient = make_civ("AncientCiv", list(slots), tech_tree_id=0, team_bonus_id=1)
     techs = [make_tech("filler") for _ in range(199)]
-    techs.append(make_tech("Fletching", effect_id=1, food=100, gold=50, time=30))
+    techs.append(
+        make_tech("Fletching", effect_id=1, food=fletching_food, gold=50, time=30, name_id=14199)
+    )
     effects = [
         make_effect("Red Tech Tree", [(102, 200, 0, 0, 0.0)]),
         make_effect("Fletching", [(4, -1, 0, 0, 1.0)]),
+        make_effect("C-Bonus, Archers", [(5, -1, 12, 0, bonus_multiplier)]),
     ]
     return make_dat([gaia, red, blue, ancient], techs, effects)
 
@@ -193,6 +213,6 @@ def compressed(dat: DatFile) -> bytes:
     return zlib.compress(dat.to_bytes(), level=-1, wbits=-15)
 
 
-def sample_bytes() -> bytes:
+def sample_bytes(**overrides: object) -> bytes:
     """The synthetic `.dat` as it would sit on disk."""
-    return compressed(sample())
+    return compressed(sample(**overrides))  # type: ignore[arg-type]  # keywords match sample

@@ -1,0 +1,533 @@
+{
+  "changes": [
+    {
+      "category": "civ_availability",
+      "civ": "Bluelanders",
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "where": "Archery Range"
+      },
+      "field": {
+        "args": {},
+        "key": "field.node_status"
+      },
+      "kind": "availability",
+      "low_priority": false,
+      "new": "ResearchedCompleted",
+      "old": "NotAvailable",
+      "raw": null,
+      "scope": {
+        "civs": ["Bluelanders"],
+        "kind": "some"
+      },
+      "stat_icon": null,
+      "words": []
+    },
+    {
+      "category": "civ_availability",
+      "civ": "Bluelanders",
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "tech",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 0,
+          "source": "widgetui/textures/ingame/tech/000_fletching.dds",
+          "width": 4
+        },
+        "id": "199",
+        "kind": "tech",
+        "name": "Fletching",
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.node_status"
+      },
+      "kind": "availability",
+      "low_priority": false,
+      "new": "ResearchedCompleted",
+      "old": "NotAvailable",
+      "raw": null,
+      "scope": {
+        "civs": ["Bluelanders"],
+        "kind": "some"
+      },
+      "stat_icon": null,
+      "words": []
+    },
+    {
+      "category": "bonuses",
+      "civ": "Redlanders",
+      "detail": {
+        "args": {
+          "command": 0,
+          "effect": "C-Bonus, Archers"
+        },
+        "key": "detail.effect_command"
+      },
+      "entity": {
+        "icon": {
+          "category": "emblems",
+          "hash": null,
+          "height": null,
+          "missing_reason": "file not found",
+          "picture_index": null,
+          "source": null,
+          "width": null
+        },
+        "id": "Redlanders",
+        "kind": "civ",
+        "name": "Redlanders",
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.team_bonus_effect"
+      },
+      "kind": "modified",
+      "low_priority": false,
+      "new": "type 5 a=-1 b=12 c=0 d=1.15",
+      "old": "type 5 a=-1 b=12 c=0 d=1.20",
+      "raw": "command 0",
+      "scope": {
+        "civs": [],
+        "kind": "global"
+      },
+      "stat_icon": null,
+      "words": []
+    },
+    {
+      "category": "unit_stats",
+      "civ": "Ancients",
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.hit_points"
+      },
+      "kind": "modified",
+      "low_priority": false,
+      "new": "35",
+      "old": "30",
+      "raw": null,
+      "scope": {
+        "civs": ["Ancients", "Redlanders"],
+        "kind": "some"
+      },
+      "stat_icon": "hp",
+      "words": []
+    },
+    {
+      "category": "unit_stats",
+      "civ": "Redlanders",
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.hit_points"
+      },
+      "kind": "modified",
+      "low_priority": false,
+      "new": "35",
+      "old": "30",
+      "raw": null,
+      "scope": {
+        "civs": ["Ancients", "Redlanders"],
+        "kind": "some"
+      },
+      "stat_icon": "hp",
+      "words": []
+    },
+    {
+      "category": "unit_stats",
+      "civ": "Bluelanders",
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.hit_points"
+      },
+      "kind": "modified",
+      "low_priority": false,
+      "new": "45",
+      "old": "35",
+      "raw": null,
+      "scope": {
+        "civs": ["Bluelanders"],
+        "kind": "some"
+      },
+      "stat_icon": "hp",
+      "words": []
+    },
+    {
+      "category": "unit_stats",
+      "civ": null,
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "buildings",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 23,
+          "source": "widgetui/textures/ingame/buildings/023_range_1.DDS",
+          "width": 4
+        },
+        "id": "87",
+        "kind": "unit",
+        "name": "Archery Range",
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.hit_points"
+      },
+      "kind": "modified",
+      "low_priority": false,
+      "new": "1100",
+      "old": "1000",
+      "raw": null,
+      "scope": {
+        "civs": [],
+        "kind": "all"
+      },
+      "stat_icon": "hp",
+      "words": []
+    },
+    {
+      "category": "techs",
+      "civ": null,
+      "detail": null,
+      "entity": {
+        "icon": null,
+        "id": "199",
+        "kind": "tech",
+        "name": "Fletching",
+        "where": null
+      },
+      "field": {
+        "args": {
+          "resource": "food"
+        },
+        "key": "field.cost"
+      },
+      "kind": "modified",
+      "low_priority": false,
+      "new": "120",
+      "old": "100",
+      "raw": null,
+      "scope": {
+        "civs": [],
+        "kind": "global"
+      },
+      "stat_icon": null,
+      "words": []
+    },
+    {
+      "category": "text",
+      "civ": null,
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "where": "Archery Range"
+      },
+      "field": {
+        "args": {},
+        "key": "field.help_text"
+      },
+      "kind": "text_changed",
+      "low_priority": true,
+      "new": null,
+      "old": null,
+      "raw": null,
+      "scope": {
+        "civs": [],
+        "kind": "all"
+      },
+      "stat_icon": null,
+      "words": [
+        {
+          "kind": "same",
+          "text": "A ranged "
+        },
+        {
+          "kind": "removed",
+          "text": "unit."
+        },
+        {
+          "kind": "added",
+          "text": "foot soldier."
+        }
+      ]
+    },
+    {
+      "category": "text",
+      "civ": null,
+      "detail": null,
+      "entity": {
+        "icon": null,
+        "id": "99001",
+        "kind": "string",
+        "name": "99001",
+        "where": null
+      },
+      "field": null,
+      "kind": "added",
+      "low_priority": true,
+      "new": "A brand new string",
+      "old": "",
+      "raw": null,
+      "scope": {
+        "civs": [],
+        "kind": "global"
+      },
+      "stat_icon": null,
+      "words": []
+    },
+    {
+      "category": "icons",
+      "civ": null,
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "where": "Archery Range"
+      },
+      "field": {
+        "args": {},
+        "key": "field.icon"
+      },
+      "kind": "icon_redrawn",
+      "low_priority": true,
+      "new": null,
+      "old": null,
+      "raw": null,
+      "scope": {
+        "civs": [],
+        "kind": "all"
+      },
+      "stat_icon": null,
+      "words": []
+    },
+    {
+      "category": "icons",
+      "civ": null,
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "buildings",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 23,
+          "source": "widgetui/textures/ingame/buildings/023_range_1.DDS",
+          "width": 4
+        },
+        "id": "87",
+        "kind": "building",
+        "name": "Archery Range",
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.icon"
+      },
+      "kind": "icon_redrawn",
+      "low_priority": true,
+      "new": null,
+      "old": null,
+      "raw": null,
+      "scope": {
+        "civs": [],
+        "kind": "all"
+      },
+      "stat_icon": null,
+      "words": []
+    },
+    {
+      "category": "icons",
+      "civ": null,
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "tech",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 0,
+          "source": "widgetui/textures/ingame/tech/000_fletching.dds",
+          "width": 4
+        },
+        "id": "199",
+        "kind": "tech",
+        "name": "Fletching",
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.icon"
+      },
+      "kind": "icon_redrawn",
+      "low_priority": true,
+      "new": null,
+      "old": null,
+      "raw": null,
+      "scope": {
+        "civs": [],
+        "kind": "all"
+      },
+      "stat_icon": null,
+      "words": []
+    }
+  ],
+  "civs": [
+    {
+      "added": false,
+      "count": 2,
+      "era": "base",
+      "icon": {
+        "category": "emblems",
+        "hash": null,
+        "height": null,
+        "missing_reason": "file not found",
+        "picture_index": null,
+        "source": null,
+        "width": null
+      },
+      "internal_name": "Redlanders",
+      "name": "Redlanders"
+    },
+    {
+      "added": false,
+      "count": 3,
+      "era": "base",
+      "icon": {
+        "category": "emblems",
+        "hash": null,
+        "height": null,
+        "missing_reason": "file not found",
+        "picture_index": null,
+        "source": null,
+        "width": null
+      },
+      "internal_name": "Bluelanders",
+      "name": "Bluelanders"
+    },
+    {
+      "added": false,
+      "count": 1,
+      "era": "antiquity",
+      "icon": {
+        "category": "emblems",
+        "hash": null,
+        "height": null,
+        "missing_reason": "no image path",
+        "picture_index": null,
+        "source": null,
+        "width": null
+      },
+      "internal_name": "Ancients",
+      "name": "Ancients"
+    }
+  ],
+  "counts": {
+    "overall": 7,
+    "total": 13
+  },
+  "identical": false,
+  "new": {
+    "capture_id": "new",
+    "captured_at": "2026-09-16T00:00:00Z",
+    "game_build": null,
+    "label": "PUP build",
+    "prerelease": true,
+    "stats_available": true
+  },
+  "notices": [],
+  "old": {
+    "capture_id": "old",
+    "captured_at": "2026-09-16T00:00:00Z",
+    "game_build": null,
+    "label": "Live build",
+    "prerelease": false,
+    "stats_available": true
+  }
+}

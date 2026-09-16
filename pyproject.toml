@@ -52,6 +52,9 @@ testpaths = ["tests"]
 pythonpath = ["tools", "tests"]
 addopts = [
     "--import-mode=importlib",
+    # The golden-file option lives in a plugin, not a second conftest (tests/support/golden.py).
+    "-p",
+    "support.golden",
     "--strict-markers",
     "-m",
     "not game",

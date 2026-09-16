@@ -1,0 +1,27 @@
+Patch Scout — what changed
+
+Old: Live build · 2026-09-16T00:00:00Z
+New: PUP build · 2026-09-16T00:00:00Z · pre-release
+
+OVERALL
+  Unit stats
+    • Archery Range · Hit points · 1000 → 1100 · (all civilizations)
+  Technologies
+    • Fletching · Cost in food · 100 → 120
+
+REDLANDERS
+  Civilization and team bonuses
+    • Redlanders · Team bonus effect · type 5 a=-1 b=12 c=0 d=1.20 → type 5 a=-1 b=12 c=0 d=1.15
+  Unit stats
+    • Archer · Hit points · 30 → 35 · (Ancients, Redlanders)
+
+BLUELANDERS
+  Availability
+    • Archer (Archery Range) · Availability · NotAvailable → ResearchedCompleted · (Bluelanders)
+    • Fletching · Availability · NotAvailable → ResearchedCompleted · (Bluelanders)
+  Unit stats
+    • Archer · Hit points · 35 → 45 · (Bluelanders)
+
+ANCIENTS
+  Unit stats
+    • Archer · Hit points · 30 → 35 · (Ancients, Redlanders)
