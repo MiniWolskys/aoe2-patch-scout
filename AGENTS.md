@@ -13,7 +13,7 @@ It's for streamers and YouTubers who get pre-release builds without patch notes.
 
 - **Stack:** Python core, pywebview GUI (plain HTML/CSS/JS, no CLI), PyInstaller Windows build, [genieutils-py](https://github.com/SiegeEngineers/genieutils-py) for the `.dat`. Licence GPL-3.0-or-later.
 - **Names:** Python package `patch_scout`, entry point `patch-scout`.
-- **Status:** M0 done. M1 in progress: slice 1, the app shell (WebView2 check, window, Forge-themed version list and first-launch screen), is done. Next step: slice 2 in [docs/roadmap.md](docs/roadmap.md), starting with a spec.
+- **Status:** M0-M3 done; M4 done apart from the image export and snapshot archives; M5 has a working PyInstaller build but no release. The app captures, compares and exports for real. What is left is listed per milestone in [docs/roadmap.md](docs/roadmap.md).
 
 ## Where things are documented
 

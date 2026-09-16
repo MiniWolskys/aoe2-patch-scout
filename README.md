@@ -14,7 +14,7 @@ Content creators often get early builds (pre-release, PUP) before any patch note
 - **Compare** two snapshots and get a categorised list of changes, with game icons:
   - new or removed civilizations;
   - units, techs and buildings gained or lost, per civ;
-  - civ bonus and team bonus changes, in plain sentences;
+  - civ bonus and team bonus changes: the game's own wording, word by word;
   - unit stat changes (HP, attack, armour, range, speed, cost, train time…), marked *all civs* or *specific civs*;
   - tech cost, research time and effect changes;
   - text and icon changes.

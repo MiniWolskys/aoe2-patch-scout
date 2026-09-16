@@ -1,6 +1,8 @@
 # Roadmap
 
-**Status on 2026-09-15:** M0 done. M1 is in progress: slice 1, the app shell, is done. The M0 checks that need a PUP branch or a Store install are deferred.
+**Status on 2026-09-16:** M0 done. M1, M2 and M3 are done. M4 is done apart from the image export and snapshot archives, and M5 has a working build but no release yet. The checks that need a PUP branch or a Microsoft Store install are still deferred.
+
+The app captures a real install, gates the `.dat`, compares two versions and exports the result as text or HTML. What is left before v1.0 is listed under each milestone below.
 
 **How milestones run:**
 - Design that goes beyond `docs/design/` is agreed in an issue first, then recorded in `docs/design/` and `docs/decisions.md` together with the code.
@@ -65,9 +67,9 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 
 **Slices** (each with its own spec, plan and pull request, D-28):
 1. [x] App shell: WebView2 check, window size, Forge theme, collapsible version list, first-launch screen.
-2. [ ] Snapshot schema, store and library index; version details.
-3. [ ] Readers, capture dialog and progress.
-4. [ ] Diagnostics window.
+2. [x] Snapshot schema, store and library index; version details.
+3. [x] Readers, capture dialog and progress.
+4. [x] Diagnostics: environment, capture log, gate details and the snapshot inspector, as a panel in the main window rather than a second window. A separate window buys nothing while the app has one screen at a time; revisit if it grows.
 
 **Scope**
 - **GUI shell:** one window with the version list (D-32), the Forge theme (D-35), WebView2 check.
@@ -81,9 +83,10 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - **Storage:** icon pipeline (tech tree, emblems, unique units, stat icons) and icon store; snapshot schema v1 for the files tier; library index; raw backups (P-19).
 
 **Exit criteria**
-- Capturing the live install twice gives identical snapshots, apart from `captured_at` and `capture_id`.
-- Detection failure falls back to Browse cleanly.
-- Synthetic fixture trees cover every reader; game tests pass locally.
+- [x] Capturing the live install twice gives identical snapshots, apart from `captured_at` and `capture_id`.
+- [x] Detection failure falls back to Browse cleanly.
+- [x] Synthetic fixture trees cover every reader; game tests pass locally (13 tests, `AOE2DE_PATH`).
+- [ ] **Still open:** importing snapshot archives and the baseline pack (P-21); the Import button is visible but disabled.
 - **Help wanted:** someone with the Microsoft Store / Game Pass version checks detection and folder layout.
 
 ## M2: Stats-tier capture
@@ -96,9 +99,9 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - The unit and tech field lists in [snapshot-format.md](design/snapshot-format.md) are frozen.
 
 **Exit criteria**
-- The live build captures with `stats_available: true`.
-- A faked unknown version string is read through layout substitution and flagged.
-- A structurally corrupted stream (a broken count or string, or a truncated file) and a failed sanity check each give `stats: null` with the right reason.
+- [x] The live build captures with `stats_available: true` (build 101.103.48987.0, 27 s for the whole capture).
+- [x] A faked unknown version string is read through layout substitution and flagged.
+- [x] A structurally corrupted stream (a broken count or string, or a truncated file) and a failed sanity check each give `stats: null` with the right reason.
 - **Known limit:** a corrupted value that stays plausible can't be detected; see [genieutils-py.md](reference/genieutils-py.md#measured-on-the-live-build).
 
 ## M3: Diff engine
@@ -113,8 +116,8 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - Golden tests (change-set JSON + plain text).
 
 **Exit criteria (acceptance)**
-- Diff two consecutive **public** builds.
-- Check the plain-text output against the official patch notes: every gameplay item in the notes is in the output, or the gap is explained and tracked.
+- [ ] **Not done:** diff two consecutive **public** builds and check the plain-text output against the official patch notes. Only one build is installed, so the engine has so far been checked against synthetic pairs and against one real build compared with a deliberately altered copy of itself.
+- [ ] **Not done:** effect sentences (O-5 layer 2). Every changed effect command falls back to the raw command, because the command type, attribute and unit class names live inside the Advanced Genie Editor executable and were not going to be written from memory (AGENTS.md rule 7).
 
 ## M4: Compare UI and exports
 
@@ -124,7 +127,8 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - Export/import of snapshot archives; baseline pack import and first-launch screen (P-21).
 
 **Exit criteria**
-- A streamer-style walkthrough works end to end: capture live, capture PUP, compare, export an image and a text summary.
+- [x] Capture, compare and export text or HTML work end to end in the app.
+- [ ] **Not done:** the PNG image export, and export/import of snapshot archives and the baseline pack (P-21).
 
 ## M5: Packaging and v1.0
 
@@ -138,7 +142,8 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - First public release **`v1.0.0`, unsigned**.
 
 **Exit criteria**
-- A non-developer installs from the zip, imports the baseline pack, captures, compares and exports, on a clean Windows 10 machine.
+- [x] `uv run pyinstaller packaging/patch-scout.spec` produces a one-folder build that runs and compares real captures (217 files, 40.8 MB).
+- [ ] **Not done:** `COPYING.LESSER` (the LGPLv3 text), an exe icon, the baseline pack, release notes, the 3.13 smoke test, and the walkthrough on a clean machine.
 
 ## After v1.0
 

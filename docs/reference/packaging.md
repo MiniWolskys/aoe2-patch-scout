@@ -3,9 +3,25 @@
 Facts about building the Windows app, checked in the M0 packaging spike on 2026-09-15:
 - **Environment:** Windows 10, Python 3.12.14, PyInstaller 6.22.3, pywebview 6.2.1, genieutils-py 0.1.2.
 - **Re-check this page** when any of these versions changes.
-- **The spike build was throwaway.** The release build is set up in M5 (D-16).
+- **The spike build was throwaway.** The real build is `packaging/patch-scout.spec`, measured again below on 2026-09-16.
 
-## One-folder build [verified]
+## The real build [verified 2026-09-16]
+
+`uv run pyinstaller packaging/patch-scout.spec --clean --noconfirm`
+
+- **Output:** `dist/PatchScout/`, **217 files, 40.8 MB**, with a 5.3 MB `Patch Scout.exe`. Larger
+  than the M0 spike (161 files, 28.8 MB) because Pillow and its native libraries are now bundled.
+- **genieutils-py** lands as loose `.py` files in `_internal/genieutils/`, as the spike showed
+  (LGPLv3 section 4).
+- **Bundled data:** `patch_scout/gui/web/` and `patch_scout/i18n/en.json`, plus `LICENSE`,
+  `README.md` and `THIRD_PARTY_NOTICES`. **No game content**, which the release workflow checks.
+- **Exe metadata:** product name and version, written from the package version by the spec.
+- **Checked by running it:** the frozen app opens the same window as `uv run patch-scout`, reads
+  the same data folder, and shows a real comparison with game icons.
+- **Still missing for a release:** an exe icon, `COPYING.LESSER` (the LGPLv3 text), and the
+  Python 3.13 smoke test (P-12).
+
+## One-folder build (M0 spike) [verified]
 
 - **Form:** a PyInstaller one-folder, windowed build (no console), made from a `.spec` file. It takes about 12 s with `--clean`.
 - **Output:** the exe plus an `_internal\` folder (PyInstaller's default `contents_directory`): 161 files and 28.8 MB, or 12.8 MB zipped.
