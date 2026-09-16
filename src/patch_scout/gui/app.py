@@ -108,12 +108,13 @@ def main(
         return 1
     logger.info("WebView2 Runtime %s", runtime)
 
+    api = Api(catalog, LANGUAGE, importlib.metadata.version("patch-scout"))
     screen = choose_screen()
     geometry = window_geometry(screen)
     window = webview.create_window(
         catalog.text("app.title"),
         url=str(web_root() / "index.html"),
-        js_api=Api(catalog, LANGUAGE, importlib.metadata.version("patch-scout")),
+        js_api=api,
         width=geometry.width,
         height=geometry.height,
         maximized=geometry.maximized,
@@ -128,6 +129,7 @@ def main(
     if window is None:  # pywebview returns None only when a handler cancels the window
         logger.error("the main window wasn't created")
         return 1
+    api.attach(window)
     renderer_failed = threading.Event()
     webview.start(
         func=check_renderer,

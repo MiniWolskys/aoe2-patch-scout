@@ -3,6 +3,13 @@
  * Uses the Forge tokens from theme.css only: no colour literals here.
  */
 
+/* A class that sets `display` would otherwise beat the browser's rule for [hidden], and an
+ * invisible .scrim would still cover the window and swallow every click. `:not(:root)` only
+ * raises the specificity above a single class; it changes nothing about what matches. */
+[hidden]:not(:root) {
+  display: none;
+}
+
 html,
 body {
   height: 100%;
@@ -236,4 +243,497 @@ body:not([data-ready]) {
 
 .version-list[data-collapsed] .version-list__bottom {
   flex-direction: column;
+}
+
+/* Views in the main area (ui.md, "Window layout") */
+
+.main {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 32px 40px;
+  overflow-y: auto;
+}
+
+.view__back {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.view__back:hover {
+  color: var(--accent-hover);
+}
+
+.view__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 600;
+}
+
+.view__title [role="button"] {
+  cursor: text;
+  border-radius: var(--radius-control);
+}
+
+.view__title [role="button"]:hover {
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.view__meta {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.view__result {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--fs-md);
+}
+
+.view__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* Field rows shared by the details view and the dialogs */
+
+.fields {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 8px 0;
+}
+
+.fields dd {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-sm);
+}
+
+.field-row--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.field-row--inline {
+  display: flex;
+  gap: 8px;
+}
+
+.field-row--inline .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-row--grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.input--area {
+  height: auto;
+  padding: 8px 10px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  word-break: break-all;
+}
+
+/* Capture progress */
+
+.steps {
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step__mark {
+  text-align: center;
+}
+
+.step[data-state="running"] .step__mark {
+  color: var(--accent);
+}
+
+.step__detail {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+/* Version rows: the Compare button replaces the marks on hover (ui.md) */
+
+.version-list__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.version-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.version-row__main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.version-row__marks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.version-row__marks .icon--warning {
+  color: var(--warn);
+}
+
+.version-row__compare {
+  display: none;
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+}
+
+.version-row:hover .version-row__compare,
+.version-row:focus-within .version-row__compare {
+  display: inline-flex;
+}
+
+.version-row:hover .version-row__marks,
+.version-row:focus-within .version-row__marks {
+  visibility: hidden;
+}
+
+.version-row__progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--bg-inset);
+}
+
+.version-row__progress-bar {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.tag--muted {
+  color: var(--text-2);
+  background: var(--bg-raised);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+/* Comparison */
+
+.comparison {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  height: 100%;
+  min-width: 0;
+}
+
+.comparison-header__spacer {
+  flex: 1;
+}
+
+.version-picker {
+  min-width: 0;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.version-picker:hover {
+  background: var(--bg-hover);
+}
+
+.version-picker__name {
+  overflow: hidden;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.version-picker__build {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--line-subtle);
+  background: var(--bg-panel);
+}
+
+.notice__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comparison__body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.civ-list {
+  overflow-y: auto;
+}
+
+.civ-list__group {
+  margin: 14px 0 4px;
+  padding: 0 12px;
+  color: var(--text-3);
+}
+
+.civ-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.civ-row:hover {
+  background: var(--bg-hover);
+}
+
+.civ-row__emblem {
+  width: 22px;
+  height: 22px;
+}
+
+.civ-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comparison__page {
+  min-width: 0;
+  padding: 24px 28px;
+  overflow-y: auto;
+}
+
+.page__title {
+  margin: 0;
+  font-size: var(--fs-section);
+  font-weight: 600;
+}
+
+.page__subtitle {
+  margin: 2px 0 16px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.page__category {
+  margin: 22px 0 6px;
+  color: var(--text-3);
+}
+
+.change-row__no-icon {
+  width: var(--game-icon-size);
+}
+
+.change-row__entity {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.change-row__name {
+  overflow: hidden;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.change-row__kind {
+  margin-right: 5px;
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+.change-row__where {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.change-row__field {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.change-row__note {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.change-values--words {
+  display: block;
+  font-size: var(--fs-sm);
+  white-space: normal;
+}
+
+/* Dialogs */
+
+.dialog__title {
+  margin: 0;
+  padding: 20px 24px 12px;
+  font-size: var(--fs-dialog);
+  font-weight: 600;
+}
+
+.dialog__body {
+  display: flex;
+  max-height: 60vh;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 24px 16px;
+  overflow-y: auto;
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--line-subtle);
+}
+
+.dialog--wide {
+  width: 880px;
+  max-width: 92vw;
+}
+
+.pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pick-row {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pick-row:hover {
+  background: var(--bg-hover);
+}
+
+.pick-row__name {
+  font-weight: 600;
+}
+
+.pick-row__meta {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.preview {
+  max-height: 320px;
+  margin: 0;
+  padding: 12px;
+  border-radius: var(--radius-control);
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--line-subtle);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  margin: 0;
+  padding: 10px 18px;
+  transform: translateX(-50%);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  box-shadow:
+    inset 0 0 0 1px var(--line-strong),
+    var(--shadow-float);
+  font-size: var(--fs-sm);
 }
