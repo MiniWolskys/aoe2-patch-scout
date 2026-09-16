@@ -520,6 +520,13 @@ ins {
   background: var(--scrim);
 }
 
+/* `display` on a class beats the browser's rule for [hidden], and a scrim that is laid out
+ * covers the whole window and swallows every click. The rule lives here, beside the one that
+ * causes it, so it applies even before app.css has been fetched. */
+.scrim[hidden] {
+  display: none;
+}
+
 .dialog {
   display: flex;
   flex-direction: column;

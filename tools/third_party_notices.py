@@ -28,6 +28,22 @@ BUNDLED: Final = (
     "proxy-tools",
     "typing-extensions",
 )
+# pywebview pulls these in only on Windows, so they are missing from a Linux checkout. The file
+# is generated and checked on Windows, where the build is made.
+WINDOWS_ONLY: Final = frozenset({"pythonnet", "clr-loader", "cffi", "pycparser"})
+
+
+def missing_packages() -> list[str]:
+    """Bundled packages this environment does not have installed."""
+    absent = []
+    for name in BUNDLED:
+        try:
+            importlib.metadata.metadata(name)
+        except importlib.metadata.PackageNotFoundError:
+            absent.append(name)
+    return absent
+
+
 # What the metadata never carries: files vendored by hand, and the runtime itself.
 EXTRA: Final = """
 ## Bundled fonts

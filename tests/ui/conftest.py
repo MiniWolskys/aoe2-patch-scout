@@ -126,6 +126,9 @@ def open_shell(page: Page, web_server: str) -> Callable[..., Page]:
         )
         page.goto(f"{web_server}/index.html")
         page.wait_for_selector("body[data-ready]", state="attached")
+        # `data-ready` only means the page's own script ran; a stylesheet can still be in flight,
+        # and a half-styled page has different hit targets.
+        page.wait_for_load_state("load")
         return page
 
     return open_
