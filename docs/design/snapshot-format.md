@@ -52,6 +52,7 @@ A snapshot is the **only** thing the diff reads. It must stay readable after any
 | `source_path` | string \| null | Absolute install path. **Replaced with `null` on export.** |
 | `game_build` | string \| null | From `AoE2DE_s.exe`; `null` if unreadable. |
 | `steam_build_id` | string \| null | Steam installs only. |
+| `steam_branch` | string \| null | Steam beta branch, when the manifest names one (P-23). |
 | `dat_format_version` | string \| null | Version string found in the file, e.g. `"VER 8.9"`, NULs stripped. |
 | `dat_layout_version` | string \| null | Layout genieutils-py actually parsed with. Differs from `dat_format_version` when the unknown-version fallback was used (P-02). |
 | `genieutils_version` | string \| null | Library version used for the stats tier. |
@@ -87,8 +88,10 @@ One object per `civilizations.json` entry, **in file order** (Gaia first):
   "internal_name": "Britons",        // identity (P-07)
   "tech_tree_name": "BRITONS",
   "data_name": "BRITON-CIV",
+  "hud_style": "CivWest",
   "era": "base",
   "name_string_id": 10271,
+  "computer_name_string_table_offset": 4400,
   "bonus_string_id": 120150,         // derived: 120150 + index - 1; null for Gaia or if the check failed
   "unique_tech_ids": [ 3, 461 ],     // unique_tech_id_1, unique_tech_id_2
   "unique_unit_id": 8,
@@ -96,11 +99,18 @@ One object per `civilizations.json` entry, **in file order** (Gaia first):
   "unique_unit_line": -276,
   "unique_unit_upgrade_id": 360,
   "unique_unit_string_ids": [ { "name": 5107, "description": 26107 } ],
+  "tech_tree_image_path": "/resources/civ_techtree/menu_techtree_britons.png",
+  "emblem_image_path": "/resources/civ_emblems/britons.png",
+  "unique_unit_image_paths": [ "/resources/uniticons/041_50730.png" ],
   "emblem_icon": { ...icon ref... },
   "unique_unit_icons": [ { ...icon ref... } ],
   "extra": { }                       // unknown keys, verbatim
 }
 ```
+
+Every key of `civilizations.json` is kept, so the civ overview (D-39) has what it needs.
+The three image paths are relative to `resources\_common\wpfg\` [verified 101.103.48987.0];
+the icon pipeline resolves them into the `*_icon` references beside them.
 
 ### `tech_trees`
 Keyed by civ `internal_name`. Each value is a list of nodes, merged from both CivTechTrees arrays with the array name kept:
@@ -130,10 +140,17 @@ Keyed by civ `internal_name`. Each value is a list of nodes, merged from both Ci
 ```
 
 ### `building_offers`
-From `futuravailableunits.json` and `paphosfutureavailableunits.json`, keyed by `internal_name`. Placeholder keys (`FullTechCiv`, `Paphos6`–`Paphos9`) are skipped. The value keeps the file's structure with snake_case keys, plus `extra`.
+From `futuravailableunits.json` and `paphosfutureavailableunits.json`, keyed by `internal_name`. Placeholder keys (`FullTechCiv`, `Paphos6`–`Paphos9`) are skipped. The value is `{ "buildings": [ ... ] }`, each building keeping the file's fields under our
+names (`id`, `name`, `required_age`, `prereq_tech`, `required_tech_id`, `required_unit_id`,
+`prereq_icon_set`, `prereq_icon_index`, `prereq_style`, `prereq_string_id`, `techs`, `units`)
+plus `extra`.
 
 ### `unit_lines`, `linked_techs`, `linked_units`, `eras`
-Direct normalized copies of the helper JSONs (snake_case keys, `extra` for unknown keys).
+Direct normalized copies of the helper JSONs (snake_case keys, `extra` for unknown keys). A
+helper that can't be read is listed in `flags.missing_sections` and its section stays empty;
+only `civilizations.json` is required. `unitcategories.json`, `sharedbuildings.json`,
+`dropsites.json` and `objreplacement.json` are not captured in v1: nothing in the comparison
+reads them.
 
 ### `strings`
 
@@ -151,7 +168,12 @@ Direct normalized copies of the helper JSONs (snake_case keys, `extra` for unkno
 - Text is stored raw, with tags and placeholders intact.
 
 ### `stat_icons`
-Maps a stat key to an icon ref. The game's stat icons come from `widgetui\textures\ingame\staticons\` (D-09), e.g. `{ "hp": {…}, "melee_armor": {…} }`. The stat keys are ours; the file mapping is decided in M1, from the files M0 found ([game-files.md §10](../reference/game-files.md#other-icon-sets)). Line of sight and train time have no game icon. The UI falls back to text labels when an icon is missing.
+Maps a stat key to an icon ref. The game's stat icons come from `widgetui\textures\ingame\staticons\` (D-09), e.g. `{ "hp": {…}, "melee_armor": {…} }`. The stat keys are ours. The mapping, chosen in M1 from the 29 files that folder holds, is
+`STAT_ICON_FILES` in `capture/icons.py`: `hp`, `melee_attack`, `pierce_attack`, `melee_armor`,
+`pierce_armor`, `range`, `movement_speed`, `reload_time`, `food`, `wood`, `gold`, `stone`,
+`garrison`, `convert`, `work_rate`, `blast_radius`, `hp_regen`, `hp_loss`, `transport`. The
+less certain files (the bleed and bypass damage variants and the six `powerup*` icons) are
+left out ([game-files.md §10](../reference/game-files.md#other-icon-sets)). Line of sight and train time have no game icon. The UI falls back to text labels when an icon is missing.
 
 ## Stats-tier section
 

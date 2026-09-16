@@ -43,7 +43,8 @@ CIVILIZATIONS: list[dict[str, Any]] = [
         "unique_unit_string_ids": [{"name": 5107, "description": 26107}],
         "emblem_image_path": "emblems/red",
         "unique_unit_image_paths": ["uniticons/017_50730"],
-        "hud_style": 1,
+        "hud_style": "CivWest",
+        "mystery_key": 7,
     },
     {
         "internal_name": "Bluelanders",
@@ -136,6 +137,8 @@ def tech_tree_nodes(available: bool = True) -> dict[str, Any]:
 STRINGS = """\
 // A synthetic string file, nothing from the real game.
 5083 "Archer"
+5004 "Archer"        // the name ID the synthetic .dat unit 4 carries
+5087 "Archery Range" // the name ID the synthetic .dat unit 87 carries
 14083 "Archer"
 26083 "A ranged unit." //trailing comment
 105083 "unused direct hit"

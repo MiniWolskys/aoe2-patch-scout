@@ -39,6 +39,12 @@ files = ["src", "tests", "tools"]
 mypy_path = ["tools", "tests"]
 strict = true
 
+[[tool.mypy.overrides]]
+# genieutils-py ships no py.typed marker (docs/reference/genieutils-py.md). Only
+# capture.stats_tier, capture.gates and the test .dat builder import it.
+module = ["genieutils.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Development scripts in tools/, and the shared test helpers in tests/support/, are imported
