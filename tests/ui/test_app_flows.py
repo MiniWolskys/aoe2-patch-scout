@@ -372,3 +372,20 @@ def test_a_change_with_a_stat_icon_marks_the_field(open_shell: OpenShell) -> Non
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
 
     expect(page.locator('.change-row__stat[data-stat="hp"]')).to_have_count(1)
+
+
+def test_the_comparison_fits_the_minimum_window(page: Page, open_shell: OpenShell) -> None:
+    """The comparison must work at 1120px wide, the minimum window size (D-42)."""
+    page.set_viewport_size({"width": 1120, "height": 640})
+    open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    export = page.locator("#comparison-export")
+    expect(export).to_be_visible()
+    box = export.bounding_box()
+    assert box is not None
+    assert box["x"] + box["width"] <= 1120
+    overflow = page.evaluate(
+        "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
+    )
+    assert overflow == 0

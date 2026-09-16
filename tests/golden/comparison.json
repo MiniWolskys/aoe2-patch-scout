@@ -268,7 +268,15 @@
       "civ": null,
       "detail": null,
       "entity": {
-        "icon": null,
+        "icon": {
+          "category": "tech",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 0,
+          "source": "widgetui/textures/ingame/tech/000_fletching.dds",
+          "width": 4
+        },
         "id": "199",
         "kind": "tech",
         "name": "Fletching",

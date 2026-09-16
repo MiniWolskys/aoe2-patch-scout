@@ -478,16 +478,33 @@ body:not([data-ready]) {
   min-width: 0;
 }
 
+.comparison-header {
+  min-width: 0;
+}
+
 .comparison-header__spacer {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* The Export button must stay reachable at the minimum window size (D-42). */
+.comparison-header > .button {
+  flex: none;
 }
 
 .version-picker {
   min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
   border: 0;
   color: inherit;
   font: inherit;
   cursor: pointer;
+}
+
+.version-picker .tag,
+.version-picker .legend-dot {
+  flex: none;
 }
 
 .version-picker:hover {
@@ -503,8 +520,10 @@ body:not([data-ready]) {
 }
 
 .version-picker__build {
+  overflow: hidden;
   color: var(--text-3);
   font-size: var(--fs-xs);
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

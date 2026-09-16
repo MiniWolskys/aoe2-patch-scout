@@ -740,7 +740,7 @@ def _techs(run: _Run) -> None:
             continue
         names = run.new_names if after is not None else run.old_names
         name = names.record_name(source, _numeric_key(key))
-        entity = Entity("tech", key, name)
+        entity = Entity("tech", key, name, icon=_node_icon(run, "Tech", _numeric_key(key)))
         _remember_string(run, source.get("language_dll_name"))
         sort = (_GLOBAL, "", "")
         if before is None or after is None:
@@ -1083,11 +1083,15 @@ def _civ_dat(snapshot: Snapshot, index: int) -> JsonObject | None:
 
 
 def _unit_icon(run: _Run, unit_id: int) -> JsonObject | None:
+    """A unit's icon, from whichever civ's tech tree shows it as a unit or a building."""
+    return _node_icon(run, "Unit", unit_id) or _node_icon(run, "Building", unit_id)
+
+
+def _node_icon(run: _Run, use_type: str, node_id: int) -> JsonObject | None:
+    """The icon a tech tree node carries, taken from the first civ that has that node."""
     for names in (run.new_names, run.old_names):
         for internal_name in run.civ_index:
-            node = names.node(internal_name, "Unit", unit_id) or names.node(
-                internal_name, "Building", unit_id
-            )
+            node = names.node(internal_name, use_type, node_id)
             icon = node.get("icon") if node else None
             if isinstance(icon, dict) and icon.get("hash"):
                 return icon
