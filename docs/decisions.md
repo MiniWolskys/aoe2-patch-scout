@@ -142,6 +142,7 @@ Details: [genieutils-py.md](reference/genieutils-py.md#unknown-version-strings-l
 
 ### D-07 Per-civ collapsing: Decided
 A change is grouped by value across civs: "(all civs)", "(Franks only)"…, based on raw unit values (D-20).
+- **Amended 2026-09-27** (maintainer, after the first real patch): "all civilizations" means every civ in the comparison. An entity only some civs have names them when there are at most 8, and otherwise reads "all N civilizations that have it" ([diff-rules.md](design/diff-rules.md#per-civ-collapsing-d-07)).
 
 ### D-08 Diff fields come from an allowlist: Decided
 
@@ -304,8 +305,9 @@ The window has no navigation rail. A **version list** on the left replaces the s
 Taken while building the comparison (M3/M4); it answers open question 3 in
 [ui.md](design/ui.md#open-questions) and needs the maintainer's confirmation.
 - A change limited to **some** civs appears on **each of those civs' pages**, and not in Overall.
-- A change that applies to **all civs**, to all but a few ("all civs except…"), or to nothing
-  civ-specific, appears in **Overall** only.
+- A change that applies to **all civs**, to all but a few ("all civs except…"), to all the civs
+  that have the entity when there are more than 8 of them ("all 45 civilizations that have it",
+  added 2026-09-27), or to nothing civ-specific, appears in **Overall** only.
 - **Why:** "what changed for my civ" is the question users have, and Overall keeps its stated
   meaning, "changes to every civilization, with exceptions noted".
 - **Cost:** a change shared by three civs is drawn three times. The change set stores it once per

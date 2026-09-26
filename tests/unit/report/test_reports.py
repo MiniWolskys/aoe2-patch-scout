@@ -12,10 +12,11 @@ import pytest
 from support import pairs
 
 from patch_scout.diff import compare
-from patch_scout.diff.model import ChangeSet, Side
+from patch_scout.diff.model import ChangeSet, Scope, Side
 from patch_scout.i18n.catalog import Catalog, load_catalog
 from patch_scout.report import Filters, render_html, render_text
 from patch_scout.report.html import MICROSOFT_NOTICE
+from patch_scout.report.text import scope_text
 from patch_scout.store import IconStore
 
 GOLDEN = Path(__file__).resolve().parents[2] / "golden"
@@ -155,3 +156,10 @@ def test_the_html_export_escapes_game_text(
     document = render_html(nasty, catalog)
     assert "<script>x</script>" not in document
     assert "&lt;script&gt;" in document
+
+
+def test_an_entity_only_some_civs_have_says_how_many_have_it(catalog: Catalog) -> None:
+    assert scope_text(Scope("having", count=12), catalog) == ("(all 12 civilizations that have it)")
+    assert scope_text(Scope("having_except", ("Goths",), count=12), catalog) == (
+        "(all 12 civilizations that have it, except Goths)"
+    )

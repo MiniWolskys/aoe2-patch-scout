@@ -32,6 +32,7 @@
         "civs": [
           "Bluelanders"
         ],
+        "count": 0,
         "kind": "some"
       },
       "stat_icon": null,
@@ -69,6 +70,7 @@
         "civs": [
           "Bluelanders"
         ],
+        "count": 0,
         "kind": "some"
       },
       "stat_icon": null,
@@ -110,6 +112,7 @@
       "raw": "command 0",
       "scope": {
         "civs": [],
+        "count": 0,
         "kind": "global"
       },
       "stat_icon": null,
@@ -148,6 +151,7 @@
           "Redlanders",
           "Ancients"
         ],
+        "count": 0,
         "kind": "some"
       },
       "stat_icon": "hp",
@@ -186,6 +190,7 @@
           "Redlanders",
           "Ancients"
         ],
+        "count": 0,
         "kind": "some"
       },
       "stat_icon": "hp",
@@ -223,6 +228,7 @@
         "civs": [
           "Bluelanders"
         ],
+        "count": 0,
         "kind": "some"
       },
       "stat_icon": "hp",
@@ -258,6 +264,7 @@
       "raw": null,
       "scope": {
         "civs": [],
+        "count": 0,
         "kind": "all"
       },
       "stat_icon": "hp",
@@ -295,6 +302,7 @@
       "raw": null,
       "scope": {
         "civs": [],
+        "count": 0,
         "kind": "global"
       },
       "stat_icon": null,
@@ -330,6 +338,7 @@
       "raw": null,
       "scope": {
         "civs": [],
+        "count": 0,
         "kind": "all"
       },
       "stat_icon": null,
@@ -367,6 +376,7 @@
       "raw": null,
       "scope": {
         "civs": [],
+        "count": 0,
         "kind": "global"
       },
       "stat_icon": null,
@@ -402,6 +412,7 @@
       "raw": null,
       "scope": {
         "civs": [],
+        "count": 0,
         "kind": "all"
       },
       "stat_icon": null,
@@ -437,6 +448,7 @@
       "raw": null,
       "scope": {
         "civs": [],
+        "count": 0,
         "kind": "all"
       },
       "stat_icon": null,
@@ -472,6 +484,7 @@
       "raw": null,
       "scope": {
         "civs": [],
+        "count": 0,
         "kind": "all"
       },
       "stat_icon": null,
