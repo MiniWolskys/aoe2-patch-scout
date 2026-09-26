@@ -362,6 +362,25 @@ def test_a_civ_the_new_build_dropped_is_still_compared() -> None:
     assert "Beta" in removed
 
 
+def test_a_node_only_the_new_build_has_is_reported_as_added() -> None:
+    """Regression: a node absent from every civ's old tree used to raise StopIteration."""
+    civs = [_civ_record("Gaia", 0), _civ_record("Alpha", 1)]
+    old = _build(civs, _archer({1: 10}, 2))
+    tree: list[JsonValue] = [
+        {"use_type": "Unit", "node_id": 4, "node_status": "ResearchedCompleted"},
+        {"use_type": "Unit", "node_id": 5, "node_status": "ResearchedCompleted"},
+    ]
+    new = replace(_build(civs, _archer({1: 10}, 2)), tech_trees={"Alpha": tree})
+
+    changes = [
+        change
+        for change in compare(old, new).changes
+        if change.category == "civ_availability" and change.entity.id == "5"
+    ]
+
+    assert [(change.kind, change.civ) for change in changes] == [("added", None)]
+
+
 def test_civ_lists_follow_the_order_of_civilizations_json() -> None:
     """diff-rules.md: civ lists are sorted in civilizations.json order, not alphabetically."""
     civs = [

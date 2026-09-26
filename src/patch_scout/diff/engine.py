@@ -304,9 +304,9 @@ def _node_changes(
     in_scope = [name for name in civs if key in maps[name][0] or key in maps[name][1]]
     if not in_scope:
         return
+    # The new build's node when there is one; generators, so neither side is read eagerly.
     sample = next(
-        (maps[name][1][key] for name in in_scope if key in maps[name][1]),
-        next(maps[name][0][key] for name in in_scope if key in maps[name][0]),
+        nodes[key] for side in (1, 0) for name in in_scope if key in (nodes := maps[name][side])
     )
     names = run.new_names if any(key in maps[name][1] for name in in_scope) else run.old_names
     entity = Entity(
