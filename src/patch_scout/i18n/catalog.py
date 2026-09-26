@@ -42,6 +42,20 @@ class Catalog:
         except (KeyError, IndexError, ValueError) as exc:
             raise MessageFormatError(f"message {key!r}: {exc!r}") from exc
 
+    def message(self, key: str, args: Mapping[str, object]) -> str:
+        """Like `text`, but a value that is itself a `{"key", "args"}` message is resolved first.
+
+        The change set nests a field inside another, e.g. "Projectile: {field}", and stays
+        language-neutral by carrying both as keys.
+        """
+        values = {
+            name: self.message(str(value["key"]), value.get("args") or {})
+            if isinstance(value, dict) and "key" in value
+            else value
+            for name, value in args.items()
+        }
+        return self.text(key, **values)
+
     def messages(self) -> dict[str, str]:
         """Return every message this catalog can resolve; its own override the fallback's."""
         inherited = self._fallback.messages() if self._fallback is not None else {}
