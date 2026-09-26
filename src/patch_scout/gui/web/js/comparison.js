@@ -260,7 +260,7 @@ function values(change) {
 /**
  * The civ-list phrase after a change (D-07).
  * @param {(key: string, values?: Record<string, unknown>) => string} t
- * @param {{kind: string, civs: string[]} | undefined} scope
+ * @param {{kind: string, civs: string[], count?: number} | undefined} scope
  * @returns {string}
  */
 export function scopeText(t, scope) {
@@ -270,6 +270,9 @@ export function scopeText(t, scope) {
   if (scope.kind === "all") {
     return t("scope.all");
   }
+  if (scope.kind === "having") {
+    return t("scope.having", { count: scope.count ?? 0 });
+  }
   const civs = scope.civs ?? [];
   const named =
     civs.length <= 8
@@ -278,9 +281,13 @@ export function scopeText(t, scope) {
           civs: civs.slice(0, 8).join(", "),
           count: civs.length - 8,
         });
-  return scope.kind === "all_except"
-    ? t("scope.all_except", { civs: named })
-    : t("scope.some", { civs: named });
+  if (scope.kind === "all_except") {
+    return t("scope.all_except", { civs: named });
+  }
+  if (scope.kind === "having_except") {
+    return t("scope.having_except", { count: scope.count ?? 0, civs: named });
+  }
+  return t("scope.some", { civs: named });
 }
 
 /**

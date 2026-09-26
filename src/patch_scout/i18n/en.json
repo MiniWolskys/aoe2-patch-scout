@@ -215,6 +215,8 @@
   "scope.all": "(all civilizations)",
   "scope.all_except": "(all civilizations except {civs})",
   "scope.and_more": "{civs} and {count} more",
+  "scope.having": "(all {count} civilizations that have it)",
+  "scope.having_except": "(all {count} civilizations that have it, except {civs})",
   "scope.some": "({civs})",
   "settings.backups": "Keep a raw backup of every capture",
   "settings.backups_help": "Backups let a fixed reader re-capture an old build. They are never exported.",
