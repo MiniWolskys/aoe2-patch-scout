@@ -17,6 +17,7 @@
         "id": "4",
         "kind": "unit",
         "name": "Archer",
+        "named": true,
         "where": "Archery Range"
       },
       "field": {
@@ -55,6 +56,7 @@
         "id": "199",
         "kind": "tech",
         "name": "Fletching",
+        "named": true,
         "where": null
       },
       "field": {
@@ -99,6 +101,7 @@
         "id": "Redlanders",
         "kind": "civ",
         "name": "Redlanders",
+        "named": true,
         "where": null
       },
       "field": {
@@ -135,6 +138,7 @@
         "id": "4",
         "kind": "unit",
         "name": "Archer",
+        "named": true,
         "where": null
       },
       "field": {
@@ -174,6 +178,7 @@
         "id": "4",
         "kind": "unit",
         "name": "Archer",
+        "named": true,
         "where": null
       },
       "field": {
@@ -213,6 +218,7 @@
         "id": "4",
         "kind": "unit",
         "name": "Archer",
+        "named": true,
         "where": null
       },
       "field": {
@@ -251,6 +257,7 @@
         "id": "87",
         "kind": "unit",
         "name": "Archery Range",
+        "named": true,
         "where": null
       },
       "field": {
@@ -287,6 +294,7 @@
         "id": "199",
         "kind": "tech",
         "name": "Fletching",
+        "named": true,
         "where": null
       },
       "field": {
@@ -325,6 +333,7 @@
         "id": "4",
         "kind": "unit",
         "name": "Archer",
+        "named": true,
         "where": "Archery Range"
       },
       "field": {
@@ -366,6 +375,7 @@
         "id": "99001",
         "kind": "string",
         "name": "99001",
+        "named": true,
         "where": null
       },
       "field": null,
@@ -399,6 +409,7 @@
         "id": "4",
         "kind": "unit",
         "name": "Archer",
+        "named": true,
         "where": "Archery Range"
       },
       "field": {
@@ -435,6 +446,7 @@
         "id": "87",
         "kind": "building",
         "name": "Archery Range",
+        "named": true,
         "where": null
       },
       "field": {
@@ -471,6 +483,7 @@
         "id": "199",
         "kind": "tech",
         "name": "Fletching",
+        "named": true,
         "where": null
       },
       "field": {

@@ -313,6 +313,15 @@ Taken while building the comparison (M3/M4); it answers open question 3 in
 - **Cost:** a change shared by three civs is drawn three times. The change set stores it once per
   civ, so the counts in the civ list stay right.
 
+### D-45 Objects with no name are hidden by default: Decided
+Chosen by the maintainer on 2026-09-27, after the first real patch showed dozens of `#<id>` rows.
+- **Named first:** techs with no display name use their internal `.dat` name (civ bonuses read
+  e.g. "C-Bonus, Docks garrison"), and projectiles are reported on the units that fire them (D-37).
+- **What's left** with no name is marked in the change set, hidden by default, and counted in a
+  notice. "Show objects with no name" shows it in the app and the exports.
+- **Chosen over** removing them from the change set: the reader could no longer check them.
+- Details: [diff-rules.md](design/diff-rules.md#values-and-formatting).
+
 ### D-42 Window size: Decided
 Chosen by the maintainer on 2026-09-15, in the app shell spec.
 - The window opens at **1440×900**, centred on the primary screen, when that screen has room for it (at least 1440×980, leaving space for the title bar and the taskbar); otherwise it opens maximized.

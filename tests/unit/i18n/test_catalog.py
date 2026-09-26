@@ -30,6 +30,14 @@ def test_text_fills_named_placeholders() -> None:
     )
 
 
+def test_message_resolves_a_nested_message_given_as_a_value() -> None:
+    catalog = Catalog({"field.projectile": "Projectile: {field}", "field.attacks": "Attack vs {c}"})
+
+    assert catalog.message(
+        "field.projectile", {"field": {"key": "field.attacks", "args": {"c": "#3"}}}
+    ) == ("Projectile: Attack vs #3")
+
+
 def test_text_raises_when_a_placeholder_value_is_missing() -> None:
     catalog = Catalog({"capture.reading": "Reading {file}"})
 
