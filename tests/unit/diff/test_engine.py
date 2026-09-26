@@ -381,6 +381,54 @@ def test_a_node_only_the_new_build_has_is_reported_as_added() -> None:
     assert [(change.kind, change.civ) for change in changes] == [("added", None)]
 
 
+def test_a_node_only_one_civ_had_is_removed_for_that_civ_only() -> None:
+    """Regression: the Franks losing their own node read "(all civilizations)"."""
+    civs = [_civ_record("Gaia", 0), _civ_record("Alpha", 1), _civ_record("Beta", 2)]
+    shared: JsonValue = {"use_type": "Unit", "node_id": 4, "node_status": "ResearchedCompleted"}
+    own: JsonValue = {"use_type": "Tech", "node_id": 9, "node_status": "ResearchedCompleted"}
+    old = replace(
+        _build(civs, _archer({1: 10, 2: 10}, 3)),
+        tech_trees={"Alpha": [shared, own], "Beta": [shared]},
+    )
+    new = replace(
+        _build(civs, _archer({1: 10, 2: 10}, 3)),
+        tech_trees={"Alpha": [shared], "Beta": [shared]},
+    )
+
+    changes = [
+        change
+        for change in compare(old, new).changes
+        if change.category == "civ_availability" and change.entity.id == "9"
+    ]
+
+    assert [(change.kind, change.scope.kind, change.civ) for change in changes] == [
+        ("removed", "some", "Alpha")
+    ]
+
+
+def test_a_civ_added_in_the_new_build_does_not_split_a_shared_change() -> None:
+    """Regression: the new civs' "added" values made every existing civ get named one by one."""
+    old = _build(
+        [_civ_record("Gaia", 0), _civ_record("Alpha", 1), _civ_record("Beta", 2)],
+        _archer({1: 10, 2: 10}, 3),
+    )
+    new = _build(
+        [
+            _civ_record("Gaia", 0),
+            _civ_record("Alpha", 1),
+            _civ_record("Beta", 2),
+            _civ_record("Newcomer", 3),
+        ],
+        _archer({1: 12, 2: 12, 3: 12}, 4),
+    )
+
+    changes = [change for change in compare(old, new).changes if change.category == "unit_stats"]
+
+    assert [(change.old, change.new, change.scope.kind, change.civ) for change in changes] == [
+        ("10", "12", "all", None)
+    ]
+
+
 def test_civ_lists_follow_the_order_of_civilizations_json() -> None:
     """diff-rules.md: civ lists are sorted in civilizations.json order, not alphabetically."""
     civs = [

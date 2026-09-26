@@ -111,21 +111,29 @@ Collapsing is applied to **every per-civ change**, not only unit stats: a tech t
 For each unit ID and allowlisted field of the raw unit records:
 
 1. **Scope.** Consider the civs where the unit exists in either snapshot and is **reachable** (see [Reachability](#reachability-d-37)). Unreachable civ copies are ignored unless "show unreachable" is on.
+   - **Civs only one build has** (a civ added or removed) are left out when the entity exists in both builds: they have no value to compare on one side. Otherwise every shared unit would read "added" for a new civ, and split each real change into two groups. A brand-new entity keeps them. The same rule applies to tech tree nodes.
 2. **Values.** Compute each civ's old and new value.
 3. **Changed civs.** Collect every civ where old ≠ new.
 4. **Grouping.** Group the changed civs by the (old, new) value pair.
 5. **Wording** (English catalog shown; the GUI may render groups as badges):
 
+"All civilizations" is measured against **every civ in the comparison** (the civs with a tech tree in either build), never against the in-scope civs alone. Otherwise an entity only the Franks have would read "(all civilizations)".
+
 | Situation | Output |
 |---|---|
-| Changed in every in-scope civ, one value pair | `Knight — HP 100 → 110 (all civs)` |
-| One value pair, most civs but not all | `Knight — HP 100 → 110 (all civs except Franks, Persians)` |
-| One value pair, few civs | `Knight — HP 120 → 130 (Franks)` |
+| One value pair, every civ in the comparison is in scope and changed | `Knight — HP 100 → 110 (all civilizations)` |
+| One value pair, every civ in scope, most changed | `Knight — HP 100 → 110 (all civilizations except Franks, Persians)` |
+| One value pair, at most 8 civs in scope, all changed | `Throwing Axeman — LOS 5 → 7 (Franks)` |
+| One value pair, more than 8 civs in scope (not all), all changed | `Onager — attack 50 → 55 (all 45 civilizations that have it)` |
+| One value pair, more than 8 civs in scope (not all), most changed | `(all 45 civilizations that have it, except Goths)` |
+| One value pair, few civs changed | `Knight — HP 120 → 130 (Franks)` |
 | Several value pairs | One line per group, largest group first |
 
 **Thresholds:**
 - Name at most 8 civs in a list.
-- Use the "all civs except" form when listing the exceptions is shorter than listing the changed civs.
+- Use the "except" forms when listing the exceptions is shorter than listing the changed civs.
+
+**Where it shows (D-44):** a change that names its civs is on each of those civs' pages; every other form, including "all N civilizations that have it", is on Overall.
 
 **Civ-specific changes go first.** A change limited to some civs usually means a civ bonus changed, so within a category those lines come before "all civs" lines.
 

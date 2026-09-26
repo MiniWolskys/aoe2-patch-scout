@@ -34,7 +34,9 @@ type Kind = Literal[
     "icon_redrawn",
     "icon_remapped",
 ]
-type ScopeKind = Literal["global", "all", "all_except", "some"]
+# "all" and "all_except" count every civ in the comparison; "having" and "having_except" count
+# only the civs that have the entity, when there are too many of them to name.
+type ScopeKind = Literal["global", "all", "all_except", "having", "having_except", "some"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,15 +78,17 @@ class Scope:
 
     kind: ScopeKind = "global"
     civs: tuple[str, ...] = ()
+    # How many civs have the entity; set for "having" and "having_except" only.
+    count: int = 0
 
     def to_json(self) -> JsonObject:
         """The form the GUI and the exports read."""
-        return {"kind": self.kind, "civs": list(self.civs)}
+        return {"kind": self.kind, "civs": list(self.civs), "count": self.count}
 
     @property
     def affected(self) -> tuple[str, ...]:
         """The civs named in the scope; empty for a global or all-civs change."""
-        return self.civs if self.kind in ("some", "all_except") else ()
+        return self.civs if self.kind in ("some", "all_except", "having_except") else ()
 
 
 @dataclass(frozen=True, slots=True)
