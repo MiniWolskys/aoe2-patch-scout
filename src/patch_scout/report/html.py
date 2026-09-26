@@ -3,12 +3,19 @@
 
 Everything is inline: the stylesheet, and the icons as data URIs. The file opens from anywhere,
 makes no network request (D-02), and carries the Microsoft notice in its footer (legal.md).
+
+Each icon is embedded once, as a CSS class, and shrunk to twice the size it's shown at: a real
+patch reuses a few hundred icons across thousands of rows.
 """
 
 import base64
 import html
+import io
+import re
 from collections.abc import Callable, Sequence
 from typing import Final
+
+from PIL import Image
 
 from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Side
 from patch_scout.i18n.catalog import Catalog
@@ -18,6 +25,10 @@ from patch_scout.snapshot import JsonObject
 type IconReader = Callable[[str], bytes | None]
 
 ARROW: Final = "→"
+# Icons are shown at 40 px; 80 keeps them sharp on high-DPI screens.
+ICON_PIXELS: Final = 80
+# Icon store digests are hex; anything else is left out rather than put into a class name.
+_DIGEST: Final = re.compile(r"[0-9a-f]{8,128}")
 
 # Forge tokens (docs/design/ui.md); inline, because the file must stand on its own.
 STYLESHEET: Final = """
@@ -42,8 +53,9 @@ td.entity { font-weight: 500; }
 td.field { color: #aa9e8a; width: 30%; }
 td.values { width: 24%; white-space: nowrap; }
 td.scope { color: #aa9e8a; font-size: 13.5px; }
-img { width: 40px; height: 40px; border-radius: 2px; outline: 1px solid #51432f;
-  outline-offset: 1px; background: #0e0c0a; }
+.icon { display: block; width: 40px; height: 40px; border-radius: 2px;
+  outline: 1px solid #51432f; outline-offset: 1px; background-color: #0e0c0a;
+  background-size: cover; }
 .old { color: #e35b50; }
 .new { color: #92dcaa; }
 del { color: #e35b50; background: #2c1a16; text-decoration: line-through; }
@@ -74,20 +86,24 @@ def render(
     """Return the whole comparison as one self-contained HTML document."""
     chosen = filters or Filters()
     title = catalog.text("report.title")
+    used: dict[str, str] = {}
+    body = (
+        f"<p>{html.escape(catalog.text('report.identical'))}</p>"
+        if change_set.identical
+        else _body(change_set, catalog, chosen, _IconClasses(icons, used))
+    )
     parts = [
         "<!doctype html>",
         '<html lang="en"><head><meta charset="utf-8">',
         f"<title>{html.escape(title)}</title>",
         f"<style>{STYLESHEET}</style>",
+        _icon_styles(used),
         "</head><body><main>",
         f"<h1>{html.escape(title)}</h1>",
         _sides(change_set, catalog),
         _notices(change_set, catalog),
+        body,
     ]
-    if change_set.identical:
-        parts.append(f"<p>{html.escape(catalog.text('report.identical'))}</p>")
-    else:
-        parts.append(_body(change_set, catalog, chosen, icons))
     parts.append(_footer(tool_version))
     parts.append("</main></body></html>")
     return "\n".join(part for part in parts if part) + "\n"
@@ -127,9 +143,7 @@ def _notices(change_set: ChangeSet, catalog: Catalog) -> str:
     )
 
 
-def _body(
-    change_set: ChangeSet, catalog: Catalog, filters: Filters, icons: IconReader | None
-) -> str:
+def _body(change_set: ChangeSet, catalog: Catalog, filters: Filters, icons: "_IconClasses") -> str:
     pages: list[tuple[str, str | None]] = [(catalog.text("report.overall"), None)]
     pages += [(civ.name, civ.internal_name) for civ in change_set.civs]
     sections: list[str] = []
@@ -149,12 +163,12 @@ def _body(
     return "".join(sections)
 
 
-def _table(changes: Sequence[Change], catalog: Catalog, icons: IconReader | None) -> str:
+def _table(changes: Sequence[Change], catalog: Catalog, icons: "_IconClasses") -> str:
     rows = [_row(change, catalog, icons) for change in changes]
     return "<table>" + "".join(rows) + "</table>"
 
 
-def _row(change: Change, catalog: Catalog, icons: IconReader | None) -> str:
+def _row(change: Change, catalog: Catalog, icons: "_IconClasses") -> str:
     entity = change.entity
     name = html.escape(entity.name)
     if change.kind in ("added", "removed"):
@@ -164,7 +178,7 @@ def _row(change: Change, catalog: Catalog, icons: IconReader | None) -> str:
     field = html.escape(catalog.text(change.field.key, **change.field.args)) if change.field else ""
     return (
         "<tr>"
-        f'<td class="icon">{_icon(entity.icon, icons)}</td>'
+        f'<td class="icon">{icons.span(entity.icon)}</td>'
         f'<td class="entity">{name}</td>'
         f'<td class="field">{field}</td>'
         f'<td class="values">{_values(change)}</td>'
@@ -197,17 +211,52 @@ def _word(kind: str, text: str) -> str:
     return escaped
 
 
-def _icon(icon: JsonObject | None, icons: IconReader | None) -> str:
-    if icon is None or icons is None:
+class _IconClasses:
+    """Hands out one CSS class per icon, and remembers each icon's data URI for the head."""
+
+    def __init__(self, read: IconReader | None, used: dict[str, str]) -> None:
+        self._read = read
+        self._used = used
+        self._missing: set[str] = set()
+
+    def span(self, icon: JsonObject | None) -> str:
+        """The markup for one row's icon; empty when there is no icon to show."""
+        if icon is None or self._read is None:
+            return ""
+        digest = icon.get("hash")
+        if not isinstance(digest, str) or not _DIGEST.fullmatch(digest):
+            return ""
+        if digest not in self._used and digest not in self._missing:
+            data = self._read(digest)
+            if data is None:
+                self._missing.add(digest)
+            else:
+                self._used[digest] = base64.b64encode(shrink_icon(data)).decode("ascii")
+        if digest not in self._used:
+            return ""
+        return f'<span class="icon i-{digest}"></span>'
+
+
+def shrink_icon(png: bytes) -> bytes:
+    """Scale an icon down to ICON_PIXELS, keeping its proportions; smaller ones stay as they are."""
+    with Image.open(io.BytesIO(png)) as image:
+        if max(image.size) <= ICON_PIXELS:
+            return png
+        image.thumbnail((ICON_PIXELS, ICON_PIXELS), Image.Resampling.LANCZOS)
+        out = io.BytesIO()
+        image.save(out, format="PNG", optimize=True)
+        return out.getvalue()
+
+
+def _icon_styles(used: dict[str, str]) -> str:
+    """One rule per icon, in first-use order so the file is the same on every export."""
+    if not used:
         return ""
-    digest = icon.get("hash")
-    if not isinstance(digest, str):
-        return ""
-    data = icons(digest)
-    if data is None:
-        return ""
-    encoded = base64.b64encode(data).decode("ascii")
-    return f'<img alt="" src="data:image/png;base64,{encoded}">'
+    rules = "".join(
+        f".i-{digest}{{background-image:url(data:image/png;base64,{encoded})}}\n"
+        for digest, encoded in used.items()
+    )
+    return f"<style>\n{rules}</style>"
 
 
 def _footer(tool_version: str) -> str:
