@@ -31,7 +31,7 @@
         <button
           type="button"
           class="button button--accent"
-          disabled
+          id="capture-button"
           data-i18n-attr="aria-label:version_list.capture"
         >
           <span class="icon icon--capture" aria-hidden="true"></span>
@@ -40,6 +40,7 @@
         <button
           type="button"
           class="button button--ghost"
+          id="import-button"
           disabled
           data-i18n-attr="aria-label:version_list.import"
         >
@@ -61,7 +62,7 @@
         <button
           type="button"
           class="button button--ghost button--small"
-          disabled
+          id="diagnostics-button"
           data-i18n-attr="aria-label:version_list.diagnostics"
         >
           <span class="icon icon--diagnostics" aria-hidden="true"></span>
@@ -70,7 +71,7 @@
         <button
           type="button"
           class="button button--ghost button--small"
-          disabled
+          id="settings-button"
           data-i18n-attr="aria-label:version_list.settings"
         >
           <span class="icon icon--settings" aria-hidden="true"></span>
@@ -79,7 +80,7 @@
       </div>
     </aside>
 
-    <main class="main">
+    <main class="main" id="main">
       <section class="first-launch" id="first-launch" aria-labelledby="first-launch-title">
         <p class="label" data-i18n="first_launch.label"></p>
         <h1 class="first-launch__title" id="first-launch-title" data-i18n="first_launch.title"></h1>
@@ -92,7 +93,7 @@
             <button
               type="button"
               class="button button--accent"
-              disabled
+              id="first-launch-capture"
               data-i18n="first_launch.capture.action"
             ></button>
           </article>
@@ -104,6 +105,7 @@
               class="button button--ghost"
               disabled
               data-i18n="first_launch.import.action"
+              data-i18n-attr="title:version_list.import_later"
             ></button>
           </article>
         </div>
@@ -113,6 +115,244 @@
           <span data-i18n="first_launch.preview_warning"></span>
         </p>
       </section>
+
+      <!-- Capture progress (ui.md, "Capture") -->
+      <section class="view" id="capture-view" hidden aria-labelledby="capture-view-title">
+        <h1 class="view__title" id="capture-view-title"></h1>
+        <p class="view__meta" id="capture-view-meta"></p>
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="capture-progress">
+          <div class="progress__bar" id="capture-progress-bar"></div>
+        </div>
+        <ol class="steps" id="capture-steps"></ol>
+        <p class="view__result" id="capture-result"></p>
+        <div class="view__actions">
+          <button type="button" class="button button--ghost" id="capture-cancel" data-i18n="progress.cancel"></button>
+          <button type="button" class="button button--accent" id="capture-open" hidden data-i18n="progress.open"></button>
+          <button type="button" class="button button--ghost" id="capture-anyway" hidden data-i18n="progress.capture_anyway"></button>
+        </div>
+      </section>
+
+      <!-- Version details (ui.md, "Version details") -->
+      <section class="view" id="details-view" hidden aria-labelledby="details-title">
+        <button type="button" class="view__back" id="details-back" hidden data-i18n="details.back_to_comparison"></button>
+        <h1 class="view__title">
+          <span id="details-title" tabindex="0" role="button" data-i18n-attr="title:details.rename_hint"></span>
+          <span class="badge-prerelease" id="details-prerelease-badge" hidden data-i18n="details.prerelease_badge"></span>
+        </h1>
+        <p class="view__meta" id="details-meta"></p>
+
+        <dl class="fields" id="details-fields"></dl>
+
+        <label class="field-row">
+          <input type="checkbox" class="checkbox" id="details-prerelease">
+          <span data-i18n="details.prerelease"></span>
+        </label>
+        <p class="help" data-i18n="details.prerelease_help"></p>
+
+        <label class="field-row field-row--stack">
+          <span class="label" data-i18n="details.notes"></span>
+          <textarea class="input input--area" id="details-notes" rows="3"></textarea>
+        </label>
+
+        <div class="view__actions">
+          <button type="button" class="button button--accent" id="details-compare" data-i18n="details.compare_with"></button>
+          <button type="button" class="button button--ghost" id="details-diagnostics" data-i18n="details.open_diagnostics"></button>
+          <button type="button" class="button button--ghost" id="details-delete" data-i18n="details.delete"></button>
+        </div>
+      </section>
+
+      <!-- Comparison (ui.md, "Comparison") -->
+      <section class="comparison" id="comparison-view" hidden aria-labelledby="comparison-title">
+        <header class="comparison-header">
+          <button type="button" class="version-picker" id="picker-old">
+            <span class="legend-dot legend-dot--old" aria-hidden="true"></span>
+            <span class="tag tag--old" data-i18n="comparison.old"></span>
+            <span class="version-picker__name" id="picker-old-name"></span>
+            <span class="version-picker__build" id="picker-old-build"></span>
+          </button>
+          <button type="button" class="button icon-button" id="comparison-swap" data-i18n-attr="aria-label:comparison.swap title:comparison.swap">
+            <span aria-hidden="true">⇄</span>
+          </button>
+          <button type="button" class="version-picker" id="picker-new">
+            <span class="legend-dot legend-dot--new" aria-hidden="true"></span>
+            <span class="tag tag--new" data-i18n="comparison.new"></span>
+            <span class="version-picker__name" id="picker-new-name"></span>
+            <span class="version-picker__build" id="picker-new-build"></span>
+          </button>
+          <div class="comparison-header__spacer"></div>
+          <button type="button" class="button button--ghost" id="comparison-filters" aria-expanded="false" data-i18n="comparison.filters"></button>
+          <button type="button" class="button button--accent" id="comparison-export" data-i18n="comparison.export"></button>
+        </header>
+
+        <div class="filters" id="filters-panel" hidden>
+          <label class="field-row">
+            <input type="checkbox" class="checkbox" id="filter-low">
+            <span data-i18n="comparison.show_low"></span>
+          </label>
+          <label class="field-row">
+            <input type="checkbox" class="checkbox" id="filter-unreachable">
+            <span data-i18n="comparison.show_unreachable"></span>
+          </label>
+          <label class="field-row field-row--grow">
+            <span class="label" data-i18n="comparison.search"></span>
+            <input type="search" class="input" id="filter-search" data-i18n-attr="placeholder:comparison.search_placeholder">
+          </label>
+        </div>
+
+        <div class="notice" id="comparison-notice" hidden>
+          <span class="icon icon--warning" aria-hidden="true"></span>
+          <span class="notice__text" id="comparison-notice-text"></span>
+        </div>
+
+        <div class="comparison__body">
+          <nav class="civ-list" id="civ-list" aria-label="Civilizations"></nav>
+          <div class="comparison__page" id="comparison-page">
+            <h1 class="page__title" id="comparison-title"></h1>
+            <p class="page__subtitle" id="comparison-subtitle"></p>
+            <div id="comparison-changes"></div>
+          </div>
+        </div>
+      </section>
     </main>
+
+    <!-- Capture dialog (ui.md, "Capture") -->
+    <div class="scrim" id="capture-scrim" hidden>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="capture-dialog-title">
+        <h2 class="dialog__title" id="capture-dialog-title" data-i18n="capture.title"></h2>
+        <div class="dialog__body">
+          <label class="field-row field-row--stack">
+            <span class="label" data-i18n="capture.folder"></span>
+            <span class="field-row--inline">
+              <input type="text" class="input" id="capture-folder" data-i18n-attr="placeholder:capture.folder_placeholder">
+              <button type="button" class="button button--ghost" id="capture-browse" data-i18n="capture.browse"></button>
+            </span>
+          </label>
+          <p class="help" id="capture-folder-help"></p>
+
+          <label class="field-row field-row--stack">
+            <span class="label" data-i18n="capture.label"></span>
+            <input type="text" class="input" id="capture-label">
+          </label>
+
+          <label class="field-row">
+            <input type="checkbox" class="checkbox" id="capture-prerelease">
+            <span data-i18n="capture.prerelease"></span>
+          </label>
+
+          <p class="first-launch__warning">
+            <span class="icon icon--warning" aria-hidden="true"></span>
+            <span data-i18n="capture.pup_reminder"></span>
+          </p>
+        </div>
+        <div class="dialog__actions">
+          <button type="button" class="button button--ghost" id="capture-dialog-cancel" data-i18n="common.cancel"></button>
+          <button type="button" class="button button--accent" id="capture-start" data-i18n="capture.start"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pick a version to compare with (ui.md, "Opening and comparing") -->
+    <div class="scrim" id="pick-scrim" hidden>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="pick-title">
+        <h2 class="dialog__title" id="pick-title" data-i18n="pick.title"></h2>
+        <div class="dialog__body">
+          <ul class="pick-list" id="pick-list"></ul>
+          <p class="help" id="pick-empty" hidden data-i18n="pick.empty"></p>
+        </div>
+        <div class="dialog__actions">
+          <button type="button" class="button button--ghost" id="pick-cancel" data-i18n="common.cancel"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export (P-13) -->
+    <div class="scrim" id="export-scrim" hidden>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="export-title">
+        <h2 class="dialog__title" id="export-title" data-i18n="export.title"></h2>
+        <div class="dialog__body">
+          <p class="help" data-i18n="export.help"></p>
+          <p class="first-launch__warning" id="export-embargo" hidden>
+            <span class="icon icon--warning" aria-hidden="true"></span>
+            <span data-i18n="export.embargo"></span>
+          </p>
+          <div class="view__actions">
+            <button type="button" class="button button--accent" id="export-copy" data-i18n="export.copy"></button>
+            <button type="button" class="button button--ghost" id="export-text" data-i18n="export.save_text"></button>
+            <button type="button" class="button button--ghost" id="export-html" data-i18n="export.save_html"></button>
+          </div>
+          <p class="help" id="export-status" aria-live="polite"></p>
+          <pre class="preview" id="export-preview"></pre>
+        </div>
+        <div class="dialog__actions">
+          <button type="button" class="button button--ghost" id="export-close" data-i18n="common.close"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings (P-10, P-19) -->
+    <div class="scrim" id="settings-scrim" hidden>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <h2 class="dialog__title" id="settings-title" data-i18n="settings.title"></h2>
+        <div class="dialog__body">
+          <dl class="fields">
+            <dt class="label" data-i18n="settings.data_folder"></dt>
+            <dd class="mono" id="settings-folder"></dd>
+          </dl>
+          <label class="field-row">
+            <input type="checkbox" class="checkbox" id="settings-backups">
+            <span data-i18n="settings.backups"></span>
+          </label>
+          <p class="help" data-i18n="settings.backups_help"></p>
+          <div class="view__actions">
+            <button type="button" class="button button--ghost" id="settings-purge" data-i18n="settings.purge"></button>
+          </div>
+          <p class="help" id="settings-status" aria-live="polite"></p>
+        </div>
+        <div class="dialog__actions">
+          <button type="button" class="button button--ghost" id="settings-close" data-i18n="common.close"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnostics (P-08: this replaces a CLI) -->
+    <div class="scrim" id="diagnostics-scrim" hidden>
+      <div class="dialog dialog--wide" role="dialog" aria-modal="true" aria-labelledby="diagnostics-title">
+        <h2 class="dialog__title" id="diagnostics-title" data-i18n="diagnostics.title"></h2>
+        <div class="dialog__body">
+          <h3 class="label" data-i18n="diagnostics.environment"></h3>
+          <dl class="fields" id="diagnostics-environment"></dl>
+          <h3 class="label" data-i18n="diagnostics.gates"></h3>
+          <div id="diagnostics-gates"></div>
+          <h3 class="label" data-i18n="diagnostics.log"></h3>
+          <pre class="preview" id="diagnostics-log"></pre>
+          <h3 class="label" data-i18n="diagnostics.inspector"></h3>
+          <div class="field-row">
+            <select class="input" id="diagnostics-version"></select>
+            <select class="input" id="diagnostics-section"></select>
+          </div>
+          <pre class="preview" id="diagnostics-section-body"></pre>
+        </div>
+        <div class="dialog__actions">
+          <button type="button" class="button button--ghost" id="diagnostics-copy" data-i18n="diagnostics.copy"></button>
+          <button type="button" class="button button--ghost" id="diagnostics-close" data-i18n="common.close"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation (delete, capture anyway) -->
+    <div class="scrim" id="confirm-scrim" hidden>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <h2 class="dialog__title" id="confirm-title"></h2>
+        <div class="dialog__body">
+          <p id="confirm-text"></p>
+        </div>
+        <div class="dialog__actions">
+          <button type="button" class="button button--ghost" id="confirm-no" data-i18n="common.cancel"></button>
+          <button type="button" class="button button--accent" id="confirm-yes" data-i18n="common.confirm"></button>
+        </div>
+      </div>
+    </div>
+
+    <p class="toast" id="toast" role="status" hidden></p>
   </body>
 </html>

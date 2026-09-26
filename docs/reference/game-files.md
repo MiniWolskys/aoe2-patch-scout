@@ -124,6 +124,14 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
 - **Effects.** Lists of commands: modify attribute, enable/disable unit, upgrade unit, disable tech, resource modifiers…
   - Civ bonuses, team bonuses, Blacksmith-style upgrades and each civ's disabled units and techs are all effects.
   - Each civ points to its tech tree effect (what it can't have) and its team bonus effect.
+- **Name string IDs** [verified 101.103.48987.0]: of the 2,921 named units and techs in the
+  file, 813 do **not** resolve in the English table, mostly internal techs sharing the
+  placeholder ID 7000, and scenario-only objects. Of the **10,167 records the tech trees
+  name, all 10,167 resolve.** So a sanity check on name IDs must look at the
+  tech-tree-referenced records, not at every record in the file.
+- **Value ranges over every civ** [verified 101.103.48987.0]: hit points -1000 to 20000,
+  line of sight **-1** to 21 (-1 means unset, on 432 records), speed 0 to 20, garrison
+  capacity 0 to 30, tech research time **-1** to 190.
 - **Where civ bonuses live** [verified 101.103.48987.0]: in effects only, never in the per-civ unit copies. Knight (unit 38) has 100 HP in all 60 civs, Franks included. A civ reaches its effects in three ways:
   - `Civ.tech_tree_id` points to its tech tree effect, named "<Civ> Tech Tree": what the civ can't have.
   - `Civ.team_bonus_id` points to its team bonus effect, named "<Civ> Team Bonus".
@@ -318,6 +326,10 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
   - Because of the two channel orders, hash decoded RGBA pixels, never the raw file bytes (P-06).
 
 ### Other icon sets
+- **Image paths in `civilizations.json`** (`tech_tree_image_path`, `emblem_image_path`,
+  `unique_unit_image_paths`) start with `/resources/...` and are relative to
+  `resources\_common\wpfg\`, e.g. `/resources/civ_emblems/britons.png`.
+  [verified 101.103.48987.0]
 - Unique unit PNGs: `resources\_common\wpfg\resources\uniticons\NNN_50730.png` (95 files). [verified]
 - Civ emblems: `resources\_common\wpfg\resources\civ_emblems\` (62) and `widgetui\textures\ingame\emblems\` (59). [verified]
 - Stat icons: `widgetui\textures\ingame\staticons\`: 29 PNGs, 66×66 (two are 69×66). They are extracted at capture (D-09). [verified]
@@ -330,6 +342,7 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
     - `garrison`, `convert`, `workrate`, `blastRadius`, `hpRegen`, `hpLoss`.
   - **Less certain:** `transport`, the bleed and bypass damage variants, and six `powerup*` icons.
   - **Missing:** this folder has no icon for line of sight or train time; those need text labels (D-09 fallback).
+  - **In use:** the 19 keys listed in [snapshot-format.md](../design/snapshot-format.md#stat_icons).
   - File name case varies (`reloadTime.png`), so match names case-insensitively.
 - Age and legend icons: `widgetui\textures\menu\techtree\`.
 

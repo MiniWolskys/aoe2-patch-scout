@@ -41,26 +41,34 @@ def test_every_translated_attribute_is_filled(open_shell: OpenShell) -> None:
 def test_first_launch_shows_the_headline_and_preview_warning(open_shell: OpenShell) -> None:
     page = open_shell()
 
-    expect(page.get_by_role("heading", level=1)).to_have_text(
+    first_launch = page.locator("#first-launch")
+    expect(first_launch.get_by_role("heading", level=1)).to_have_text(
         "You need two versions of the game to compare"
     )
     expect(
-        page.get_by_text(
+        first_launch.get_by_text(
             "Getting a preview build? Capture the live version before you switch Steam to it."
         )
     ).to_be_visible()
 
 
-def test_controls_for_later_features_are_visible_but_disabled(open_shell: OpenShell) -> None:
+def test_the_shell_controls_are_ready_to_use(open_shell: OpenShell) -> None:
     page = open_shell()
 
-    expected = [("Capture new version", 2), ("Import", 2), ("Diagnostics", 1), ("Settings", 1)]
-    for name, count in expected:
+    for name, count in [("Capture new version", 2), ("Diagnostics", 1), ("Settings", 1)]:
         buttons = page.get_by_role("button", name=name, exact=True)
         expect(buttons).to_have_count(count)
         for index in range(count):
-            expect(buttons.nth(index)).to_be_visible()
-            expect(buttons.nth(index)).to_be_disabled()
+            expect(buttons.nth(index)).to_be_enabled()
+
+
+def test_import_is_shown_but_not_available_yet(open_shell: OpenShell) -> None:
+    page = open_shell()
+
+    buttons = page.get_by_role("button", name="Import", exact=True)
+    expect(buttons).to_have_count(2)
+    for index in range(2):
+        expect(buttons.nth(index)).to_be_disabled()
 
 
 def test_the_bundled_fonts_load(open_shell: OpenShell) -> None:

@@ -41,7 +41,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 - **Order:** newest game build first.
 - **Row:** label, then `build · capture date`. On the right:
   - a flag for pre-release versions;
-  - a warning icon for versions without stats;
+  - a small text tag for versions without stats. It was going to be a second icon, but only one warning glyph is vendored and drawing another would break D-43's "copied unedited from Lucide";
   - the OLD or NEW tag when the version is in the comparison.
 
   Both icons have a tooltip.
@@ -145,13 +145,14 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 
 1. **Civ bonuses and unit stats (D-20) in the civ-navigated comparison.** Where do a civ's bonus text, effect sentences and the unit stats view go?
 2. **Categories inside a civ's page.** Are entries grouped by category (diff-rules.md) or listed as one list?
-3. **Changes shared by a few civs** (not "all except"): do they appear under each of those civs, in Overall, or both?
+3. ~~**Changes shared by a few civs**~~ **Answered by D-44** (Proposed): under each of those civs, not in Overall.
 4. **Civ list order:** alphabetical (easier to scan) or `civilizations.json` order (the change set's order)?
 5. **Filters and search:** low-priority categories, unreachable units, all fields. Where do they go?
 6. **PNG export of a selected section:** how is a section selected?
 7. **Collapsed list during a capture:** show progress on the Capture button.
 8. ~~Minimum window size~~ **Decided in D-42:** 1440×900 when the screen has room, maximized otherwise; minimum 1120×640.
 9. **Chronicles civs (D-38):**
+   - **Built:** their own group at the end of the civ list, under a small-caps heading. Still to confirm, and the counting question below is still open.
    - Do they get their own group at the end of the civ list, or sit behind a filter?
    - Does "all civs" in Overall count them, or would every base-civ change read "all civs except" the six Chronicles civs?
 
