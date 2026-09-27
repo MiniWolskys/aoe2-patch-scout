@@ -53,7 +53,7 @@ td.entity { font-weight: 500; }
 td.field { color: #aa9e8a; width: 30%; }
 td.values { width: 24%; white-space: nowrap; }
 td.scope { color: #aa9e8a; font-size: 13.5px; }
-.icon { display: block; width: 40px; height: 40px; border-radius: 2px;
+.game-icon { display: block; width: 40px; height: 40px; border-radius: 2px;
   outline: 1px solid #51432f; outline-offset: 1px; background-color: #0e0c0a;
   background-size: cover; }
 .old { color: #e35b50; }
@@ -234,7 +234,7 @@ class _IconClasses:
                 self._used[digest] = base64.b64encode(shrink_icon(data)).decode("ascii")
         if digest not in self._used:
             return ""
-        return f'<span class="icon i-{digest}"></span>'
+        return f'<span class="game-icon i-{digest}"></span>'
 
 
 def shrink_icon(png: bytes) -> bytes:
