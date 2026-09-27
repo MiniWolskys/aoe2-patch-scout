@@ -44,6 +44,68 @@
       "civ": "Bluelanders",
       "detail": null,
       "entity": {
+        "icon": null,
+        "id": "87",
+        "kind": "building",
+        "name": "Archery Range",
+        "named": true,
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.offered_techs"
+      },
+      "kind": "modified",
+      "low_priority": false,
+      "new": "Fletching",
+      "old": "",
+      "raw": null,
+      "scope": {
+        "civs": [
+          "Bluelanders"
+        ],
+        "count": 0,
+        "kind": "some"
+      },
+      "stat_icon": null,
+      "words": []
+    },
+    {
+      "category": "civ_availability",
+      "civ": "Bluelanders",
+      "detail": null,
+      "entity": {
+        "icon": null,
+        "id": "87",
+        "kind": "building",
+        "name": "Archery Range",
+        "named": true,
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.offered_units"
+      },
+      "kind": "modified",
+      "low_priority": false,
+      "new": "Archer",
+      "old": "",
+      "raw": null,
+      "scope": {
+        "civs": [
+          "Bluelanders"
+        ],
+        "count": 0,
+        "kind": "some"
+      },
+      "stat_icon": null,
+      "words": []
+    },
+    {
+      "category": "civ_availability",
+      "civ": "Bluelanders",
+      "detail": null,
+      "entity": {
         "icon": {
           "category": "tech",
           "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
@@ -523,7 +585,7 @@
     },
     {
       "added": false,
-      "count": 3,
+      "count": 4,
       "era": "base",
       "icon": {
         "category": "emblems",
@@ -556,7 +618,7 @@
   ],
   "counts": {
     "overall": 7,
-    "total": 13
+    "total": 14
   },
   "entries": [
     {
@@ -595,7 +657,33 @@
     {
       "category": "civ_availability",
       "changes": [
-        1
+        1,
+        2
+      ],
+      "civ": "Bluelanders",
+      "entity": {
+        "icon": null,
+        "id": "87",
+        "kind": "building",
+        "name": "Archery Range",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "modified",
+      "low_priority": false,
+      "scope": {
+        "civs": [
+          "Bluelanders"
+        ],
+        "count": 0,
+        "kind": "some"
+      }
+    },
+    {
+      "category": "civ_availability",
+      "changes": [
+        3
       ],
       "civ": "Bluelanders",
       "entity": {
@@ -628,7 +716,7 @@
     {
       "category": "bonuses",
       "changes": [
-        2
+        4
       ],
       "civ": "Redlanders",
       "entity": {
@@ -659,7 +747,7 @@
     {
       "category": "unit_stats",
       "changes": [
-        3
+        5
       ],
       "civ": "Redlanders",
       "entity": {
@@ -693,7 +781,7 @@
     {
       "category": "unit_stats",
       "changes": [
-        4
+        6
       ],
       "civ": "Ancients",
       "entity": {
@@ -727,7 +815,7 @@
     {
       "category": "unit_stats",
       "changes": [
-        5
+        7
       ],
       "civ": "Bluelanders",
       "entity": {
@@ -760,7 +848,7 @@
     {
       "category": "unit_stats",
       "changes": [
-        6
+        8
       ],
       "civ": null,
       "entity": {
@@ -791,7 +879,7 @@
     {
       "category": "techs",
       "changes": [
-        7
+        9
       ],
       "civ": null,
       "entity": {
@@ -822,7 +910,7 @@
     {
       "category": "text",
       "changes": [
-        8
+        10
       ],
       "civ": null,
       "entity": {
@@ -853,7 +941,7 @@
     {
       "category": "text",
       "changes": [
-        9
+        11
       ],
       "civ": null,
       "entity": {
@@ -876,7 +964,7 @@
     {
       "category": "icons",
       "changes": [
-        10
+        12
       ],
       "civ": null,
       "entity": {
@@ -907,7 +995,7 @@
     {
       "category": "icons",
       "changes": [
-        11
+        13
       ],
       "civ": null,
       "entity": {
@@ -938,7 +1026,7 @@
     {
       "category": "icons",
       "changes": [
-        12
+        14
       ],
       "civ": null,
       "entity": {
