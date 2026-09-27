@@ -17,9 +17,9 @@ from typing import Final
 
 from PIL import Image
 
-from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Side
+from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Entry, Side
 from patch_scout.i18n.catalog import Catalog
-from patch_scout.report.text import Filters, scope_text
+from patch_scout.report.text import Filters, field_text, scope_text
 from patch_scout.snapshot import JsonObject
 
 type IconReader = Callable[[str], bytes | None]
@@ -48,6 +48,9 @@ h3 { font-size: 12px; letter-spacing: 0.07em; text-transform: uppercase; color: 
 .notice.warn { border-color: #f0a03e; color: #f0a03e; }
 table { width: 100%; border-collapse: collapse; }
 td { padding: 6px 8px; border-bottom: 1px solid #241f19; vertical-align: top; }
+tr.entry:has(+ tr.more) td.field, tr.entry:has(+ tr.more) td.values, tr.more:has(+ tr.more) td {
+  border-bottom: none; padding-bottom: 2px; }
+tr.more td { padding-top: 2px; }
 td.icon { width: 40px; }
 td.entity { font-weight: 500; }
 td.field { color: #aa9e8a; width: 30%; }
@@ -148,12 +151,12 @@ def _body(change_set: ChangeSet, catalog: Catalog, filters: Filters, icons: "_Ic
     pages += [(civ.name, civ.internal_name) for civ in change_set.civs]
     sections: list[str] = []
     for title, internal_name in pages:
-        changes = [change for change in change_set.for_civ(internal_name) if filters.keeps(change)]
-        if not changes:
+        entries = [entry for entry in change_set.entries_for(internal_name) if filters.keeps(entry)]
+        if not entries:
             continue
         sections.append(f"<h2>{html.escape(title)}</h2>")
         for category in CATEGORIES:
-            in_category = [change for change in changes if change.category == category]
+            in_category = [entry for entry in entries if entry.category == category]
             if not in_category:
                 continue
             sections.append(f"<h3>{html.escape(catalog.text(f'category.{category}'))}</h3>")
@@ -163,33 +166,49 @@ def _body(change_set: ChangeSet, catalog: Catalog, filters: Filters, icons: "_Ic
     return "".join(sections)
 
 
-def _table(changes: Sequence[Change], catalog: Catalog, icons: "_IconClasses") -> str:
-    rows = [_row(change, catalog, icons) for change in changes]
-    return "<table>" + "".join(rows) + "</table>"
+def _table(entries: Sequence[Entry], catalog: Catalog, icons: "_IconClasses") -> str:
+    return "<table>" + "".join(_rows(entry, catalog, icons) for entry in entries) + "</table>"
 
 
-def _row(change: Change, catalog: Catalog, icons: "_IconClasses") -> str:
-    entity = change.entity
+def _rows(entry: Entry, catalog: Catalog, icons: "_IconClasses") -> str:
+    """One entry: its icon, name and scope span one row per changed field."""
+    entity = entry.entity
     name = html.escape(entity.name)
-    if change.kind in ("added", "removed"):
-        name = f"{html.escape(catalog.text(f'kind.{change.kind}'))} {name}"
+    if entry.kind in ("added", "removed"):
+        name = f"{html.escape(catalog.text(f'kind.{entry.kind}'))} {name}"
     if entity.where:
         name += f' <span class="where">{html.escape(entity.where)}</span>'
-    field = (
-        html.escape(catalog.message(change.field.key, change.field.args)) if change.field else ""
-    )
-    return (
-        "<tr>"
-        f'<td class="icon">{icons.span(entity.icon)}</td>'
-        f'<td class="entity">{name}</td>'
-        f'<td class="field">{field}</td>'
-        f'<td class="values">{_values(change)}</td>'
-        f'<td class="scope">{html.escape(scope_text(change.scope, catalog))}</td>'
-        "</tr>"
-    )
+    lines = [
+        (
+            html.escape(field_text(change, catalog)),
+            _values(change, only_new=entry.kind == "added" and len(entry.changes) > 1),
+        )
+        for change in entry.changes
+    ]
+    if entry.hidden:
+        lines.append((html.escape(catalog.text("report.hidden", count=entry.hidden)), ""))
+    if not lines:
+        lines.append(("", ""))
+    span = f' rowspan="{len(lines)}"' if len(lines) > 1 else ""
+    first_field, first_values = lines[0]
+    rows = [
+        f'<tr class="entry"><td class="icon"{span}>{icons.span(entity.icon)}</td>'
+        f'<td class="entity"{span}>{name}</td>'
+        f'<td class="field">{first_field}</td>'
+        f'<td class="values">{first_values}</td>'
+        f'<td class="scope"{span}>{html.escape(scope_text(entry.scope, catalog))}</td></tr>'
+    ]
+    rows += [
+        f'<tr class="more"><td class="field">{field}</td><td class="values">{values}</td></tr>'
+        for field, values in lines[1:]
+    ]
+    return "".join(rows)
 
 
-def _values(change: Change) -> str:
+def _values(change: Change, *, only_new: bool = False) -> str:
+    if only_new:
+        # A new entity's stat: there is no old value to show.
+        return f'<span class="new">{html.escape(change.new or "")}</span>'
     if change.words:
         return "".join(_word(word.kind, word.text) for word in change.words)
     if change.old and change.new:

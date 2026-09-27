@@ -12,6 +12,7 @@ from dataclasses import dataclass, field, replace
 from typing import Final
 
 from patch_scout.diff import collapse as collapse_module
+from patch_scout.diff import entries as entries_module
 from patch_scout.diff.allowlist import RESOURCE_KEYS, TECH_FIELDS, UNIT_FIELDS, Field
 from patch_scout.diff.model import (
     Change,
@@ -154,18 +155,19 @@ def compare(
         _other_effects(run)
     _strings(run)
     _volume(run)
-    unnamed = sum(1 for change in run.changes if not change.entity.named)
+
+    changes = tuple(sorted_changes(run.changes))
+    entries = entries_module.group(changes)
+    unnamed = sum(1 for entry in entries if not entry.entity.named)
     if unnamed:
         # Hidden by the default filters, so the reader must know they exist (diff-rules.md).
         run.notices.append(
             Notice("unnamed_hidden", Message("notice.unnamed_hidden", {"count": unnamed}))
         )
-
-    changes = tuple(sorted_changes(run.changes))
     counts: dict[str, int] = {}
-    for change in changes:
-        if change.civ is not None:
-            counts[change.civ] = counts.get(change.civ, 0) + 1
+    for entry in entries:
+        if entry.civ is not None:
+            counts[entry.civ] = counts.get(entry.civ, 0) + 1
     civs = tuple(
         CivRef(
             internal_name=ref.internal_name,
@@ -179,7 +181,12 @@ def compare(
         if ref.added or counts.get(ref.internal_name, 0)
     )
     return ChangeSet(
-        old=sides[0], new=sides[1], changes=changes, notices=tuple(run.notices), civs=civs
+        old=sides[0],
+        new=sides[1],
+        changes=changes,
+        notices=tuple(run.notices),
+        civs=civs,
+        entries=entries,
     )
 
 

@@ -15,7 +15,8 @@ from PIL import Image
 from support import pairs
 
 from patch_scout.diff import compare
-from patch_scout.diff.model import ChangeSet, Scope, Side
+from patch_scout.diff.entries import group
+from patch_scout.diff.model import Change, ChangeSet, Entity, Message, Scope, Side
 from patch_scout.i18n.catalog import Catalog, load_catalog
 from patch_scout.report import Filters, render_html, render_text
 from patch_scout.report.html import ICON_PIXELS, MICROSOFT_NOTICE, shrink_icon
@@ -200,3 +201,56 @@ def test_an_entity_only_some_civs_have_says_how_many_have_it(catalog: Catalog) -
     assert scope_text(Scope("having_except", ("Goths",), count=12), catalog) == (
         "(all 12 civilizations that have it, except Goths)"
     )
+
+
+def _entry_set(*changes: Change) -> ChangeSet:
+    side = Side("a", "A", "1.0", FIXED_TIME, prerelease=False, stats_available=True)
+    return ChangeSet(old=side, new=side, changes=changes, entries=group(changes))
+
+
+def test_a_unit_with_several_changed_fields_reads_as_one_item(catalog: Catalog) -> None:
+    knight = Entity("unit", "38", "Knight")
+    text = render_text(
+        _entry_set(
+            Change(
+                "unit_stats",
+                "modified",
+                knight,
+                Scope("all"),
+                Message("field.hit_points"),
+                old="100",
+                new="110",
+            ),
+            Change(
+                "unit_stats",
+                "modified",
+                knight,
+                Scope("all"),
+                Message("field.speed"),
+                old="1.35",
+                new="1.4",
+            ),
+        ),
+        catalog,
+    )
+    assert "    • Knight · (all civilizations)\n" in text
+    assert "        - Hit points · 100 → 110\n" in text
+    assert "        - Movement speed · 1.35 → 1.4\n" in text
+
+
+def test_a_new_unit_lists_its_main_stats_and_says_what_it_leaves_out(catalog: Catalog) -> None:
+    jarl = Entity("unit", "2716", "Jarl")
+    everywhere = Scope("all")
+    fields = [("field.hit_points", "65"), ("field.garrison_capacity", "0")]
+    text = render_text(
+        _entry_set(
+            *[
+                Change("unit_stats", "modified", jarl, everywhere, Message(key), old="", new=value)
+                for key, value in fields
+            ]
+        ),
+        catalog,
+    )
+    assert "• Added: Jarl · (all civilizations)" in text
+    assert "- Hit points · 65\n" in text
+    assert "1 more values not shown" in text
