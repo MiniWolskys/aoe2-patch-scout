@@ -72,9 +72,9 @@
  *   showUnreachable?: boolean) => Promise<Record<string, any>>} compare_versions
  * @property {(hashes: string[]) => Promise<Record<string, string>>} get_icons
  * @property {(oldId: string, newId: string, lowPriority?: boolean,
- *   civs?: string[] | null) => Promise<{text: string}>} export_text
+ *   civs?: string[] | null, unnamed?: boolean) => Promise<{text: string}>} export_text
  * @property {(oldId: string, newId: string, kind?: string, lowPriority?: boolean,
- *   civs?: string[] | null) => Promise<{saved: boolean, path?: string}>} save_export
+ *   civs?: string[] | null, unnamed?: boolean) => Promise<{saved: boolean, path?: string}>} save_export
  * @property {() => Promise<Settings>} get_settings
  * @property {(rawBackups?: boolean | null) => Promise<Settings>} update_settings
  * @property {() => Promise<{removed: number}>} purge_backups

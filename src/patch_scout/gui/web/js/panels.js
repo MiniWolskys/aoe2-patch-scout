@@ -9,8 +9,8 @@ import { byId, clear, el, input, show } from "./dom.js";
  * @param {{
  *   api: import("./api.js").Api,
  *   t: (key: string, values?: Record<string, unknown>) => string,
- *   current: () => {oldId: string, newId: string, low: boolean, civs: string[] | null,
- *     prerelease: boolean} | null,
+ *   current: () => {oldId: string, newId: string, low: boolean, unnamed: boolean,
+ *     civs: string[] | null, prerelease: boolean} | null,
  * }} deps
  * @returns {{open: () => Promise<void>}}
  */
@@ -24,7 +24,13 @@ export function initExport(deps) {
     byId("export-status").textContent = "";
     byId("export-preview").textContent = deps.t("export.loading");
     dialogs.open("export-scrim");
-    const exported = await deps.api.export_text(state.oldId, state.newId, state.low, state.civs);
+    const exported = await deps.api.export_text(
+      state.oldId,
+      state.newId,
+      state.low,
+      state.civs,
+      state.unnamed,
+    );
     byId("export-preview").textContent = exported.text;
   }
 
@@ -54,6 +60,7 @@ export function initExport(deps) {
         kind,
         state.low,
         state.civs,
+        state.unnamed,
       );
       byId("export-status").textContent = saved.saved
         ? deps.t("export.saved", { path: String(saved.path ?? "") })

@@ -2,6 +2,7 @@
 /** The comparison: header, civ navigation and change rows (D-32, D-33, D-34, ui.md). */
 
 import { byId, clear, el, formatDate, show } from "./dom.js";
+import { message } from "./i18n.js";
 import * as icons from "./icons.js";
 
 // The order categories are shown in (diff-rules.md); the change set uses the same names.
@@ -22,7 +23,7 @@ const CATEGORIES = [
  *   t: (key: string, values?: Record<string, unknown>) => string,
  *   changeSet: Record<string, any>,
  *   civ: string | null,
- *   filters: {low: boolean, unreachable: boolean, search: string},
+ *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, search: string},
  *   onCiv: (internalName: string | null) => void,
  *   onPick: (side: "old" | "new") => void,
  * }} view
@@ -61,11 +62,15 @@ function picker(side, version, t) {
 /**
  * Does a change survive the filters the reader chose?
  * @param {Record<string, any>} change
- * @param {{low: boolean, search: string}} filters
+ * @param {{low: boolean, unnamed: boolean, search: string}} filters
  * @returns {boolean}
  */
 function keeps(change, filters) {
   if (change.low_priority && !filters.low) {
+    return false;
+  }
+  // Objects the game gives no name are hidden unless asked for (diff-rules.md).
+  if (change.entity?.named === false && !filters.unnamed) {
     return false;
   }
   const needle = filters.search.trim().toLowerCase();
@@ -206,7 +211,7 @@ function changeRow(view, change) {
     );
   }
   if (change.field) {
-    field.append(document.createTextNode(view.t(change.field.key, change.field.args)));
+    field.append(document.createTextNode(message(view.t, change.field.key, change.field.args)));
   }
   row.append(field);
 

@@ -12,6 +12,8 @@ from patch_scout.diff.values import at_path, unknown_id
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
 
 FALLBACK_LANGUAGE: Final = "en"
+# The internal name the scenario editor gives a new tech; not a name at all.
+PLACEHOLDER_TECH_NAME: Final = "New Research"
 # Tech tree labels wrap onto two lines in the game's own interface; reports want one line.
 _LINE_BREAK: Final = "\\n"
 
@@ -71,6 +73,22 @@ class Names:
             if resolved:
                 return resolved
         return unknown_id(identifier)
+
+    def tech_name(self, record: JsonObject | None, identifier: int) -> str | None:
+        """A tech's display name, else its internal `.dat` name; None when it has neither.
+
+        Civ bonuses are techs with no display name but a readable internal one, such as
+        "C-Bonus, Military cost -20%". The editor's placeholder name doesn't count.
+        """
+        if record is None:
+            return None
+        resolved = self.one_line(at_path(record, "language_dll_name"))
+        if resolved:
+            return resolved
+        internal = record.get("name")
+        if isinstance(internal, str) and internal.strip() not in ("", PLACEHOLDER_TECH_NAME):
+            return internal.strip()
+        return None
 
 
 def _tables(snapshot: Snapshot) -> Mapping[str, JsonValue]:

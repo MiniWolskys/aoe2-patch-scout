@@ -25,10 +25,13 @@ class Filters:
 
     low_priority: bool = False
     civs: tuple[str, ...] | None = None
+    unnamed: bool = False
 
     def keeps(self, change: Change) -> bool:
         """Whether one change survives the filters."""
         if change.low_priority and not self.low_priority:
+            return False
+        if not change.entity.named and not self.unnamed:
             return False
         if self.civs is None:
             return True
@@ -106,7 +109,7 @@ def line(change: Change, catalog: Catalog) -> str:
     """One change on one line."""
     parts = [_entity(change, catalog)]
     if change.field is not None:
-        parts.append(catalog.text(change.field.key, **change.field.args))
+        parts.append(catalog.message(change.field.key, change.field.args))
     values = _values(change, catalog)
     if values:
         parts.append(values)

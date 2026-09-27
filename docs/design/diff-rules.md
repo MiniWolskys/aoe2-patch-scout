@@ -48,7 +48,7 @@ Shown in this order. Categories marked *low* are collapsed by default.
    - Changed bonus **effects** as sentences (see Effects).
    - `civ_dat.resources` changes, such as starting resources.
 4. **Unit stats:** allowlisted fields of the raw unit records, collapsed per civ.
-5. **Techs:** cost, research time, required techs, research location, effect ID; the effect's commands as sentences.
+5. **Techs:** cost, research time, required techs, research location, effect ID; the effect's commands as sentences. An effect ID change is reported once, with the effect's commands.
 6. **Other effects:** effect command changes not covered by 3 or 5.
 7. **Text** *(low)*: name and help text changes for entities not already reported above. Help text changes are attached to the entity's entry when it has one.
 8. **Icons** *(low)*: `icon_redrawn`, `icon_remapped`.
@@ -88,7 +88,7 @@ For each civ, the diff reports only the units that civ can actually get. Reachab
 2. **Linked forms.** From every reachable unit, follow these links, and repeat until no unit is added:
    - `Building.transform_unit`: the other form of a transforming unit, e.g. Trebuchet ↔ Trebuchet (Packed);
    - `Unit.blood_unit_id`, only when the target's `language_dll_name` resolves to a string, e.g. Konnik → Konnik (Dismounted).
-3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it.
+3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it, labelled `Projectile: <field>` (e.g. `Arbalester · Projectile: Attack vs #3 · 6 → 7`), with the civs where that unit fires it.
 4. **Not followed:**
    - `Unit.dead_unit_id` (corpses, rubble);
    - `DeadFish.tracking_unit`;
@@ -176,6 +176,11 @@ Showing how a civ's bonuses affect a unit may come later as a separate feature (
   - Show the shortest decimal form that tells old and new apart: `2.0 → 1.9`, not `2 → 2`.
   - Resources are shown by name: type 0 is food, 1 wood, 2 stone and 3 gold, checked against costs the game shows in its own interface (game-files.md §4). Armour classes have no verified name table yet, so they show as `#<id>`.
   - Unknown IDs are shown as `#<id>`.
+- **Names:**
+  - A unit, tech tree node or building is named from the game's strings, the new build first.
+  - A **tech with no display name** uses its internal `.dat` name. Civ bonuses are such techs, e.g. `C-Bonus, Military cost -20%`. The scenario editor's placeholder, `New Research`, doesn't count as a name (seen on build 101.103.54800.0).
+  - A **tech the `.dat` ties to a civ** (its `civ` slot, on either side; Gaia doesn't count) is that civ's bonus. Its changes go on that civ's page.
+  - An entity still left with **no name** is marked `named: false` and shown as `#<id>`. Its changes are **hidden by default**: a notice gives their count, and "Show objects with no name" shows them, in the app and in the exports. They stay in the change set, so nothing is lost.
 - **Lists** (e.g. attack entries):
   - Keyed by class when the entries have one: added, removed and changed classes are reported separately.
   - Otherwise compared by position.
@@ -206,4 +211,4 @@ The **comparison** in the app is the main output: icons, navigation by civilizat
 
 There is no Markdown export.
 
-Every export starts with a header (snapshot labels, game builds, capture dates, pre-release marks, tool version) and any notices: stats not compared, layout substituted, unusually many changes. The HTML export ends with the Microsoft notice ([legal.md](../legal.md)).
+Every export starts with a header (snapshot labels, game builds, capture dates, pre-release marks, tool version) and any notices: stats not compared, layout substituted, unusually many changes, changes to objects with no name hidden. The HTML export ends with the Microsoft notice ([legal.md](../legal.md)).
