@@ -148,8 +148,9 @@ The change set is field-level: one change per field and value group. The app and
 ```
 
 - **One change:** the entry reads as one line, as before.
-- **A new entity** (every field goes from nothing to a value): the entry is marked Added and lists only its **main stats**, without empty or default values (`0`, `-1`). The main stats are hit points, line of sight, speed, attacks, armours, displayed attack and armours, maximum range, reload time, cost and train time. The entry ends with the number of values it leaves out.
-- **A removed entity:** one line, with the number of values left out.
+- **A new unit** (in Unit stats, every field goes from nothing to a value): the entry is marked Added and lists only its **main stats**, without empty or default values (`0`, `-1`). The main stats are hit points, line of sight, speed, attacks, armours, displayed attack and armours, maximum range, reload time, cost and train time. The entry ends with the number of values it leaves out.
+- **A removed unit:** one line, with the number of values left out.
+- **Other categories** keep every change they have, e.g. a building that only gained offered items.
 - **Any entry:** a field that only appears or disappears with a default value (`added 0`) is counted, not listed. A placeholder unit that the patch fills in otherwise shows dozens of them.
 - **Counts:** the civ list counts entries.
 - **In the change set JSON,** an entry lists its changes by position in `changes`, so no change is written twice.
