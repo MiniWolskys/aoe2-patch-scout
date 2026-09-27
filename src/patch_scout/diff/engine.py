@@ -404,8 +404,14 @@ def _node_changes(
         named=bool(label),
     )
     sort = (_CIV_FIRST, "", "")
-    gained = [name for name in in_scope if key not in maps[name][0] and key in maps[name][1]]
-    lost = [name for name in in_scope if key in maps[name][0] and key not in maps[name][1]]
+    # A node that appears or disappears as NotAvailable was never the civ's to gain or lose: the
+    # game lists nodes a civ can't get too (diff-rules.md, Civ availability).
+    gained = [
+        name for name in in_scope if key not in maps[name][0] and _available(maps[name][1].get(key))
+    ]
+    lost = [
+        name for name in in_scope if _available(maps[name][0].get(key)) and key not in maps[name][1]
+    ]
     for civ_list, kind in ((gained, "added"), (lost, "removed")):
         if civ_list:
             scope = _scope_for(run, in_scope, civ_list)
@@ -561,8 +567,18 @@ def _offers(run: _Run, internal_name: str) -> None:
                 )
             )
             continue
-        for list_key, label in (("units", "field.offered_units"), ("techs", "field.offered_techs")):
-            gained, lost = _list_difference(before.get(list_key), after.get(list_key))
+        for list_key, label, use_types in (
+            ("units", "field.offered_units", ("Unit", "Building")),
+            ("techs", "field.offered_techs", ("Tech",)),
+        ):
+            old_items = _offered(
+                run.old, run.old_names, internal_name, before.get(list_key), use_types
+            )
+            new_items = _offered(
+                run.new, run.new_names, internal_name, after.get(list_key), use_types
+            )
+            lost = [name for item_id, name in old_items.items() if item_id not in new_items]
+            gained = [name for item_id, name in new_items.items() if item_id not in old_items]
             if not gained and not lost:
                 continue
             run.add(
@@ -572,12 +588,51 @@ def _offers(run: _Run, internal_name: str) -> None:
                     entity=entity,
                     scope=scope,
                     field=Message(label),
-                    old=", ".join(unknown_id(item) for item in lost),
-                    new=", ".join(unknown_id(item) for item in gained),
+                    old=", ".join(lost),
+                    new=", ".join(gained),
                     civ=internal_name,
                     sort_key=sort,
                 )
             )
+
+
+def _offered(
+    snapshot: Snapshot,
+    names: Names,
+    internal_name: str,
+    items: JsonValue,
+    use_types: Sequence[str],
+) -> dict[int, str]:
+    """What a building offers a civ, by ID, with display names.
+
+    The game's offer lists include things the civ's own tech tree marks NotAvailable (e.g.
+    Cranequins at the Italians' Archery Range on build 101.103.54800.0); those are left out,
+    since the civ can't get them (diff-rules.md, Civ availability).
+    """
+    nodes = snapshot.tech_trees.get(internal_name)
+    # Unit and tech IDs overlap (tech 83 is the Bearded Axe, unit 83 the Villager): match by type.
+    tree = {
+        node.get("node_id"): node
+        for node in (nodes if isinstance(nodes, list) else [])
+        if isinstance(node, dict) and node.get("use_type") in use_types
+    }
+    found: dict[int, str] = {}
+    for item in items if isinstance(items, list) else []:
+        item_id = item.get("ID") if isinstance(item, dict) else item
+        if not isinstance(item_id, int):
+            continue
+        node = tree.get(item_id)
+        if node is not None and not _available(node):
+            continue
+        label = names.one_line(node.get("name_string_id")) if node is not None else None
+        fallback = item.get("Name") if isinstance(item, dict) else None
+        found[item_id] = label or (fallback if isinstance(fallback, str) else unknown_id(item_id))
+    return found
+
+
+def _available(node: JsonObject | None) -> bool:
+    """Whether a tech tree node exists and the civ can get it."""
+    return node is not None and node.get("node_status") != "NotAvailable"
 
 
 def _has_tree(run: _Run, internal_name: str) -> bool:
@@ -1315,16 +1370,6 @@ def _where(
     if use_type == "Building" and building_id == node_id:
         return None
     return _building_name(run, internal_name, building_id)
-
-
-def _list_difference(
-    before: JsonValue, after: JsonValue
-) -> tuple[list[JsonValue], list[JsonValue]]:
-    old_items = before if isinstance(before, list) else []
-    new_items = after if isinstance(after, list) else []
-    gained = [item for item in new_items if item not in old_items]
-    lost = [item for item in old_items if item not in new_items]
-    return gained, lost
 
 
 def _remember_string(run: _Run, string_id: JsonValue) -> None:
