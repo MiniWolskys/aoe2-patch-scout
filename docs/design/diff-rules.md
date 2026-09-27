@@ -176,7 +176,7 @@ Every changed effect command is shown in up to three layers, most readable first
 
 **Mapping tables** (command type numbers, attribute IDs, unit class IDs → names) are built from genieutils-py and Advanced Genie Editor, never from memory. **They are still empty** (see O-5): AGE keeps the names inside its executable, so every command currently falls back to layer 3, and armour classes and attributes show as `#<id>`. A command type without a template is not an error; it falls back to layer 3. The effect's own name from the `.dat` is shown when present (how descriptive those names are is checked in M0).
 
-**Commands are compared as ordered lists.** Each added, removed or changed command gets its own entry.
+**Commands are compared as a sequence.** The two lists are aligned first (Python's `difflib`), so a command inserted or removed is one change, not a shift of every command after it. Within a replaced stretch, commands are paired by position. Each added, removed or changed command gets its own entry, with its position in the new effect (or the old one, when removed). *Before 2026-09-27 they were compared position by position; one inserted command in Butalmapu gave over 100 changes.*
 
 ## Civ bonuses are not applied to units (P-17)
 
