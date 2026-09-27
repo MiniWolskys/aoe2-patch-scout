@@ -65,10 +65,12 @@ def _entry(members: list[Change]) -> Entry:
     kind: Kind = first.kind if len(members) == 1 else "modified"
     # A field that only appears or disappears with a default value says nothing to a reader.
     shown = [change for change in members if not _trivial(change)] or members[:1]
-    if first.field is not None and all(_is_new(change) for change in members):
+    # Only a unit's stats read as "a new unit": other categories keep every change they have.
+    stats = first.category == "unit_stats"
+    if stats and all(_is_new(change) for change in members):
         kind = "added"
         shown = [change for change in members if _worth_showing(change)]
-    elif first.field is not None and len(members) > 1 and all(_is_gone(c) for c in members):
+    elif stats and len(members) > 1 and all(_is_gone(change) for change in members):
         kind = "removed"
         shown = []
     return Entry(
