@@ -16,11 +16,13 @@ OVERALL
     • Archery Range · Icon · (all civilizations)
     • Fletching · Icon · (all civilizations)
 
+SEVERAL CIVILIZATIONS
+  Unit stats
+    • Archer · Hit points · 30 → 35 · (Redlanders, Ancients)
+
 REDLANDERS
   Civilization and team bonuses
     • Redlanders · Team bonus effect · type 5 a=-1 b=12 c=0 d=1.20 → type 5 a=-1 b=12 c=0 d=1.15
-  Unit stats
-    • Archer · Hit points · 30 → 35 · (Redlanders, Ancients)
 
 BLUELANDERS
   Availability
@@ -28,7 +30,3 @@ BLUELANDERS
     • Fletching · Availability · NotAvailable → ResearchedCompleted · (Bluelanders)
   Unit stats
     • Archer · Hit points · 35 → 45 · (Bluelanders)
-
-ANCIENTS
-  Unit stats
-    • Archer · Hit points · 30 → 35 · (Redlanders, Ancients)
