@@ -39,9 +39,14 @@ export function render(view) {
     .map((notice) => t(notice.message.key, notice.message.args))
     .join(" · ");
 
-  const changes = (changeSet.changes ?? []).filter((change) => keeps(change, view.filters));
-  renderCivList(view, changes);
-  renderPage(view, changes);
+  // One entry per entity, page and scope (diff-rules.md); the civ counts count entries too.
+  // An entry lists its changes by position in `changes`, so none is sent twice.
+  const all = changeSet.changes ?? [];
+  const entries = (changeSet.entries ?? [])
+    .map((entry) => ({ ...entry, changes: (entry.changes ?? []).map((index) => all[index]) }))
+    .filter((entry) => keeps(entry, view.filters));
+  renderCivList(view, entries);
+  renderPage(view, entries);
 }
 
 /**
@@ -60,24 +65,25 @@ function picker(side, version, t) {
 }
 
 /**
- * Does a change survive the filters the reader chose?
- * @param {Record<string, any>} change
+ * Does an entry survive the filters the reader chose?
+ * @param {Record<string, any>} entry
  * @param {{low: boolean, unnamed: boolean, search: string}} filters
  * @returns {boolean}
  */
-function keeps(change, filters) {
-  if (change.low_priority && !filters.low) {
+function keeps(entry, filters) {
+  if (entry.low_priority && !filters.low) {
     return false;
   }
   // Objects the game gives no name are hidden unless asked for (diff-rules.md).
-  if (change.entity?.named === false && !filters.unnamed) {
+  if (entry.entity?.named === false && !filters.unnamed) {
     return false;
   }
   const needle = filters.search.trim().toLowerCase();
   if (needle === "") {
     return true;
   }
-  const haystack = [change.entity?.name, change.entity?.where, change.old, change.new]
+  const values = (entry.changes ?? []).flatMap((change) => [change.old, change.new]);
+  const haystack = [entry.entity?.name, entry.entity?.where, ...values]
     .filter((part) => typeof part === "string")
     .join(" ")
     .toLowerCase();
@@ -181,29 +187,69 @@ function renderPage(view, changes) {
 }
 
 /**
- * One change row: icon, entity, field, values, and the civs it applies to (ui.md).
+ * One entry's row: icon, entity, one field-and-values line per change, and the civs it applies
+ * to (ui.md, diff-rules.md "One entry per entity").
  * @param {Parameters<typeof render>[0]} view
- * @param {Record<string, any>} change
+ * @param {Record<string, any>} entry
  * @returns {HTMLElement}
  */
-function changeRow(view, change) {
+function changeRow(view, entry) {
   const row = el("div", { class: "change-row" });
-  const image = icons.element(change.entity?.icon);
+  const image = icons.element(entry.entity?.icon);
   row.append(image ?? el("span", { class: "change-row__no-icon" }));
 
   const entity = el("div", { class: "change-row__entity" });
   const name = el("span", { class: "change-row__name" });
-  if (change.kind === "added" || change.kind === "removed") {
-    name.append(el("span", { class: "change-row__kind", text: view.t(`kind.${change.kind}`) }));
+  if (entry.kind === "added" || entry.kind === "removed") {
+    name.append(el("span", { class: "change-row__kind", text: view.t(`kind.${entry.kind}`) }));
   }
-  name.append(document.createTextNode(change.entity?.name ?? ""));
+  name.append(document.createTextNode(entry.entity?.name ?? ""));
   entity.append(name);
-  const where = change.entity?.where;
+  const where = entry.entity?.where;
   if (typeof where === "string" && where !== "") {
     entity.append(el("span", { class: "change-row__where", text: where }));
   }
   row.append(entity);
 
+  // The lines share the row's field and values columns (a subgrid), so arrows line up.
+  const lines = el("div", { class: "change-row__lines" });
+  const changes = entry.changes ?? [];
+  for (const change of changes) {
+    lines.append(fieldCell(view, change), values(change));
+  }
+  if (entry.hidden > 0) {
+    lines.append(
+      el("div", {
+        class: "change-row__hidden",
+        text: view.t("report.hidden", { count: entry.hidden }),
+      }),
+    );
+  }
+  row.append(lines);
+
+  const note = el("div", { class: "change-row__note" });
+  note.textContent = scopeText(view.t, entry.scope);
+  for (const change of changes) {
+    if (change.detail) {
+      note.append(
+        el("span", {
+          class: "change-row__detail",
+          text: view.t(change.detail.key, change.detail.args),
+        }),
+      );
+    }
+  }
+  row.append(note);
+  return row;
+}
+
+/**
+ * A change's field label, with its stat icon.
+ * @param {Parameters<typeof render>[0]} view
+ * @param {Record<string, any>} change
+ * @returns {HTMLElement}
+ */
+function fieldCell(view, change) {
   const field = el("div", { class: "change-row__field" });
   if (change.stat_icon) {
     field.append(
@@ -213,22 +259,7 @@ function changeRow(view, change) {
   if (change.field) {
     field.append(document.createTextNode(message(view.t, change.field.key, change.field.args)));
   }
-  row.append(field);
-
-  row.append(values(change));
-
-  const note = el("div", { class: "change-row__note" });
-  note.textContent = scopeText(view.t, change.scope);
-  if (change.detail) {
-    note.append(
-      el("span", {
-        class: "change-row__detail",
-        text: view.t(change.detail.key, change.detail.args),
-      }),
-    );
-  }
-  row.append(note);
-  return row;
+  return field;
 }
 
 /**

@@ -636,6 +636,21 @@ body:not([data-ready]) {
   font-size: var(--fs-xs);
 }
 
+/* An entry's field-and-values lines use the row's own columns, so the arrows line up */
+.change-row__lines {
+  display: grid;
+  grid-column: 3 / span 2;
+  grid-template-columns: subgrid;
+  row-gap: 6px;
+  align-items: center;
+}
+
+.change-row__hidden {
+  grid-column: 1 / -1;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
 .change-row__field {
   display: flex;
   min-width: 0;
