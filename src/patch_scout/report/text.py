@@ -5,15 +5,16 @@ For video descriptions, chat and forums: Unicode bullets and indentation, no mar
 comes from the message catalog, so the export follows the app's language (P-20).
 """
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Final
 
 from patch_scout.diff.collapse import MAX_NAMED_CIVS
-from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Scope, Side
+from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Entry, Scope, Side
 from patch_scout.i18n.catalog import Catalog
 
 BULLET: Final = "•"
+DASH: Final = "-"
 ARROW: Final = "→"
 NOTICE: Final = "!"
 INDENT: Final = "  "
@@ -27,8 +28,8 @@ class Filters:
     civs: tuple[str, ...] | None = None
     unnamed: bool = False
 
-    def keeps(self, change: Change) -> bool:
-        """Whether one change survives the filters."""
+    def keeps(self, change: Change | Entry) -> bool:
+        """Whether one change, or one entry, survives the filters."""
         if change.low_priority and not self.low_priority:
             return False
         if not change.entity.named and not self.unnamed:
@@ -52,11 +53,11 @@ def render(change_set: ChangeSet, catalog: Catalog, filters: Filters | None = No
     pages += [(civ.name, civ.internal_name) for civ in change_set.civs]
     body: list[str] = []
     for title, internal_name in pages:
-        changes = [change for change in change_set.for_civ(internal_name) if chosen.keeps(change)]
-        if not changes:
+        entries = [entry for entry in change_set.entries_for(internal_name) if chosen.keeps(entry)]
+        if not entries:
             continue
         body += ["", title.upper()]
-        body += _category_lines(changes, catalog)
+        body += _category_lines(entries, catalog)
     if not body:
         body = ["", catalog.text("report.no_changes")]
     return "\n".join(lines + body) + "\n"
@@ -90,26 +91,41 @@ def _notices(change_set: ChangeSet, catalog: Catalog) -> list[str]:
     ]
 
 
-def _category_lines(changes: Sequence[Change], catalog: Catalog) -> list[str]:
+def _category_lines(entries: Sequence[Entry], catalog: Catalog) -> list[str]:
     lines: list[str] = []
     for category in CATEGORIES:
-        in_category = [change for change in changes if change.category == category]
+        in_category = [entry for entry in entries if entry.category == category]
         if not in_category:
             continue
         lines.append(f"{INDENT}{catalog.text(f'category.{category}')}")
-        lines += [f"{INDENT * 2}{BULLET} {line}" for line in _change_lines(in_category, catalog)]
+        for entry in in_category:
+            lines += _entry_lines(entry, catalog)
     return lines
 
 
-def _change_lines(changes: Iterable[Change], catalog: Catalog) -> list[str]:
-    return [line(change, catalog) for change in changes]
+def _entry_lines(entry: Entry, catalog: Catalog) -> list[str]:
+    """One entry: a single line for a single change, else a header and one line per field."""
+    if len(entry.changes) == 1 and not entry.hidden:
+        return [f"{INDENT * 2}{BULLET} {line(entry.changes[0], catalog)}"]
+    head = [_entity(entry, catalog), scope_text(entry.scope, catalog)]
+    lines = [f"{INDENT * 2}{BULLET} " + " · ".join(part for part in head if part)]
+    for change in entry.changes:
+        values = change.new or "" if entry.kind == "added" else _values(change, catalog)
+        parts = [field_text(change, catalog), values]
+        lines.append(f"{INDENT * 4}{DASH} " + " · ".join(part for part in parts if part))
+    if entry.hidden:
+        lines.append(f"{INDENT * 4}{DASH} " + catalog.text("report.hidden", count=entry.hidden))
+    return lines
+
+
+def field_text(change: Change, catalog: Catalog) -> str:
+    """A change's field label, resolving a nested field such as "Projectile: {field}"."""
+    return catalog.message(change.field.key, change.field.args) if change.field else ""
 
 
 def line(change: Change, catalog: Catalog) -> str:
     """One change on one line."""
-    parts = [_entity(change, catalog)]
-    if change.field is not None:
-        parts.append(catalog.message(change.field.key, change.field.args))
+    parts = [_entity(change, catalog), field_text(change, catalog)]
     values = _values(change, catalog)
     if values:
         parts.append(values)
@@ -119,7 +135,7 @@ def line(change: Change, catalog: Catalog) -> str:
     return " · ".join(part for part in parts if part)
 
 
-def _entity(change: Change, catalog: Catalog) -> str:
+def _entity(change: Change | Entry, catalog: Catalog) -> str:
     entity = change.entity
     name = entity.name
     kind = catalog.text(f"kind.{change.kind}") if change.kind in ("added", "removed") else ""

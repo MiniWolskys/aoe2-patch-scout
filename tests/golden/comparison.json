@@ -558,6 +558,415 @@
     "overall": 7,
     "total": 13
   },
+  "entries": [
+    {
+      "category": "civ_availability",
+      "changes": [
+        0
+      ],
+      "civ": "Bluelanders",
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "named": true,
+        "where": "Archery Range"
+      },
+      "hidden": 0,
+      "kind": "availability",
+      "low_priority": false,
+      "scope": {
+        "civs": [
+          "Bluelanders"
+        ],
+        "count": 0,
+        "kind": "some"
+      }
+    },
+    {
+      "category": "civ_availability",
+      "changes": [
+        1
+      ],
+      "civ": "Bluelanders",
+      "entity": {
+        "icon": {
+          "category": "tech",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 0,
+          "source": "widgetui/textures/ingame/tech/000_fletching.dds",
+          "width": 4
+        },
+        "id": "199",
+        "kind": "tech",
+        "name": "Fletching",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "availability",
+      "low_priority": false,
+      "scope": {
+        "civs": [
+          "Bluelanders"
+        ],
+        "count": 0,
+        "kind": "some"
+      }
+    },
+    {
+      "category": "bonuses",
+      "changes": [
+        2
+      ],
+      "civ": "Redlanders",
+      "entity": {
+        "icon": {
+          "category": "emblems",
+          "hash": null,
+          "height": null,
+          "missing_reason": "file not found",
+          "picture_index": null,
+          "source": null,
+          "width": null
+        },
+        "id": "Redlanders",
+        "kind": "civ",
+        "name": "Redlanders",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "modified",
+      "low_priority": false,
+      "scope": {
+        "civs": [],
+        "count": 0,
+        "kind": "global"
+      }
+    },
+    {
+      "category": "unit_stats",
+      "changes": [
+        3
+      ],
+      "civ": "Redlanders",
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "modified",
+      "low_priority": false,
+      "scope": {
+        "civs": [
+          "Redlanders",
+          "Ancients"
+        ],
+        "count": 0,
+        "kind": "some"
+      }
+    },
+    {
+      "category": "unit_stats",
+      "changes": [
+        4
+      ],
+      "civ": "Ancients",
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "modified",
+      "low_priority": false,
+      "scope": {
+        "civs": [
+          "Redlanders",
+          "Ancients"
+        ],
+        "count": 0,
+        "kind": "some"
+      }
+    },
+    {
+      "category": "unit_stats",
+      "changes": [
+        5
+      ],
+      "civ": "Bluelanders",
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "modified",
+      "low_priority": false,
+      "scope": {
+        "civs": [
+          "Bluelanders"
+        ],
+        "count": 0,
+        "kind": "some"
+      }
+    },
+    {
+      "category": "unit_stats",
+      "changes": [
+        6
+      ],
+      "civ": null,
+      "entity": {
+        "icon": {
+          "category": "buildings",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 23,
+          "source": "widgetui/textures/ingame/buildings/023_range_1.DDS",
+          "width": 4
+        },
+        "id": "87",
+        "kind": "unit",
+        "name": "Archery Range",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "modified",
+      "low_priority": false,
+      "scope": {
+        "civs": [],
+        "count": 0,
+        "kind": "all"
+      }
+    },
+    {
+      "category": "techs",
+      "changes": [
+        7
+      ],
+      "civ": null,
+      "entity": {
+        "icon": {
+          "category": "tech",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 0,
+          "source": "widgetui/textures/ingame/tech/000_fletching.dds",
+          "width": 4
+        },
+        "id": "199",
+        "kind": "tech",
+        "name": "Fletching",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "modified",
+      "low_priority": false,
+      "scope": {
+        "civs": [],
+        "count": 0,
+        "kind": "global"
+      }
+    },
+    {
+      "category": "text",
+      "changes": [
+        8
+      ],
+      "civ": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "named": true,
+        "where": "Archery Range"
+      },
+      "hidden": 0,
+      "kind": "text_changed",
+      "low_priority": true,
+      "scope": {
+        "civs": [],
+        "count": 0,
+        "kind": "all"
+      }
+    },
+    {
+      "category": "text",
+      "changes": [
+        9
+      ],
+      "civ": null,
+      "entity": {
+        "icon": null,
+        "id": "99001",
+        "kind": "string",
+        "name": "99001",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "added",
+      "low_priority": true,
+      "scope": {
+        "civs": [],
+        "count": 0,
+        "kind": "global"
+      }
+    },
+    {
+      "category": "icons",
+      "changes": [
+        10
+      ],
+      "civ": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "named": true,
+        "where": "Archery Range"
+      },
+      "hidden": 0,
+      "kind": "icon_redrawn",
+      "low_priority": true,
+      "scope": {
+        "civs": [],
+        "count": 0,
+        "kind": "all"
+      }
+    },
+    {
+      "category": "icons",
+      "changes": [
+        11
+      ],
+      "civ": null,
+      "entity": {
+        "icon": {
+          "category": "buildings",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 23,
+          "source": "widgetui/textures/ingame/buildings/023_range_1.DDS",
+          "width": 4
+        },
+        "id": "87",
+        "kind": "building",
+        "name": "Archery Range",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "icon_redrawn",
+      "low_priority": true,
+      "scope": {
+        "civs": [],
+        "count": 0,
+        "kind": "all"
+      }
+    },
+    {
+      "category": "icons",
+      "changes": [
+        12
+      ],
+      "civ": null,
+      "entity": {
+        "icon": {
+          "category": "tech",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 0,
+          "source": "widgetui/textures/ingame/tech/000_fletching.dds",
+          "width": 4
+        },
+        "id": "199",
+        "kind": "tech",
+        "name": "Fletching",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "icon_redrawn",
+      "low_priority": true,
+      "scope": {
+        "civs": [],
+        "count": 0,
+        "kind": "all"
+      }
+    }
+  ],
   "identical": false,
   "new": {
     "capture_id": "new",
