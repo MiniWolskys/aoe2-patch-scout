@@ -201,7 +201,7 @@ The **comparison** in the app is the main output: icons, navigation by civilizat
 | Export | Use | Notes |
 |---|---|---|
 | **Plain text** | Video descriptions, chat, forums | Unicode bullets and indentation, no markup. Copy to clipboard or save as `.txt`. Filters let users fit length limits. |
-| **HTML** | Sharing, archiving, showing on stream | One self-contained file: icons as data URIs, inline CSS. |
+| **HTML** | Sharing, archiving, showing on stream | One self-contained file: inline CSS, and icons as data URIs, each embedded once and shrunk to 80 px (twice the displayed size). |
 | **Image (PNG)** | Putting a section on screen in a video | The current view or a selected section, rendered by the frontend. |
 
 There is no Markdown export.
