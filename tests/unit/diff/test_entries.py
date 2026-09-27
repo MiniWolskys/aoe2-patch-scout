@@ -96,6 +96,26 @@ def test_a_field_that_only_appears_with_a_default_value_is_not_listed() -> None:
     assert entries[0].hidden == 2
 
 
+def test_only_unit_stats_are_cut_down_to_main_stats() -> None:
+    """Regression: a building that only gained offered items lost them to the new-unit filter."""
+    offers = Change(
+        "civ_availability",
+        "modified",
+        Entity("building", "87", "Archery Range"),
+        FRANKS,
+        field=Message("field.offered_techs"),
+        old="",
+        new="Cranequins",
+        civ="Franks",
+    )
+
+    entries = group([offers])
+
+    assert [(entry.kind, len(entry.changes), entry.hidden) for entry in entries] == [
+        ("modified", 1, 0)
+    ]
+
+
 def test_a_change_without_a_field_is_an_entry_of_its_own() -> None:
     added = Change("civ_availability", "added", Entity("unit", "2716", "Jarl", where="Castle"))
     entries = group([added, _stat(JARL, "hit_points", "60", "65")])
