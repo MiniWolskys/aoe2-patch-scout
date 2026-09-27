@@ -156,6 +156,16 @@ def test_the_html_export_shrinks_icons_to_the_size_they_are_shown_at(
         assert max(image.size) <= ICON_PIXELS
 
 
+def test_the_icon_style_does_not_apply_to_the_table_cell_holding_it(
+    prepared: tuple[ChangeSet, IconStore], catalog: Catalog
+) -> None:
+    """Regression: a `.icon` rule made `<td class="icon">` a block and broke multi-row entries."""
+    change_set, store = prepared
+    document = render_html(change_set, catalog, icons=store.read_png)
+    assert '<span class="game-icon i-' in document
+    assert "\n.icon {" not in document
+
+
 def test_a_full_size_game_icon_is_shrunk_before_it_is_embedded() -> None:
     big = io.BytesIO()
     Image.new("RGBA", (256, 256), (200, 30, 30, 255)).save(big, format="PNG")
