@@ -6,7 +6,7 @@ comes from the message catalog, so the export follows the app's language (P-20).
 """
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Final
 
 from patch_scout.diff.collapse import MAX_NAMED_CIVS
@@ -49,18 +49,55 @@ def render(change_set: ChangeSet, catalog: Catalog, filters: Filters | None = No
         lines += ["", catalog.text("report.identical")]
         return "\n".join(lines) + "\n"
 
-    pages: list[tuple[str, str | None]] = [(catalog.text("report.overall"), None)]
-    pages += [(civ.name, civ.internal_name) for civ in change_set.civs]
     body: list[str] = []
-    for title, internal_name in pages:
-        entries = [entry for entry in change_set.entries_for(internal_name) if chosen.keeps(entry)]
-        if not entries:
-            continue
+    for title, entries in pages(change_set, catalog, chosen):
         body += ["", title.upper()]
         body += _category_lines(entries, catalog)
     if not body:
         body = ["", catalog.text("report.no_changes")]
     return "\n".join(lines + body) + "\n"
+
+
+def pages(
+    change_set: ChangeSet, catalog: Catalog, filters: Filters
+) -> list[tuple[str, list[Entry]]]:
+    """The sections an export prints, each with its entries; empty sections are left out.
+
+    Overall, then "Several civilizations", then each civ. The app shows a change shared by a few
+    civs on each of their pages (D-44); an export prints it once, in "Several civilizations",
+    unless it is limited to some civs, where each civ's section keeps everything it has.
+    """
+    kept = [entry for entry in change_set.entries if filters.keeps(entry)]
+    once = filters.civs is None
+    sections: list[tuple[str, list[Entry]]] = [
+        (catalog.text("report.overall"), [entry for entry in kept if entry.civ is None])
+    ]
+    if once:
+        seen: set[str] = set()
+        several: list[Entry] = []
+        for entry in kept:
+            key = _shared_key(entry)
+            if key is not None and key not in seen:
+                seen.add(key)
+                several.append(entry)
+        sections.append((catalog.text("report.several_civs"), several))
+    for civ in change_set.civs:
+        mine = [
+            entry
+            for entry in kept
+            if entry.civ == civ.internal_name and not (once and _shared_key(entry) is not None)
+        ]
+        sections.append((civ.name, mine))
+    return [(title, entries) for title, entries in sections if entries]
+
+
+def _shared_key(entry: Entry) -> str | None:
+    """The same key for each civ's copy of an entry shared by several civs; None otherwise."""
+    if entry.civ is None or entry.scope.kind != "some" or len(entry.scope.civs) < 2:
+        return None
+    return repr(
+        (replace(entry, civ=None, changes=()), [replace(c, civ=None) for c in entry.changes])
+    )
 
 
 def _header(change_set: ChangeSet, catalog: Catalog) -> list[str]:

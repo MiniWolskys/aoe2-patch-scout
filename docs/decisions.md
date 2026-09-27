@@ -312,6 +312,9 @@ Taken while building the comparison (M3/M4); it answers open question 3 in
   meaning, "changes to every civilization, with exceptions noted".
 - **Cost:** a change shared by three civs is drawn three times. The change set stores it once per
   civ, so the counts in the civ list stay right.
+- **Exports (maintainer, 2026-09-27):** the text and HTML exports print a shared change once, in a
+  "Several civilizations" section, instead of in each civ's section
+  ([diff-rules.md](design/diff-rules.md#presentation-and-exports-p-13)).
 
 ### D-45 Objects with no name are hidden by default: Decided
 Chosen by the maintainer on 2026-09-27, after the first real patch showed dozens of `#<id>` rows.
