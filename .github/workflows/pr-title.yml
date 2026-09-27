@@ -31,7 +31,8 @@ jobs:
             chore
             revert
           requireScope: false
-          # Summary: starts in lower case, no final period.
-          subjectPattern: ^[^A-Z].*[^.]$
+          # Summary: starts in lower case, no final period. Dependabot's "Bump ..." is accepted
+          # as it writes it, since Dependabot can't be told to lower-case it (D-27).
+          subjectPattern: ^([^A-Z]|Bump ).*[^.]$
           subjectPatternError: |
             The summary "{subject}" must start in lower case and must not end with a period.

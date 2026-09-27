@@ -457,6 +457,7 @@ The Biome standalone binary lints and formats JavaScript and CSS, locally throug
 - **Security:** alerts and automatic security-fix PRs are enabled (2026-09-15).
 - **Version updates:** one grouped PR a week per ecosystem (uv, GitHub Actions) for minor and patch updates. Major updates come as separate PRs. Commit prefix `chore(deps)`.
 - **Setup:** configured in M0, once `uv.lock` exists.
+- **PR titles (maintainer, 2026-09-27):** the title check accepts Dependabot's "Bump …" summary as it is, so its squash commits on `main` start with a capital B. Chosen over renaming each PR by hand or with a workflow.
 
 ### D-28 Agent approval gates: Decided
 - **Features and design changes:** an approved spec, then an approved implementation plan, before coding.
