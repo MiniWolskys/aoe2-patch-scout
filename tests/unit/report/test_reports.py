@@ -16,7 +16,7 @@ from support import pairs
 
 from patch_scout.diff import compare
 from patch_scout.diff.entries import group
-from patch_scout.diff.model import Change, ChangeSet, Entity, Message, Scope, Side
+from patch_scout.diff.model import Change, ChangeSet, CivRef, Entity, Message, Scope, Side
 from patch_scout.i18n.catalog import Catalog, load_catalog
 from patch_scout.report import Filters, render_html, render_text
 from patch_scout.report.html import ICON_PIXELS, MICROSOFT_NOTICE, shrink_icon
@@ -264,3 +264,45 @@ def test_a_new_unit_lists_its_main_stats_and_says_what_it_leaves_out(catalog: Ca
     assert "• Added: Jarl · (all civilizations)" in text
     assert "- Hit points · 65\n" in text
     assert "1 more values not shown" in text
+
+
+def _shared_set() -> ChangeSet:
+    side = Side("a", "A", "1.0", FIXED_TIME, prerelease=False, stats_available=True)
+    both = Scope("some", ("Vikings", "Danes"))
+    longship = Entity("unit", "250", "Longship")
+    changes = tuple(
+        Change(
+            "unit_stats",
+            "modified",
+            longship,
+            both,
+            Message("field.hit_points"),
+            old="130",
+            new="140",
+            civ=civ,
+        )
+        for civ in ("Vikings", "Danes")
+    )
+    civs = tuple(
+        CivRef(name, name, "base", None, added=False, count=1) for name in ("Vikings", "Danes")
+    )
+    return ChangeSet(old=side, new=side, changes=changes, civs=civs, entries=group(changes))
+
+
+def test_a_change_shared_by_several_civs_is_exported_once(catalog: Catalog) -> None:
+    text = render_text(_shared_set(), catalog)
+    assert text.count("Longship") == 1
+    assert "SEVERAL CIVILIZATIONS" in text
+    assert "VIKINGS" not in text and "DANES" not in text
+
+
+def test_a_civ_export_keeps_its_shared_changes(catalog: Catalog) -> None:
+    text = render_text(_shared_set(), catalog, Filters(civs=("Danes",)))
+    assert "DANES" in text
+    assert "SEVERAL CIVILIZATIONS" not in text
+    assert text.count("Longship") == 1
+
+
+def test_the_html_export_also_shows_a_shared_change_once(catalog: Catalog) -> None:
+    document = render_html(_shared_set(), catalog)
+    assert document.count("Longship") == 1

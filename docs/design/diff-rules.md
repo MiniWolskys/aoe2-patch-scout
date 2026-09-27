@@ -155,6 +155,15 @@ The change set is field-level: one change per field and value group. The app and
 - **Counts:** the civ list counts entries.
 - **In the change set JSON,** an entry lists its changes by position in `changes`, so no change is written twice.
 
+## New civilizations
+
+A civ added in the new build has no old values, so comparing it field by field would report everything as "added". Instead its page shows a summary:
+- **Added** (the civ itself) and its **bonus text**, all shown as new text;
+- its **tech tree** as one entry: one line per building with what is available there (every node that isn't `NotAvailable`), plus one line for its buildings. Building offers are not compared;
+- entities that are new everywhere (its unique units and techs) as usual, since they are brand new for every civ.
+
+Shared units and nodes aren't compared for it (see Per-civ collapsing, Scope). A civ removed in the new build reads as one "Removed" line.
+
 ## Effects (O-5)
 
 Every changed effect command is shown in up to three layers, most readable first:
@@ -228,5 +237,7 @@ The **comparison** in the app is the main output: icons, navigation by civilizat
 | **Image (PNG)** | Putting a section on screen in a video | The current view or a selected section, rendered by the frontend. |
 
 There is no Markdown export.
+
+**Sections of the text and HTML exports:** Overall, then **Several civilizations**, then each civ. The app shows a change shared by a few civs on each of their pages (D-44). An export prints it once, in Several civilizations, so a patch that gives three civs the same change doesn't print it three times. An export limited to some civs keeps each shared change in each civ's section instead.
 
 Every export starts with a header (snapshot labels, game builds, capture dates, pre-release marks, tool version) and any notices: stats not compared, layout substituted, unusually many changes, changes to objects with no name hidden. The HTML export ends with the Microsoft notice ([legal.md](../legal.md)).
