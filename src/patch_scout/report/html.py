@@ -19,6 +19,7 @@ from PIL import Image
 
 from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Entry, Side
 from patch_scout.i18n.catalog import Catalog
+from patch_scout.report.present import present
 from patch_scout.report.text import Filters, field_text, pages, scope_text
 from patch_scout.snapshot import JsonObject
 
@@ -87,6 +88,7 @@ def render(
     tool_version: str = "",
 ) -> str:
     """Return the whole comparison as one self-contained HTML document."""
+    change_set = present(change_set, catalog)
     chosen = filters or Filters()
     title = catalog.text("report.title")
     used: dict[str, str] = {}

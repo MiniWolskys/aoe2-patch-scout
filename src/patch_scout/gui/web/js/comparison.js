@@ -244,6 +244,11 @@ function changeRow(view, entry) {
     const note = el("div", { class: "change-row__note" });
     if (index === 0) {
       note.textContent = scopeText(view.t, entry.scope);
+      // A shortened civ list ("… and 3 more") shows every civ on hover.
+      const civs = entry.scope?.civs ?? [];
+      if (civs.length > 8) {
+        note.title = civs.join(", ");
+      }
     }
     if (change.detail) {
       note.append(

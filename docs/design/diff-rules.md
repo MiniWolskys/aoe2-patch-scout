@@ -45,6 +45,8 @@ Shown in this order. Categories marked *low* are collapsed by default.
 2. **Civ availability:** per-civ tech tree changes (units, techs, buildings gained or lost, node status changes); building offer changes.
    - The game's tech trees and offer lists also list what a civ **can't** get (`NotAvailable`). A node that appears or disappears as `NotAvailable` is not gained or lost, and an offered item whose node is `NotAvailable` for that civ is left out of the offer comparison. *Seen on build 101.103.54800.0: Cranequins is in 15 civs' trees but available to 6, and in the Italians' Archery Range offers.*
    - Offered items are matched by ID and shown by name: the civ's tech tree label, else the offer list's own name.
+   - **Who gained or lost a node** is measured against every civ in the comparison, not against the civs whose tree lists it: those include civs that list it as `NotAvailable`. A unit ten civs gained reads with those ten civs named, and shows on their pages. *Before 2026-10-10 it read "(all 15 civilizations that have it, except Vikings, …)" for Mounted Crossbowman.*
+   - **Statuses read in words:** `ResearchedCompleted` is "Available", `ResearchRequired` "Needs a prerequisite", `NotAvailable` "Not available" (catalog `status.*`). The change set keeps the game's values; every renderer, the app included, shows the words.
 3. **Civ and team bonuses:**
    - The civ's bonus **text** diff (the game's own words).
    - Changed bonus **effects** as sentences (see Effects).
@@ -132,7 +134,7 @@ For each unit ID and allowlisted field of the raw unit records:
 | Several value pairs | One line per group, largest group first |
 
 **Thresholds:**
-- Name at most 8 civs in a list.
+- The app names at most 8 civs in a list ("… and 3 more"), with the full list on hover. **Exports name every civ**: they are read out or pasted, so nothing may be cut.
 - Use the "except" forms when listing the exceptions is shorter than listing the changed civs.
 
 **Where it shows (D-44):** a change that names its civs is on each of those civs' pages; every other form, including "all N civilizations that have it", is on Overall.
@@ -190,8 +192,10 @@ Every changed effect command is shown in up to three layers, most readable first
 | `EnableObject` (mode enable / disable) | `Enables {unit}` / `Disables {unit}` | none |
 | `UpgradeUnit` | `Upgrades {unit} to {unit}` | none |
 | `DisableTech` | `Disables {tech}` | none |
+| `ModResource` setting `EffectFunctionNumber` | `Runs the scripted effect: {title}` | none |
 
 - **Target:** the unit in `a`, else the class in `b` ("Cavalry class"). A command with neither stays raw.
+- **Scripted effects:** setting the resource `EffectFunctionNumber` runs that numbered function of `Effects.xs`; the sentence uses the function's title comment, e.g. "Effect of Kasbah for Berbers" (game-files.md §11; the Kasbah tech sets it to 52 on 101.103.54800.0).
 - **Attack and armour** (attributes 9 and 8) unpack `d` as class × 256 + amount, e.g. "Archer: Attack vs Pierce · +1". A negative `d`, or a multiplied attack or armour, stays raw: its packing isn't verified.
 - **An attribute the constants don't name** stays raw, and so do attributes whose value probably packs data in a way not yet verified: `ResourceCost`, `AddArmorType`, `AddAttackType`, `RemoveArmorType` and `RemoveAttackType`. Attack and armour are recognised by their XS names (`Attack`, `Armor`), not by number.
 - **Two commands that differ only in a slot the sentence doesn't show** stay raw, so a change never reads "×1.5 → ×1.5".

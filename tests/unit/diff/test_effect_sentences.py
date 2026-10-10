@@ -31,14 +31,20 @@ CONSTANTS: JsonValue = {
     ],
     "Damage Classes": [["cDamageClassPierce", 3], ["cDamageClassMelee", 4]],
     "Object Classes": [["cCavalryClass", 912]],
-    "Attributes": [["cAttributeFood", 0], ["cAttributeGold", 3]],
+    "Attributes": [
+        ["cAttributeFood", 0],
+        ["cAttributeGold", 3],
+        ["cAttributeEffectFunctionNumber", 33],
+    ],
 }
 UNITS = {4: "Archer", 24: "Crossbowman", 38: "Knight"}
 TECHS = {199: "Fletching"}
+SCRIPTS = {56: "Effect of Atheism for Huns"}
 LOOKUP = Lookup(
     unit=lambda unit_id: UNITS.get(unit_id, f"#{unit_id}"),
     tech=lambda tech_id: TECHS.get(tech_id, f"#{tech_id}"),
     vocabulary=Vocabulary(make_snapshot(scripts={"constants": CONSTANTS})),
+    script=SCRIPTS.get,
 )
 CATALOG = load_catalog("en")
 
@@ -100,6 +106,24 @@ def test_enabling_upgrading_and_disabling_say_it_all_in_words() -> None:
     assert _read(describe(_command(102, d=199.0), LOOKUP)) == ("Disables Fletching", None)
 
 
+def test_setting_the_effect_function_number_runs_a_scripted_effect() -> None:
+    assert _read(describe(_command(1, a=33, b=0, d=56.0), LOOKUP)) == (
+        "Runs the scripted effect: Effect of Atheism for Huns",
+        None,
+    )
+    assert _read(describe(_command(1, a=33, b=0, d=99.0), LOOKUP)) == (
+        "Runs the scripted effect: #99",
+        None,
+    )
+
+
+def test_script_titles_come_from_the_effects_file() -> None:
+    from patch_scout.diff.effects import script_titles
+
+    text = "// 55 - Effect of Flemish Revolution\nvoid x() {}\n// 56 - Atheism\n// 56 - Again\n"
+    assert script_titles(text) == {55: "Effect of Flemish Revolution", 56: "Atheism"}
+
+
 def test_types_without_a_template_or_a_name_stay_raw() -> None:
     assert describe(_command(7, a=4, b=1), LOOKUP) is None  # named, but no template yet
     assert describe(_command(255), LOOKUP) is None  # not named in Constants.xs
@@ -108,7 +132,12 @@ def test_types_without_a_template_or_a_name_stay_raw() -> None:
 
 
 def test_a_type_is_only_trusted_when_the_snapshot_names_it() -> None:
-    unnamed = Lookup(unit=LOOKUP.unit, tech=LOOKUP.tech, vocabulary=Vocabulary(make_snapshot()))
+    unnamed = Lookup(
+        unit=LOOKUP.unit,
+        tech=LOOKUP.tech,
+        vocabulary=Vocabulary(make_snapshot()),
+        script=SCRIPTS.get,
+    )
     assert describe(_command(4, a=4, c=1, d=1.0), unnamed) is None
 
 
@@ -212,6 +241,7 @@ def test_attributes_whose_value_packing_is_unverified_stay_raw() -> None:
     lookup = Lookup(
         unit=LOOKUP.unit,
         tech=LOOKUP.tech,
+        script=SCRIPTS.get,
         vocabulary=Vocabulary(
             make_snapshot(
                 scripts={
@@ -231,6 +261,7 @@ def test_attack_is_unpacked_by_its_xs_name_not_its_number() -> None:
     moved = Lookup(
         unit=LOOKUP.unit,
         tech=LOOKUP.tech,
+        script=SCRIPTS.get,
         vocabulary=Vocabulary(
             make_snapshot(
                 scripts={

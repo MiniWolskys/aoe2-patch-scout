@@ -9,9 +9,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from typing import Final
 
-from patch_scout.diff.collapse import MAX_NAMED_CIVS
 from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Entry, Scope, Side
 from patch_scout.i18n.catalog import Catalog
+from patch_scout.report.present import present
 
 BULLET: Final = "•"
 DASH: Final = "-"
@@ -58,6 +58,7 @@ class Filters:
 
 def render(change_set: ChangeSet, catalog: Catalog, filters: Filters | None = None) -> str:
     """Return the whole comparison as plain text."""
+    change_set = present(change_set, catalog)
     chosen = filters or Filters()
     lines: list[str] = [catalog.text("report.title"), ""]
     lines += _header(change_set, catalog)
@@ -238,7 +239,5 @@ def scope_text(scope: Scope, catalog: Catalog) -> str:
 
 
 def _civ_list(civs: Sequence[str], catalog: Catalog) -> str:
-    if len(civs) <= MAX_NAMED_CIVS:
-        return ", ".join(civs)
-    named = ", ".join(civs[:MAX_NAMED_CIVS])
-    return catalog.text("scope.and_more", civs=named, count=len(civs) - MAX_NAMED_CIVS)
+    """Every civ, by name: an export is read out or pasted, so it never says "and 7 more"."""
+    return ", ".join(civs)
