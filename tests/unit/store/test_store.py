@@ -20,6 +20,7 @@ from patch_scout.store import (
 from patch_scout.store.icons import MAX_SIDE, downscale
 from patch_scout.store.library import UnknownVersionError
 from patch_scout.store.paths import default_root
+from patch_scout.store.settings import SettingsStore
 
 
 @pytest.fixture
@@ -239,3 +240,13 @@ def test_updating_an_entry_another_library_added_rereads_the_index(folder: DataF
 def test_updating_an_entry_that_does_not_exist_says_so(folder: DataFolder) -> None:
     with pytest.raises(UnknownVersionError, match="nope"):
         Library(folder).update("nope", label="x")
+
+
+def test_an_older_settings_file_naming_a_data_folder_still_loads(folder: DataFolder) -> None:
+    folder.root.mkdir(parents=True, exist_ok=True)
+    folder.settings_file.write_text(
+        '{"version": 1, "raw_backups": false, "data_folder": "D:/elsewhere"}', encoding="utf-8"
+    )
+    settings = SettingsStore(folder).load()
+    assert settings.raw_backups is False
+    assert "data_folder" not in settings.to_json()

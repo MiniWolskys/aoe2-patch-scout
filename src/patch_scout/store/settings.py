@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""User settings: where data lives, which folders were used before, whether backups run (P-10)."""
+"""User settings: which game folders were used before, and whether backups run (P-10).
+
+The data folder is fixed (decisions.md); an older settings.json naming one still loads.
+"""
 
 import json
 import logging
@@ -23,7 +26,6 @@ class Settings:
     raw_backups: bool = True
     language: str = "en"
     recent_game_folders: tuple[str, ...] = ()
-    data_folder: str | None = None
     last_comparison: tuple[str, str] | None = None
 
     def to_json(self) -> JsonObject:
@@ -33,7 +35,6 @@ class Settings:
             "raw_backups": self.raw_backups,
             "language": self.language,
             "recent_game_folders": list(self.recent_game_folders),
-            "data_folder": self.data_folder,
             "last_comparison": list(self.last_comparison) if self.last_comparison else None,
         }
 
@@ -97,7 +98,6 @@ def _read(data: JsonValue) -> Settings:
         if isinstance(old, str) and isinstance(new, str):
             pair = (old, new)
     folders = data.get("recent_game_folders")
-    data_folder = data.get("data_folder")
     language = data.get("language")
     return Settings(
         raw_backups=data.get("raw_backups") is not False,
@@ -105,6 +105,5 @@ def _read(data: JsonValue) -> Settings:
         recent_game_folders=tuple(
             item for item in (folders if isinstance(folders, list) else []) if isinstance(item, str)
         ),
-        data_folder=data_folder if isinstance(data_folder, str) else None,
         last_comparison=pair,
     )
