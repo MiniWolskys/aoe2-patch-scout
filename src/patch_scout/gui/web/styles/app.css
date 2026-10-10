@@ -719,6 +719,17 @@ body[data-failed] > :not(.startup-error, script) {
   white-space: pre-line;
 }
 
+.change-values--block {
+  grid-column: span 2;
+  align-self: start;
+}
+
+.change-row__field--stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: start;
+}
+
 /* Dialogs */
 
 .dialog__title {

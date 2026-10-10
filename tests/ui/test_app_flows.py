@@ -810,3 +810,33 @@ def test_a_version_can_be_renamed_twice_from_the_keyboard(open_shell: OpenShell)
         expect(title).to_have_text(name)
 
     assert [call[1] for call in calls(page, "update_version")] == ["First", "Second"]
+
+
+def test_a_civ_bonus_list_keeps_its_lines_across_the_wide_columns(open_shell: OpenShell) -> None:
+    """Vietnamese on 101.103.54800.0: the bonus text read as one squeezed block."""
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    bonus = change(
+        category="bonuses",
+        field={"key": "field.civ_bonus_text", "args": {}},
+        stat_icon=None,
+        old=None,
+        new=None,
+        words=[
+            {"kind": "same", "text": "Archer civilization\n"},
+            {"kind": "removed", "text": "• Conscription free\n"},
+            {"kind": "same", "text": "• Archers +20% HP"},
+        ],
+    )
+    data["changeSet"] = change_set(changes=[bonus])
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    values = page.locator(".change-values--block")
+    expect(values).to_have_count(1)
+    expect(values.locator("del")).to_have_text("• Conscription free")
+    lines = values.evaluate(r"element => element.innerText.split('\n').filter(Boolean)")
+    assert lines == ["Archer civilization", "• Conscription free", "• Archers +20% HP"]
+    field = page.locator(".change-row__field")
+    values_box, field_box = values.bounding_box(), field.bounding_box()
+    assert values_box is not None and field_box is not None
+    assert values_box["width"] > field_box["width"]

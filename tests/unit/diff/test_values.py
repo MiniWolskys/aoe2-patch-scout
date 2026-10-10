@@ -124,6 +124,12 @@ def test_a_line_that_changed_a_little_marks_only_the_words() -> None:
     ]
 
 
+def test_a_line_rewritten_by_half_reads_as_removed_then_added() -> None:
+    old = r"• Archery Range units and Fire Lancers +20% HP\n• x"
+    new = r"• Foot Archers and Skirmishers +20% HP\n• x"
+    assert [run.kind for run in words(old, new) if run.kind != "same"] == ["removed", "added"]
+
+
 def test_a_line_replaced_by_a_different_one_reads_as_removed_then_added() -> None:
     runs = words(r"• Cavalry +20% HP\n• x", r"• Monks heal faster\n• x")
     assert [(run.kind, run.text) for run in runs if run.kind != "same"] == [

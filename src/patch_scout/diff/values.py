@@ -19,6 +19,10 @@ _WORDS: Final = re.compile(r"\s+|[^\s]+")
 # The game's markup in string files (game-files.md §5): a two-character line break, and bold.
 _LINE_BREAK: Final = r"\n"
 _BOLD: Final = re.compile(r"</?b>", re.IGNORECASE)
+# Above this share of shared words, a line was edited; at or below, it was replaced. Half is too
+# low: "• Archery Range units and Fire Lancers +20% HP" → "• Foot Archers and Skirmishers +20% HP"
+# (Vietnamese on 101.103.54800.0) read as interleaved words.
+_SIMILAR: Final = 0.5
 
 
 def display(value: JsonValue) -> str:
@@ -143,7 +147,7 @@ _BREAK_KIND: Final = {
 def _similar(old: str, new: str) -> bool:
     """Whether two lines are the same line edited, rather than one replaced by another."""
     before, after = old.split(), new.split()
-    return difflib.SequenceMatcher(a=before, b=after, autojunk=False).ratio() >= 0.5
+    return difflib.SequenceMatcher(a=before, b=after, autojunk=False).ratio() > _SIMILAR
 
 
 def _word_runs(old: str, new: str) -> tuple[WordDiff, ...]:

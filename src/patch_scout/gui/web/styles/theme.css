@@ -584,3 +584,8 @@ ins {
     inset 0 0 0 1px var(--line-strong),
     var(--shadow-dialog);
 }
+
+/* A list of names (a new civ's tech tree) reads as text, not as one big stat */
+.value-new--list {
+  font-weight: 400;
+}

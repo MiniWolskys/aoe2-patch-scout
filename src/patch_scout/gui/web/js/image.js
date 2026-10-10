@@ -5,7 +5,7 @@
  * comparison's own data, with the app's fonts and colours; no screenshot library.
  */
 
-import { scopeText } from "./comparison.js";
+import { isLongList, scopeText } from "./comparison.js";
 import { message } from "./i18n.js";
 import * as icons from "./icons.js";
 
@@ -211,7 +211,8 @@ function entryBlock(ctx, entry, t) {
  */
 function changeLines(ctx, change, t) {
   const field = change.field ? message(t, change.field.key, change.field.args) : "";
-  const words = change.words ?? [];
+  // A long new value is a list (a new civ's tech tree): it wraps like a text instead of being cut.
+  const words = isLongList(change) ? [{ kind: "added", text: change.new }] : (change.words ?? []);
   if (words.length > 0) {
     const runs = layoutWords(ctx, words, WIDTH - MARGIN - FIELD.x - SCOPE.width - 40);
     return {
