@@ -152,4 +152,4 @@ def test_unnamed_objects_are_left_out_of_exports_unless_asked_for() -> None:
     catalog = load_catalog("en")
 
     assert "#172" not in render_text(change_set, catalog)
-    assert "#172" in render_text(change_set, catalog, Filters(unnamed=True))
+    assert "#172" in render_text(change_set, catalog, Filters(unnamed=True, details=True))

@@ -60,6 +60,7 @@ def change(**overrides: Any) -> dict[str, Any]:
         "raw": None,
         "civ": None,
         "low_priority": False,
+        "level": "headline",
     }
     return row | overrides
 

@@ -207,6 +207,32 @@ A command without a sentence is not an error; it falls back to layer 3. The effe
 
 **Commands are compared as a sequence.** The two lists are aligned first (Python's `difflib`), so a command inserted or removed is one change, not a shift of every command after it. Within a replaced stretch, commands are paired by position. Each added, removed or changed command gets its own entry, with its position in the new effect (or the old one, when removed). *Before 2026-09-27 they were compared position by position; one inserted command in Butalmapu gave over 100 changes.*
 
+## Levels (D-46)
+
+Every change has a **level**: `headline` (shown by default), `detail` or `technical`. The filters "Show minor changes" and "Show technical changes" bring the others back, in the app and the exports. An entry shows only its changes at the chosen levels; an entry with none left is not shown. A notice counts the hidden changes of named objects. Levels never remove a change from the change set.
+
+The rules come from measuring 101.103.48987.0 → 101.103.54800.0 against its official notes.
+
+| Change | Level | Why |
+|---|---|---|
+| Unit search radius, resource capacity and decay, button icon, accuracy dispersion, base armour, charge event/type/target, projectile IDs, special ability, invulnerability level, friendly fire damage | detail | Behaviour tuning and plumbing, not what players compare |
+| Displayed melee/pierce armour, attack, range or reload time that moved exactly like the stat it shows (class 4/3 armour, an attack, maximum range, reload time) | detail | The same change twice (Hulk: armour 4 → 3 and displayed armour 4 → 3) |
+| Blast attack or defence level of a unit with no blast width in either build, and no effect giving it one | technical | It does nothing without a width |
+| Blast attack or defence level of a unit whose blast width only an effect gives (a tech or bonus) | detail | The effect's own line says what changes; the level alone read as if every civ gained trample (Knight line and Vendel Legacy on 101.103.54800.0) |
+| An attack or armour class row appearing or disappearing with 0 | technical | No effect |
+| Techs and units offered by a building | detail | The availability lines already say it |
+| A building switching between `ResearchRequired` and `ResearchedCompleted` | detail | Available either way |
+| Tech repeatable flag, required tech count, tech type; an effect ID change | detail | Bookkeeping; an effect's commands are reported on their own lines |
+| A raw command in a civ's tech tree effect | technical | The availability lines already say it |
+| A value that only changed by rounding (less than 0.1 %, e.g. 0.99999 → 1) | technical | No effect |
+| A text change in spacing only | technical | No effect |
+
+**Never lowered:** a raw command outside tech tree effects. A command without a sentence can be a real change (the Huns' Atheism uses unnamed command types).
+
+**A unit no civ could get in the old build**, that some civ can get now, reads as **Added**, even when the old `.dat` held a placeholder record for it (Mounted Crossbowman on 101.103.54800.0 went "Hit points 1 → 45"). Only units new to every civ: a civ gaining an existing unit keeps its availability line.
+
+**Starting resources** are compared across civs: a change every civ shares, Gaia included, is one Overall line named after the resource (e.g. "Varangian Gold · Starting amount · 0 → 50"), instead of one per civ page.
+
 ## Civ bonuses are not applied to units (P-17)
 
 Snapshots store raw data only (D-20), and v1 **never applies civ bonus effects to unit stats**. Bonuses can depend on age, researched techs and unit class, so a single "effective" number would be misleading and would add a lot of complexity.

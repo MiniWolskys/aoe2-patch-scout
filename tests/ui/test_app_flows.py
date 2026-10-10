@@ -278,6 +278,20 @@ def test_a_projectile_field_is_labelled_as_part_of_its_shooter(open_shell: OpenS
     expect(page.locator(".change-row__field")).to_have_text("Projectile: Attack vs #3")
 
 
+def test_minor_changes_wait_for_their_filter(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    search = change(field={"key": "field.search_radius", "args": {}}, level="detail")
+    data["changeSet"] = change_set(changes=[change(), search], entries=[entry(change(), search)])
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    expect(page.locator(".change-row__field")).to_have_text(["Hit points"])
+
+    page.locator("#comparison-filters").click()
+    page.locator("#filter-details").check()
+
+    expect(page.locator(".change-row__field")).to_have_text(["Hit points", "Search radius"])
+
+
 def test_an_effect_sentence_reads_in_words(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
     attack = {"key": "field.attacks", "args": {"class": "Pierce"}}

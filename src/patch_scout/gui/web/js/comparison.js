@@ -23,7 +23,8 @@ const CATEGORIES = [
  *   t: (key: string, values?: Record<string, unknown>) => string,
  *   changeSet: Record<string, any>,
  *   civ: string | null,
- *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, search: string},
+ *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, details: boolean,
+ *     technical: boolean, search: string},
  *   onCiv: (internalName: string | null) => void,
  *   onPick: (side: "old" | "new") => void,
  * }} view
@@ -42,9 +43,15 @@ export function render(view) {
   // One entry per entity, page and scope (diff-rules.md); the civ counts count entries too.
   // An entry lists its changes by position in `changes`, so none is sent twice.
   const all = changeSet.changes ?? [];
+  // A change below the levels the reader chose is left out; an entry with none left goes too.
   const entries = (changeSet.entries ?? [])
-    .map((entry) => ({ ...entry, changes: (entry.changes ?? []).map((index) => all[index]) }))
-    .filter((entry) => keeps(entry, view.filters));
+    .map((entry) => ({
+      ...entry,
+      changes: (entry.changes ?? [])
+        .map((index) => all[index])
+        .filter((change) => shows(change, view.filters)),
+    }))
+    .filter((entry) => entry.changes.length > 0 && keeps(entry, view.filters));
   renderCivList(view, entries);
   renderPage(view, entries);
 }
@@ -62,6 +69,22 @@ function picker(side, version, t) {
     parts.push(t("report.prerelease"));
   }
   byId(`picker-${side}-build`).textContent = parts.join(" · ");
+}
+
+/**
+ * Is a change's level shown (diff-rules.md, Levels)?
+ * @param {Record<string, any>} change
+ * @param {{details: boolean, technical: boolean}} filters
+ * @returns {boolean}
+ */
+function shows(change, filters) {
+  if (change.level === "detail") {
+    return filters.details;
+  }
+  if (change.level === "technical") {
+    return filters.technical;
+  }
+  return true;
 }
 
 /**

@@ -9,12 +9,13 @@ language-neutral (P-20).
 import difflib
 import json
 import logging
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Final
 
 from patch_scout.diff import collapse as collapse_module
 from patch_scout.diff import entries as entries_module
+from patch_scout.diff import levels
 from patch_scout.diff.allowlist import RESOURCE_KEYS, TECH_FIELDS, UNIT_FIELDS, Field
 from patch_scout.diff.effects import Lookup, describe
 from patch_scout.diff.model import (
@@ -83,6 +84,8 @@ class _Run:
     changes: list[Change] = field(default_factory=list)
     notices: list[Notice] = field(default_factory=list)
     attached_strings: set[str] = field(default_factory=set)
+    reachable_before: frozenset[int] = frozenset()
+    new_to_players: frozenset[int] = frozenset()
     compared_values: int = 0
     changed_values: int = 0
 
@@ -162,8 +165,15 @@ def compare(
     _strings(run)
     _volume(run)
 
-    changes = tuple(sorted_changes(run.changes))
+    context = levels.Context(run.vocabulary, blast_width=_blast_width_check(run))
+    changes = tuple(levels.assign(sorted_changes(run.changes), context))
     entries = entries_module.group(changes)
+    minor = sum(1 for change in changes if change.level != "headline" and change.entity.named)
+    if minor:
+        # Hidden by the default filters, so the reader must know they exist (diff-rules.md).
+        run.notices.append(
+            Notice("levels_hidden", Message("notice.levels_hidden", {"count": minor}))
+        )
     unnamed = sum(1 for entry in entries if not entry.entity.named)
     if unnamed:
         # Hidden by the default filters, so the reader must know they exist (diff-rules.md).
@@ -686,8 +696,9 @@ def _bonuses(run: _Run) -> None:
         entity = Entity("civ", internal_name, name, icon=icon if isinstance(icon, dict) else None)
         _bonus_text(run, internal_name, entity, before, after)
         if run.compare_stats:
-            _civ_resources(run, internal_name, entity)
             _civ_effects(run, internal_name, entity, before, after)
+    if run.compare_stats:
+        _civ_resources(run)
 
 
 def _bonus_text(
@@ -714,34 +725,45 @@ def _bonus_text(
     )
 
 
-def _civ_resources(run: _Run, internal_name: str, entity: Entity) -> None:
-    before = _civ_dat(run.old, run.old_index.get(internal_name))
-    after = _civ_dat(run.new, run.new_index.get(internal_name))
-    if before is None or after is None:
-        return
-    old_values = before.get("resources")
-    new_values = after.get("resources")
-    if not isinstance(old_values, list) or not isinstance(new_values, list):
-        return
-    for position in range(max(len(old_values), len(new_values))):
-        old_value = old_values[position] if position < len(old_values) else None
-        new_value = new_values[position] if position < len(new_values) else None
-        if old_value == new_value:
+def _civ_resources(run: _Run) -> None:
+    """Starting resources, compared across civs: a change every civ shares is one line.
+
+    A new resource is usually set for every civ, Gaia included; per civ, it filled every page
+    (measured on 101.103.54800.0, where Varangian Gold went 0 → 50 sixty times).
+    """
+    names = [name for name in run.civ_names if name in run.old_index and name in run.new_index]
+    changed: dict[int, dict[str, tuple[JsonValue, JsonValue]]] = {}
+    for name in names:
+        before = _civ_dat(run.old, run.old_index[name])
+        after = _civ_dat(run.new, run.new_index[name])
+        old_values = before.get("resources") if before is not None else None
+        new_values = after.get("resources") if after is not None else None
+        if not isinstance(old_values, list) or not isinstance(new_values, list):
             continue
-        old_text, new_text = pair(old_value, new_value)
-        run.add(
-            Change(
-                category="bonuses",
-                kind="modified",
-                entity=entity,
-                scope=Scope("some", (internal_name,)),
-                field=Message("field.civ_resource", {"index": position}),
-                old=old_text,
-                new=new_text,
-                civ=internal_name,
-                sort_key=(_CIV_FIRST, "", f"{position:04d}"),
+        for position in range(max(len(old_values), len(new_values))):
+            old_value = old_values[position] if position < len(old_values) else None
+            new_value = new_values[position] if position < len(new_values) else None
+            if old_value != new_value:
+                changed.setdefault(position, {})[name] = (old_value, new_value)
+    for position in sorted(changed):
+        label = run.vocabulary.resource(position)
+        entity = Entity("resource", str(position), label or unknown_id(position), named=bool(label))
+        for group in collapse_module.collapse(names, changed[position], every=run.every):
+            old_text, new_text = pair(group.old, group.new)
+            sort = (_CIV_FIRST if group.scope.kind == "some" else _GLOBAL, "", f"{position:04d}")
+            run.spread(
+                Change(
+                    category="bonuses",
+                    kind="modified",
+                    entity=entity,
+                    scope=group.scope,
+                    field=Message("field.civ_resource"),
+                    old=old_text,
+                    new=new_text,
+                    sort_key=sort,
+                ),
+                group.scope,
             )
-        )
 
 
 def _civ_effects(
@@ -774,9 +796,23 @@ def _civ_effects(
 def _unit_stats(run: _Run) -> None:
     civs = [(name, (run.old_index.get(name), run.new_index.get(name))) for name in run.civ_names]
     run.reachable = all_civs(run.old, run.new, civs, (run.old_units, run.new_units))
+    # What some civ could get in the old build alone: a unit outside it that a civ can get now is
+    # new to players, even when the old .dat held a placeholder record for it (diff-rules.md).
+    before_only = all_civs(run.old, run.old, civs, (run.old_units, run.old_units))
+    run.reachable_before = _any_reachable(before_only.values())
+    reachable_now = _any_reachable(run.reachable.values())
+    run.new_to_players = reachable_now - run.reachable_before
     unit_ids = sorted(set(run.old_units.unit_ids) | set(run.new_units.unit_ids))
     for unit_id in unit_ids:
         _unit_change(run, unit_id, civs)
+
+
+def _any_reachable(reaches: Iterable[Reachable]) -> frozenset[int]:
+    """Every unit and projectile at least one civ can get."""
+    found: set[int] = set()
+    for reach in reaches:
+        found |= reach.units | reach.projectiles
+    return frozenset(found)
 
 
 def _unit_change(
@@ -802,7 +838,7 @@ def _unit_change(
             direct.append(internal_name)
         else:
             continue
-        records[internal_name] = (before, after)
+        records[internal_name] = (None if unit_id in run.new_to_players else before, after)
     _remember_string(run, at_path(run.new_units.any_record(unit_id), "language_dll_name"))
     targets = [(unit_id, direct, False)]
     targets += [(shooter, civ_list, True) for shooter, civ_list in sorted(fired.items())]
@@ -1414,6 +1450,56 @@ def _effect(snapshot: Snapshot, effect_id: JsonValue) -> JsonObject | None:
         return None
     effect = _records(snapshot, "effects").get(str(effect_id))
     return effect
+
+
+def _blast_width_check(run: _Run) -> Callable[[str], levels.BlastWidth]:
+    """Where a unit's blast width comes from: its own record, an effect, or nowhere.
+
+    A blast level only matters with a blast width: without one, a change to it does nothing
+    (diff-rules.md, Levels; the Knight line on 101.103.54800.0).
+    """
+    units: set[int] = set()
+    classes: set[int] = set()
+    for snapshot in (run.old, run.new):
+        for effect in _records(snapshot, "effects").values():
+            for command in _commands(effect):
+                if not isinstance(command, dict):
+                    continue
+                attribute = run.vocabulary.attribute_identifier(command.get("c"))
+                amount = command.get("d")
+                if attribute != "BlastWidth" or not isinstance(amount, (int, float)) or amount <= 0:
+                    continue
+                a, b = command.get("a"), command.get("b")
+                if isinstance(a, int) and a >= 0:
+                    units.add(a)
+                elif isinstance(b, int) and b >= 0:
+                    classes.add(b)
+
+    def check(unit_id: str) -> levels.BlastWidth:
+        if not unit_id.lstrip("-").isdigit():
+            return "own"  # not a unit: never call its blast level inert
+        identifier = int(unit_id)
+        granted = identifier in units
+        for lookup in (run.old_units, run.new_units):
+            entry = lookup.entry(identifier)
+            if entry is None:
+                continue
+            base = entry.get("base")
+            if isinstance(base, dict) and base.get("class_") in classes:
+                granted = True
+            if _positive(at_path(base if isinstance(base, dict) else None, "type_50.blast_width")):
+                return "own"
+            overrides = entry.get("overrides")
+            for values in overrides.values() if isinstance(overrides, dict) else []:
+                if isinstance(values, dict) and _positive(values.get("type_50.blast_width")):
+                    return "own"
+        return "granted" if granted else "none"
+
+    return check
+
+
+def _positive(value: JsonValue) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0
 
 
 def _civ_dat(snapshot: Snapshot, index: int | None) -> JsonObject | None:

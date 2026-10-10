@@ -10,7 +10,7 @@ import { byId, clear, el, input, show } from "./dom.js";
  *   api: import("./api.js").Api,
  *   t: (key: string, values?: Record<string, unknown>) => string,
  *   current: () => {oldId: string, newId: string, low: boolean, unnamed: boolean,
- *     civs: string[] | null, prerelease: boolean} | null,
+ *     details: boolean, technical: boolean, civs: string[] | null, prerelease: boolean} | null,
  * }} deps
  * @returns {{open: () => Promise<void>}}
  */
@@ -30,6 +30,8 @@ export function initExport(deps) {
       state.low,
       state.civs,
       state.unnamed,
+      state.details,
+      state.technical,
     );
     byId("export-preview").textContent = exported.text;
   }
@@ -61,6 +63,8 @@ export function initExport(deps) {
         state.low,
         state.civs,
         state.unnamed,
+        state.details,
+        state.technical,
       );
       byId("export-status").textContent = saved.saved
         ? deps.t("export.saved", { path: String(saved.path ?? "") })
