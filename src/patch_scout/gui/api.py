@@ -24,6 +24,7 @@ from patch_scout.errors import PatchScoutError
 from patch_scout.gui.logs import RecentProblems
 from patch_scout.i18n.catalog import Catalog
 from patch_scout.report import Filters, render_html, render_text
+from patch_scout.report.present import present
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
 from patch_scout.store import (
     BackupStore,
@@ -268,7 +269,7 @@ class Api:
             older, newer = order(first, second)
             change_set = self._compared(older, newer, show_unreachable=show_unreachable)
             self._settings.remember_comparison(older.capture_id, newer.capture_id)
-            return change_set.to_json()
+            return present(change_set, self._catalog).to_json()
 
     def get_icons(self, hashes: Sequence[str]) -> JsonObject:
         """Data URIs for the icons a view is about to show."""

@@ -379,4 +379,4 @@ See [snapshot-format.md](../design/snapshot-format.md) (icon store) and [diff-ru
 - armour classes 0, 31 (about 1,200 uses), 40, 41 and 60;
 - effect command types 15, 18, 21, 26, 31, 36, 40, 200–204 and 255.
 
-**`Effects.xs` holds scripted logic** for some techs and bonuses (Ordo Cavalry, Chieftains, Stronghold…), as numbered functions. How a tech calls one is unknown: effect type 255 doesn't match the function numbers. The capture keeps the file as text, so a change to it can be shown.
+**`Effects.xs` holds scripted logic** for some techs and bonuses (Ordo Cavalry, Chieftains, Stronghold…), as numbered functions, each under a title comment such as `// 52 - Effect of Kasbah for Berbers`. **A tech runs one by setting the player resource `EffectFunctionNumber` (33) to its number** with a `ModResource` command [verified 101.103.54800.0]: the Kasbah tech sets it to 52, Cuman Mercenaries to 53, Atheism uses 56. (Effect type 255 is something else.) The capture keeps the file as text, so a change to it can be shown.

@@ -17,7 +17,7 @@ from patch_scout.diff import collapse as collapse_module
 from patch_scout.diff import entries as entries_module
 from patch_scout.diff import levels
 from patch_scout.diff.allowlist import RESOURCE_KEYS, TECH_FIELDS, UNIT_FIELDS, Field
-from patch_scout.diff.effects import Lookup, describe
+from patch_scout.diff.effects import Lookup, describe, script_titles
 from patch_scout.diff.model import (
     Change,
     ChangeSet,
@@ -86,6 +86,7 @@ class _Run:
     attached_strings: set[str] = field(default_factory=set)
     reachable_before: frozenset[int] = frozenset()
     new_to_players: frozenset[int] = frozenset()
+    script_titles: dict[int, str] | None = None
     compared_values: int = 0
     changed_values: int = 0
 
@@ -448,9 +449,12 @@ def _node_changes(
     lost = [
         name for name in in_scope if _available(maps[name][0].get(key)) and key not in maps[name][1]
     ]
+    # Measured against every civ in the comparison, not the civs whose tree lists the node: those
+    # include civs that list it as NotAvailable, which don't have it (diff-rules.md).
+    universe = [name for name in run.civ_names if name in run.every or name in in_scope]
     for civ_list, kind in ((gained, "added"), (lost, "removed")):
         if civ_list:
-            scope = _scope_for(run, in_scope, civ_list)
+            scope = _scope_for(run, universe, civ_list)
             run.spread(
                 Change("civ_availability", kind, entity, scope, sort_key=sort),  # type: ignore[arg-type]
                 scope,
@@ -1203,6 +1207,7 @@ def _command_changes(
         unit=lambda unit_id: _unit_name(run, unit_id) or unknown_id(unit_id),
         tech=lambda tech_id: _tech_name(run, tech_id),
         vocabulary=run.vocabulary,
+        script=_script_titles(run).get,
     )
     changes: list[Change] = []
     for old_command, new_command, position in _aligned(old_commands, new_commands):
@@ -1269,6 +1274,18 @@ def _sentences(
         else:
             lines.append((new_sentence.label, "", new_sentence.value))
     return lines
+
+
+def _script_titles(run: _Run) -> dict[int, str]:
+    """Effects.xs function titles, the new build's first."""
+    if run.script_titles is None:
+        titles: dict[int, str] = {}
+        for snapshot in (run.new, run.old):
+            text = snapshot.scripts.get("effects")
+            for number, title in script_titles(text if isinstance(text, str) else "").items():
+                titles.setdefault(number, title)
+        run.script_titles = titles
+    return run.script_titles
 
 
 def _aligned(
