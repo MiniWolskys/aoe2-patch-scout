@@ -1139,7 +1139,8 @@ def _other_effects(run: _Run) -> None:
         if before is None or after is None or before == after:
             continue
         name = _text(after.get("name"))
-        entity = Entity("effect", key, name or unknown_id(key), named=bool(name))
+        shown = run.new_names.internal_name(name) if name else unknown_id(key)
+        entity = Entity("effect", key, shown, named=bool(name))
         for change in _command_changes(
             run, entity, before, after, "other_effects", Message("field.effect_command")
         ):
@@ -1219,7 +1220,9 @@ def _command_changes(
     """
     old_commands = _commands(before)
     new_commands = _commands(after)
-    effect_name = _text(after.get("name")) or _text(before.get("name")) or ""
+    effect_name = run.new_names.internal_name(
+        _text(after.get("name")) or _text(before.get("name")) or ""
+    )
     lookup = Lookup(
         unit=lambda unit_id: _unit_name(run, unit_id) or unknown_id(unit_id),
         tech=lambda tech_id: _tech_name(run, tech_id),
