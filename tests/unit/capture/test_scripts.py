@@ -87,3 +87,14 @@ def test_missing_xs_files_become_missing_sections(tmp_path: Path) -> None:
     assert tier.scripts == {}
     assert "scripts.constants" in tier.missing_sections
     assert "scripts.effects" in tier.missing_sections
+
+
+def test_a_comment_right_after_a_closing_rule_is_not_a_title() -> None:
+    text = """\
+//======================
+// Unit Property Constants
+//======================
+// Get or Set - int/float
+extern const int cUnitHitpoints = 0;
+"""
+    assert scripts.parse_constants(text) == {"Unit Property Constants": [["cUnitHitpoints", 0]]}

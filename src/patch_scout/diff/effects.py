@@ -14,11 +14,16 @@ from typing import Final
 
 from patch_scout.diff.model import Message
 from patch_scout.diff.values import display, unknown_id
-from patch_scout.diff.vocabulary import Vocabulary
+from patch_scout.diff.vocabulary import Vocabulary, label
 from patch_scout.snapshot import JsonObject, JsonValue
 
-# Attributes whose value packs a class and an amount: d = class * 256 + amount (game-files.md §11).
-_PACKED: Final = {8: "field.armours", 9: "field.attacks"}
+# Attributes, by XS name, whose value packs a class and an amount: d = class * 256 + amount
+# (game-files.md §11).
+_PACKED: Final = {"Armor": "field.armours", "Attack": "field.attacks"}
+# Attributes whose value probably packs too, in a way not verified yet: they stay raw.
+_UNVERIFIED: Final = frozenset(
+    {"ResourceCost", "AddArmorType", "AddAttackType", "RemoveArmorType", "RemoveAttackType"}
+)
 # Modes from Constants.xs "Effect Type Constants": cAttributeSet/cAttributeDisable = 0,
 # cAttributeAdd/cAttributeEnable = 1.
 _SET, _ADD = 0, 1
@@ -75,18 +80,18 @@ def _attribute(
     target = _target(a, b, lookup)
     if target is None or c is None:
         return None
-    if c in _PACKED:
+    identifier = lookup.vocabulary.attribute_identifier(c)
+    if identifier is None or identifier in _UNVERIFIED:
+        return None
+    if identifier in _PACKED:
         if kind == "MulAttribute" or d < 0 or not d.is_integer():
             return None
         armour_class, amount = int(d) >> 8, int(d) & 0xFF
         name = lookup.vocabulary.armour_class(armour_class) or unknown_id(armour_class)
-        attribute: JsonValue = Message(_PACKED[c], {"class": name}).to_json()
+        attribute: JsonValue = Message(_PACKED[identifier], {"class": name}).to_json()
         value = f"={amount}" if kind == "SetAttribute" else _signed(amount)
     else:
-        named = lookup.vocabulary.attribute(c)
-        if named is None:
-            return None
-        attribute = named
+        attribute = label(identifier)
         if kind == "SetAttribute":
             value = f"={display(d)}"
         elif kind == "AddAttribute":

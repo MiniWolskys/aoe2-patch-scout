@@ -193,7 +193,8 @@ Every changed effect command is shown in up to three layers, most readable first
 
 - **Target:** the unit in `a`, else the class in `b` ("Cavalry class"). A command with neither stays raw.
 - **Attack and armour** (attributes 9 and 8) unpack `d` as class × 256 + amount, e.g. "Archer: Attack vs Pierce · +1". A negative `d`, or a multiplied attack or armour, stays raw: its packing isn't verified.
-- **An attribute the constants don't name** stays raw.
+- **An attribute the constants don't name** stays raw, and so do attributes whose value probably packs data in a way not yet verified: `ResourceCost`, `AddArmorType`, `AddAttackType`, `RemoveArmorType` and `RemoveAttackType`. Attack and armour are recognised by their XS names (`Attack`, `Armor`), not by number.
+- **Two commands that differ only in a slot the sentence doesn't show** stay raw, so a change never reads "×1.5 → ×1.5".
 - **Other types** (`SpawnUnit`, `ModifyTech`, `SetPlayerData`, the unit-attribute variants 10–12, the tech cost and time types 100, 101, 103) have no template yet: their slot meanings aren't verified from game files.
 
 **How a changed command reads:**
@@ -231,7 +232,7 @@ Showing how a civ's bonuses affect a unit may come later as a separate feature (
   - Show the shortest decimal form that tells old and new apart: `2.0 → 1.9`, not `2 → 2`.
   - Resources are shown by name: type 0 is food, 1 wood, 2 stone and 3 gold, checked against costs the game shows in its own interface (game-files.md §4).
   - Armour and attack classes are named from the snapshots' `Constants.xs`, e.g. "Attack vs Shock Infantry" (see Effects). Train and research locations show the building's name.
-  - **Required techs** show tech names, without the empty `-1` slots. A tech whose required count is 0 lists none: its slots then hold placeholders such as tech 0, "New Research".
+  - **Required techs** show tech names, without the empty `-1` slots. A tech whose required count is 0 lists none: its slots then hold placeholders such as tech 0, "New Research". A change that only touches such slots is not reported.
   - Unknown IDs are shown as `#<id>`.
 - **Names:**
   - A unit, tech tree node or building is named from the game's strings, the new build first.

@@ -45,6 +45,12 @@ class Vocabulary:
         """A unit attribute (the `c` slot of an effect command), e.g. 44 -> "Blast Attack Level"."""
         return self._label(_ATTRIBUTE, identifier)
 
+    def attribute_identifier(self, identifier: JsonValue) -> str | None:
+        """A unit attribute's bare identifier, e.g. 9 -> "Attack"."""
+        if not isinstance(identifier, int) or isinstance(identifier, bool):
+            return None
+        return self._table(_ATTRIBUTE).get(identifier)
+
     def unit_class(self, identifier: JsonValue) -> str | None:
         """A unit class as the `.dat` numbers it, e.g. 36 -> "Cavalry Archer"."""
         return self._label(_UNIT_CLASS, identifier)

@@ -1004,6 +1004,8 @@ def _techs(run: _Run) -> None:
                 if allow.key == "required_techs":
                     old_text = _tech_list(run, old_value, before.get("required_tech_count"))
                     new_text = _tech_list(run, new_value, after.get("required_tech_count"))
+                    if old_text == new_text:
+                        continue  # only empty or placeholder slots changed
                 else:
                     old_text, new_text = pair(old_value, new_value)
                 run.spread(
@@ -1186,6 +1188,8 @@ def _sentences(
     new_sentence = describe(new, lookup) if new is not None else None
     if (old is not None and old_sentence is None) or (new is not None and new_sentence is None):
         return None
+    if old_sentence is not None and old_sentence == new_sentence:
+        return None  # the commands differ in a slot the sentence doesn't show
     if (
         old_sentence is not None
         and new_sentence is not None

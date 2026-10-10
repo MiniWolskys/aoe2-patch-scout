@@ -17,7 +17,7 @@ XS_FOLDER: Final = "resources/_common/xs"
 CONSTANTS_FILE: Final = f"{XS_FOLDER}/Constants.xs"
 EFFECTS_FILE: Final = f"{XS_FOLDER}/Effects.xs"
 
-# A section title is a comment line right after a rule (`//====` or `// ====`).
+# A section title is a comment line between two rules (`//====` or `// ====`).
 _RULE = re.compile(r"^//\s*=+\s*$")
 _COMMENT = re.compile(r"^//\s*(.*?)\s*$")
 _CONSTANT = re.compile(
@@ -49,19 +49,16 @@ def parse_constants(text: str) -> JsonObject:
     """
     sections: dict[str, list[JsonValue]] = {}
     title = ""
-    after_rule = False
-    for line in text.splitlines():
-        stripped = line.strip()
-        if _RULE.match(stripped):
-            after_rule = True
-            continue
+    lines = [line.strip() for line in text.splitlines()]
+    for index, stripped in enumerate(lines):
         comment = _COMMENT.match(stripped)
-        if comment is not None:
-            if after_rule and comment.group(1):
+        if comment is not None and not _RULE.match(stripped):
+            # A title is a comment between two rules; any other comment is just a comment.
+            before = lines[index - 1] if index > 0 else ""
+            after = lines[index + 1] if index + 1 < len(lines) else ""
+            if comment.group(1) and _RULE.match(before) and _RULE.match(after):
                 title = comment.group(1)
-            after_rule = False
             continue
-        after_rule = False
         constant = _CONSTANT.match(stripped)
         if constant is not None:
             kind, name, raw = constant.groups()

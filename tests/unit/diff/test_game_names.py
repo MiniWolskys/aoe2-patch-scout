@@ -166,3 +166,14 @@ def test_a_unit_without_a_name_is_still_marked_unnamed() -> None:
         base["hit_points"] = hit_points
     [change] = [c for c in compare(old, new).changes if c.entity.id == "4"]
     assert (change.entity.name, change.entity.named) == ("#4", False)
+
+
+def test_a_change_only_in_placeholder_slots_is_not_reported() -> None:
+    old = _build(shock=6, pierce=0, train_time=21, required=[-1, -1])
+    new = _build(shock=6, pierce=0, train_time=21, required=[0, -1])
+    for snapshot in (old, new):
+        assert snapshot.stats is not None
+        techs = snapshot.stats["techs"]
+        assert isinstance(techs, dict) and isinstance(techs["200"], dict)
+        techs["200"]["required_tech_count"] = 0
+    assert [c for c in compare(old, new).changes if c.entity.name == "Crossbowman"] == []

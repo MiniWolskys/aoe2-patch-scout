@@ -201,3 +201,48 @@ def test_the_raw_command_stays_in_the_detail() -> None:
 def test_a_command_with_no_template_stays_raw() -> None:
     [change] = _changes([], [_command(255)])
     assert _line(change) == ("Effect", "", "type 255 a=-1 b=-1 c=-1 d=0")
+
+
+def test_a_change_in_a_slot_the_sentence_ignores_stays_raw() -> None:
+    [change] = _changes([_command(6, a=0, b=-1, d=1.5)], [_command(6, a=0, b=0, d=1.5)])
+    assert change.field == Message("field.tech_effect")
+
+
+def test_attributes_whose_value_packing_is_unverified_stay_raw() -> None:
+    lookup = Lookup(
+        unit=LOOKUP.unit,
+        tech=LOOKUP.tech,
+        vocabulary=Vocabulary(
+            make_snapshot(
+                scripts={
+                    "constants": {
+                        "Effect Constants": [["cAddAttribute", 4]],
+                        "Tech Effect Constants": [["cResourceCost", 100], ["cAddArmorType", 160]],
+                    }
+                }
+            )
+        ),
+    )
+    assert describe(_command(4, a=4, c=100, d=769.0), lookup) is None
+    assert describe(_command(4, a=4, c=160, d=769.0), lookup) is None
+
+
+def test_attack_is_unpacked_by_its_xs_name_not_its_number() -> None:
+    moved = Lookup(
+        unit=LOOKUP.unit,
+        tech=LOOKUP.tech,
+        vocabulary=Vocabulary(
+            make_snapshot(
+                scripts={
+                    "constants": {
+                        "Effect Constants": [["cAddAttribute", 4]],
+                        "Tech Effect Constants": [["cSomethingElse", 9]],
+                    }
+                }
+            )
+        ),
+    )
+    assert _read(describe(_command(4, a=4, c=9, d=769.0), moved)) == (
+        "Archer: Something Else",
+        "+769",
+    )
