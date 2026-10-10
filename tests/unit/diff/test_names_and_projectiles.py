@@ -178,7 +178,7 @@ def test_an_effect_named_like_a_civ_bonus_reads_as_one() -> None:
     for amount in (1.0, 2.0):
         build = _build(6, {})
         assert build.stats is not None and isinstance(build.stats["effects"], dict)
-        command = {"type": 1, "a": 0, "b": 1, "c": -1, "d": amount}
+        command: JsonObject = {"type": 1, "a": 0, "b": 1, "c": -1, "d": amount}
         build.stats["effects"]["900"] = {"name": "C-Bonus, Pastures", "commands": [command]}
         builds.append(build)
 
