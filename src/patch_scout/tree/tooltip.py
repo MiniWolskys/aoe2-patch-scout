@@ -11,6 +11,8 @@ import re
 from dataclasses import dataclass
 from typing import Final, Literal
 
+from patch_scout.snapshot import JsonObject
+
 STATS: Final = ("hp", "attack", "armor", "piercearmor", "range", "garrison")
 _LINE_BREAK: Final = r"\n"
 _STYLE_TAGS: Final = frozenset({"b", "/b", "i", "/i", "GREY", "DEFAULT"})
@@ -32,7 +34,7 @@ class Run:
     resource: str | None = None
     amount: int | None = None
 
-    def to_json(self) -> dict[str, object]:
+    def to_json(self) -> JsonObject:
         """The form the page draws."""
         return {
             "kind": self.kind,
