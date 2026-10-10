@@ -67,7 +67,8 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 | Swap | Exchanges old and new. |
 
 - **Old and new are assigned automatically:** the lower game build is old; for the same build, the earlier capture is old.
-- **On launch:** the last comparison reopens.
+- **On launch:** the last comparison reopens. The window shows straight away, with "Comparing…" while it is computed.
+- **While comparing** (a few seconds on real builds): a "Comparing…" view names both versions, with a sweeping progress bar. A failed comparison goes back to where the reader was and says so; any other failed call shows a short message pointing to Diagnostics.
 
 ### Capture
 
@@ -141,7 +142,8 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 
 ### Diagnostics and Settings
 
-- **Diagnostics** opens its own window ([architecture.md](architecture.md#gui-v1-d-15)).
+- **Diagnostics** opens its own window ([architecture.md](architecture.md#gui-v1-d-15)). It lists the recent warnings and errors and the log file's path; "Copy diagnostics" includes them.
+- **Log file:** `<data folder>\logs\patch-scout.log`, rotating at 1 MB with three old files kept. The packaged app has no console, so this is where its errors go.
 - **Settings** covers the data folder, raw backups and recent game folders (P-10, P-19).
 
 ## Open questions

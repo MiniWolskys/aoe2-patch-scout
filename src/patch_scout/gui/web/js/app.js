@@ -12,7 +12,7 @@ import * as icons from "./icons.js";
 import { initDiagnostics, initExport, initPicker, initSettings } from "./panels.js";
 import { initVersionList, render as renderVersions } from "./version-list.js";
 
-const VIEWS = ["first-launch", "capture-view", "details-view", "comparison-view"];
+const VIEWS = ["first-launch", "capture-view", "details-view", "comparing-view", "comparison-view"];
 
 async function start() {
   const api = await connect();
@@ -21,6 +21,11 @@ async function start() {
   const t = createTranslator(startup.messages);
   applyTranslations(document, t);
   dialogs.listen();
+  // A call that fails anywhere else still says so, instead of doing nothing.
+  window.addEventListener("unhandledrejection", (event) => {
+    console.error("unexpected error", event.reason);
+    dialogs.toast(t("error.unexpected"));
+  });
 
   /** @type {{
    *   versions: import("./api.js").Version[],
@@ -101,9 +106,33 @@ async function start() {
     await openComparison(other, captureId);
   }
 
+  // Each comparison asked for gets a number; a slower, older one never overwrites a newer one.
+  let comparisonRequest = 0;
+
   async function openComparison(firstId, secondId) {
-    const changeSet = await api.compare_versions(firstId, secondId, state.filters.unreachable);
-    await icons.preload(api, comparison.iconHashes(changeSet));
+    const request = ++comparisonRequest;
+    const previous = state.view;
+    const label = (id) => state.versions.find((version) => version.capture_id === id)?.label ?? "";
+    byId("comparing-meta").textContent = t("comparison.loading_meta", {
+      first: label(firstId),
+      second: label(secondId),
+    });
+    showView("comparing-view");
+    let changeSet;
+    try {
+      changeSet = await api.compare_versions(firstId, secondId, state.filters.unreachable);
+      await icons.preload(api, comparison.iconHashes(changeSet));
+    } catch (error) {
+      console.error("the comparison failed", error);
+      if (request === comparisonRequest) {
+        showView(previous === "comparing-view" ? "first-launch" : previous);
+        dialogs.toast(t("comparison.failed"));
+      }
+      return;
+    }
+    if (request !== comparisonRequest) {
+      return;
+    }
     state.comparison = {
       oldId: changeSet.old.capture_id,
       newId: changeSet.new.capture_id,
@@ -297,7 +326,10 @@ async function start() {
   } else if (startup.versions.length === 0) {
     showView("first-launch");
   } else if (startup.last_comparison.length === 2 && reopenable(startup)) {
+    // A comparison takes seconds: show the page now, with "Comparing…", not a blank window.
+    document.body.dataset.ready = "";
     await openComparison(startup.last_comparison[0], startup.last_comparison[1]);
+    return;
   } else {
     await openVersion(startup.versions[0].capture_id);
   }

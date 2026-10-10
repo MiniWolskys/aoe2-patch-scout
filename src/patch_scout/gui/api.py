@@ -21,6 +21,7 @@ from patch_scout.capture import runner
 from patch_scout.capture.runner import CaptureRequest, Progress
 from patch_scout.diff import ChangeSet, Options, SideInfo, compare, order
 from patch_scout.errors import PatchScoutError
+from patch_scout.gui.logs import RecentProblems
 from patch_scout.i18n.catalog import Catalog
 from patch_scout.report import Filters, render_html, render_text
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
@@ -80,8 +81,13 @@ class Api:
         language: str,
         app_version: str,
         folder: DataFolder | None = None,
+        *,
+        recent: RecentProblems | None = None,
+        log_file: Path | None = None,
     ) -> None:
         self._catalog = catalog
+        self._recent = recent
+        self._log_file = log_file
         self._language = language
         self._app_version = app_version
         self._folder = folder or DataFolder.default()
@@ -355,12 +361,14 @@ class Api:
                 "renderer": _renderer(),
                 "windows": platform.platform(),
                 "data_folder": str(self._folder.root),
+                "log_file": str(self._log_file) if self._log_file else "",
             }
             snapshot = self._snapshot(capture_id) if capture_id else None
             log: list[JsonValue] = list(self._log)
             return {
                 "environment": environment,
                 "log": log,
+                "problems": list(self._recent.lines()) if self._recent else [],
                 "versions": self._versions(),
                 "snapshot": _diagnostics_json(snapshot) if snapshot else None,
             }

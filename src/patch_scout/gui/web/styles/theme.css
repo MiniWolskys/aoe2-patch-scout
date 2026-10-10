@@ -514,6 +514,29 @@ ins {
   background: var(--accent);
 }
 
+/* Work of unknown length: a bar sweeping across the track */
+.progress--busy .progress__bar {
+  width: 30%;
+  animation: progress-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress--busy .progress__bar {
+    width: 100%;
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
 .step {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) auto;

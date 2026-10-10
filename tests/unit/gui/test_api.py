@@ -2,6 +2,7 @@
 """The API the page calls. Every test gives it its own data folder; none touches the real one."""
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,8 @@ import pytest
 from support import dat as sample_dat
 from support import game_tree
 
+from patch_scout.errors import PatchScoutError
+from patch_scout.gui import logs
 from patch_scout.gui.api import MAX_ICONS, Api
 from patch_scout.i18n.catalog import Catalog, load_catalog
 from patch_scout.store import DataFolder
@@ -329,3 +332,19 @@ def test_a_version_captured_after_startup_can_be_edited(api: Api, install: Path)
 def test_asking_for_more_icons_than_the_cap_returns_the_cap(api: Api) -> None:
     """The page batches its requests; anything past the cap is silently dropped here."""
     assert len(api.get_icons(["missing"] * (MAX_ICONS + 50))) == 0
+
+
+def test_diagnostics_list_recent_problems_and_the_log_file(folder: DataFolder) -> None:
+    recent = logs.RecentProblems()
+    api = Api(load_catalog("en"), "en", "1.2.3", folder, recent=recent, log_file=Path("x.log"))
+    logging.getLogger("patch_scout.gui").addHandler(recent)
+    try:
+        with pytest.raises(PatchScoutError):
+            api.compare_versions("missing", "also-missing")
+    finally:
+        logging.getLogger("patch_scout.gui").removeHandler(recent)
+    diagnostics = api.get_diagnostics()
+    problems = diagnostics["problems"]
+    assert isinstance(problems, list) and any("compare_versions" in str(p) for p in problems)
+    environment = diagnostics["environment"]
+    assert isinstance(environment, dict) and environment["log_file"] == "x.log"
