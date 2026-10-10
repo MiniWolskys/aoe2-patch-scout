@@ -235,6 +235,8 @@
   "kind.removed": "Removed:",
   "kind.renamed": "Renamed",
   "kind.text_changed": "Text changed",
+  "name.civ_bonus": "Civ bonus: {name}",
+  "name.team_bonus": "Team bonus: {name}",
   "notice.layout_substituted": "The {side} version's data format is labelled {found}, which this version of the tool doesn't know yet. It was read with the {used} layout and passed every check.",
   "notice.levels_hidden": "{count} minor or technical changes are hidden. Show them with \"Show minor changes\" and \"Show technical changes\" in Filters.",
   "notice.unnamed_hidden": "{count} changes concern game objects with no name, such as internal helper techs. They are hidden unless \"Show objects with no name\" is on.",

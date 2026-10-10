@@ -103,8 +103,26 @@ def test_a_tech_without_a_display_name_uses_its_internal_name() -> None:
 
     changes = [change for change in _compare(old, new).changes if change.category == "techs"]
 
-    assert {change.entity.name for change in changes} == {"C-Bonus, Military cost -20%"}
+    assert {change.entity.name for change in changes} == {"Civ bonus: Military cost -20%"}
     assert all(change.entity.named for change in changes)
+
+
+def test_a_team_bonus_tech_reads_as_a_team_bonus() -> None:
+    old = {"153": _tech("T-Bonus, Start w/ Llama", -1, 1)}
+    new = {"153": _tech("T-Bonus, Start w/ Llama", -1, 2)}
+
+    changes = [change for change in _compare(old, new).changes if change.category == "techs"]
+
+    assert {change.entity.name for change in changes} == {"Team bonus: Start w/ Llama"}
+
+
+def test_a_tech_named_like_a_bonus_only_in_passing_keeps_its_name() -> None:
+    old = {"153": _tech("Post-TC C-Bonus fix", -1, 1)}
+    new = {"153": _tech("Post-TC C-Bonus fix", -1, 2)}
+
+    changes = [change for change in _compare(old, new).changes if change.category == "techs"]
+
+    assert {change.entity.name for change in changes} == {"Post-TC C-Bonus fix"}
 
 
 def test_a_tech_tied_to_a_civ_shows_on_that_civs_page() -> None:
@@ -153,3 +171,17 @@ def test_unnamed_objects_are_left_out_of_exports_unless_asked_for() -> None:
 
     assert "#172" not in render_text(change_set, catalog)
     assert "#172" in render_text(change_set, catalog, Filters(unnamed=True, details=True))
+
+
+def test_an_effect_named_like_a_civ_bonus_reads_as_one() -> None:
+    builds = []
+    for amount in (1.0, 2.0):
+        build = _build(6, {})
+        assert build.stats is not None and isinstance(build.stats["effects"], dict)
+        command: JsonObject = {"type": 1, "a": 0, "b": 1, "c": -1, "d": amount}
+        build.stats["effects"]["900"] = {"name": "C-Bonus, Pastures", "commands": [command]}
+        builds.append(build)
+
+    changes = [c for c in compare(*builds).changes if c.category == "other_effects"]
+
+    assert changes and {c.entity.name for c in changes} == {"Civ bonus: Pastures"}
