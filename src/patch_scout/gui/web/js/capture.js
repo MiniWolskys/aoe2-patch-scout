@@ -22,12 +22,13 @@ const POLL_MS = 250;
  */
 export function initCapture(deps) {
   let pollTimer = 0;
-  /** @type {string | null} */
-  let chosenFolder = null;
   let captureAnyway = false;
+  // The label the dialog suggested last: it follows the folder until the user types their own.
+  let suggestedLabel = "";
 
   async function openDialog() {
     captureAnyway = false;
+    suggestedLabel = "";
     input("capture-label").value = "";
     input("capture-prerelease").checked = false;
     byId("capture-folder-help").textContent = deps.t("capture.detecting");
@@ -39,37 +40,62 @@ export function initCapture(deps) {
       return;
     }
     const first = candidates[0];
-    chosenFolder = first.path;
     input("capture-folder").value = first.path;
     input("capture-prerelease").checked = first.prerelease_hint;
     await describeFolder(first.path);
-    suggestLabel(first.game_build);
   }
 
   /**
    * Validate a folder and say what was found there.
    * @param {string} path
+   * @returns {Promise<string | null>} the install root to capture, or null when it isn't one
    */
   async function describeFolder(path) {
     if (!path) {
       byId("capture-folder-help").textContent = deps.t("capture.not_found");
-      return;
+      return null;
     }
     const checked = await deps.api.validate_game_folder(path);
     if (checked.valid !== true) {
       byId("capture-folder-help").textContent = deps.t("capture.invalid", {
         reason: String(checked.reason ?? ""),
       });
-      return;
+      return null;
     }
-    chosenFolder = String(checked.path);
-    input("capture-folder").value = chosenFolder;
+    const root = String(checked.path);
+    input("capture-folder").value = root;
     const build = checked.game_build;
     byId("capture-folder-help").textContent =
       typeof build === "string"
         ? deps.t("capture.found_build", { build })
         : deps.t("capture.found_no_build");
     suggestLabel(typeof build === "string" ? build : null);
+    return root;
+  }
+
+  /**
+   * Start a capture of the folder in the field, as it is now: never one checked earlier, so a
+   * typed folder is the one captured, and an invalid one never is.
+   * @param {boolean} anyway capture even if every input matches an existing version
+   * @returns {Promise<boolean>} whether the capture started
+   */
+  async function startCapture(anyway) {
+    const root = await describeFolder(input("capture-folder").value.trim());
+    if (root === null) {
+      return false;
+    }
+    const label = input("capture-label").value.trim() || root;
+    const started = await deps.api.start_capture(
+      root,
+      label,
+      input("capture-prerelease").checked,
+      anyway,
+    );
+    if (started.started !== true) {
+      dialogs.toast(deps.t("capture.already_running"));
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -78,7 +104,8 @@ export function initCapture(deps) {
    */
   function suggestLabel(build) {
     const field = input("capture-label");
-    if (field.value.trim() !== "") {
+    // A label the user typed is theirs; only an empty one, or the last suggestion, follows.
+    if (field.value.trim() !== "" && field.value !== suggestedLabel) {
       return;
     }
     const date = new Date().toLocaleDateString(undefined, {
@@ -87,6 +114,7 @@ export function initCapture(deps) {
       day: "numeric",
     });
     field.value = build ? `${build} · ${date}` : date;
+    suggestedLabel = field.value;
   }
 
   /**
@@ -169,20 +197,7 @@ export function initCapture(deps) {
   });
   byId("capture-dialog-cancel").addEventListener("click", () => dialogs.close("capture-scrim"));
   byId("capture-start").addEventListener("click", async () => {
-    const path = chosenFolder ?? input("capture-folder").value.trim();
-    if (!path) {
-      byId("capture-folder-help").textContent = deps.t("capture.not_found");
-      return;
-    }
-    const label = input("capture-label").value.trim() || path;
-    const started = await deps.api.start_capture(
-      path,
-      label,
-      input("capture-prerelease").checked,
-      captureAnyway,
-    );
-    if (started.started !== true) {
-      dialogs.toast(deps.t("capture.already_running"));
+    if (!(await startCapture(captureAnyway))) {
       return;
     }
     dialogs.close("capture-scrim");
@@ -194,10 +209,9 @@ export function initCapture(deps) {
   });
   byId("capture-anyway").addEventListener("click", async () => {
     captureAnyway = true;
-    const path = chosenFolder ?? input("capture-folder").value.trim();
-    const label = input("capture-label").value.trim() || path;
-    await deps.api.start_capture(path, label, input("capture-prerelease").checked, true);
-    watch();
+    if (await startCapture(true)) {
+      watch();
+    }
   });
 
   return { openDialog, showProgress, watch };

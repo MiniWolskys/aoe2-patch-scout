@@ -102,6 +102,73 @@ def test_the_capture_dialog_offers_the_folder_detection_found(open_shell: OpenSh
     expect(page.locator("#capture-label")).not_to_have_value("")
 
 
+def _detected(data: dict[str, Any]) -> dict[str, Any]:
+    """Detection finds a live Steam install; a pre-release build sits in another folder."""
+    data["candidates"] = [
+        {
+            "path": "D:/Games/AoE2DE",
+            "source": "steam",
+            "steam_build_id": "1",
+            "prerelease_hint": False,
+            "game_build": "101.103.48987.0",
+        }
+    ]
+    data["validations"] = {
+        "D:/Games/AoE2DE": {
+            "valid": True,
+            "path": "D:/Games/AoE2DE",
+            "game_build": "101.103.48987.0",
+        },
+        "E:/Preview/AoE2DE": {
+            "valid": True,
+            "path": "E:/Preview/AoE2DE",
+            "game_build": "101.103.60000.0",
+        },
+        "C:/Windows": {"valid": False, "reason": "missing resources"},
+    }
+    return data
+
+
+def test_a_typed_folder_is_the_one_captured(open_shell: OpenShell) -> None:
+    page = open_shell(data=_detected(fixture_data()))
+    page.locator("#capture-button").click()
+    expect(page.locator("#capture-folder")).to_have_value("D:/Games/AoE2DE")
+
+    page.locator("#capture-folder").fill("E:/Preview/AoE2DE")
+    page.locator("#capture-start").click()
+
+    expect(page.locator("#capture-scrim")).to_be_hidden()
+    [started] = calls(page, "start_capture")
+    assert started[0] == "E:/Preview/AoE2DE"
+    assert started[1].startswith("101.103.60000.0")  # the label follows the folder's build
+
+
+def test_an_invalid_typed_folder_is_never_captured(open_shell: OpenShell) -> None:
+    page = open_shell(data=_detected(fixture_data()))
+    page.locator("#capture-button").click()
+    expect(page.locator("#capture-folder")).to_have_value("D:/Games/AoE2DE")
+
+    page.locator("#capture-folder").fill("C:/Windows")
+    page.locator("#capture-start").click()
+
+    expect(page.locator("#capture-folder-help")).to_contain_text("isn't a game install")
+    expect(page.locator("#capture-scrim")).to_be_visible()
+    assert calls(page, "start_capture") == []
+
+
+def test_a_label_the_user_typed_is_kept_when_the_folder_changes(open_shell: OpenShell) -> None:
+    page = open_shell(data=_detected(fixture_data()))
+    page.locator("#capture-button").click()
+    expect(page.locator("#capture-folder")).to_have_value("D:/Games/AoE2DE")
+
+    page.locator("#capture-label").fill("Creator build")
+    page.locator("#capture-folder").fill("E:/Preview/AoE2DE")
+    page.locator("#capture-start").click()
+
+    [started] = calls(page, "start_capture")
+    assert started[:2] == ["E:/Preview/AoE2DE", "Creator build"]
+
+
 def test_the_capture_dialog_explains_when_nothing_was_found(open_shell: OpenShell) -> None:
     page = open_shell()
 
