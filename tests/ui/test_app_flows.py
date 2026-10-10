@@ -278,6 +278,24 @@ def test_a_projectile_field_is_labelled_as_part_of_its_shooter(open_shell: OpenS
     expect(page.locator(".change-row__field")).to_have_text("Projectile: Attack vs #3")
 
 
+def test_an_effect_sentence_reads_in_words(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    attack = {"key": "field.attacks", "args": {"class": "Pierce"}}
+    target = {"key": "effect.class_target", "args": {"class": "Archer"}}
+    sentence = change(
+        category="techs",
+        field={"key": "effect.attribute", "args": {"target": target, "attribute": attack}},
+        stat_icon=None,
+        old="",
+        new="+1",
+    )
+    data["changeSet"] = change_set(changes=[sentence])
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    expect(page.locator(".change-row__field")).to_have_text("Archer class: Attack vs Pierce")
+
+
 def test_a_unit_with_several_changed_fields_is_one_row(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
     speed = change(field={"key": "field.speed", "args": {}}, old="1.35", new="1.4")

@@ -16,6 +16,7 @@ from typing import Final
 from patch_scout.diff import collapse as collapse_module
 from patch_scout.diff import entries as entries_module
 from patch_scout.diff.allowlist import RESOURCE_KEYS, TECH_FIELDS, UNIT_FIELDS, Field
+from patch_scout.diff.effects import Lookup, describe
 from patch_scout.diff.model import (
     Change,
     ChangeSet,
@@ -924,8 +925,14 @@ def _tech_name(run: _Run, tech_id: int) -> str:
     return unknown_id(tech_id)
 
 
-def _tech_list(run: _Run, value: JsonValue) -> str:
-    """Required techs by name; the `-1` slots are empty and left out."""
+def _tech_list(run: _Run, value: JsonValue, count: JsonValue) -> str:
+    """Required techs by name; the `-1` slots are empty and left out.
+
+    A tech that requires no techs (count 0) lists none: its slots then hold placeholders, such as
+    the editor's tech 0, "New Research".
+    """
+    if count == 0:
+        return ""
     ids = [item for item in (value if isinstance(value, list) else []) if isinstance(item, int)]
     return ", ".join(_tech_name(run, item) for item in ids if item >= 0)
 
@@ -998,7 +1005,8 @@ def _techs(run: _Run) -> None:
                 if old_value == new_value:
                     continue
                 if allow.key == "required_techs":
-                    old_text, new_text = _tech_list(run, old_value), _tech_list(run, new_value)
+                    old_text = _tech_list(run, old_value, before.get("required_tech_count"))
+                    new_text = _tech_list(run, new_value, after.get("required_tech_count"))
                 else:
                     old_text, new_text = pair(old_value, new_value)
                 run.spread(
@@ -1056,7 +1064,7 @@ def _other_effects(run: _Run) -> None:
         name = _text(after.get("name"))
         entity = Entity("effect", key, name or unknown_id(key), named=bool(name))
         for change in _command_changes(
-            entity, before, after, "other_effects", Message("field.effect_command")
+            run, entity, before, after, "other_effects", Message("field.effect_command")
         ):
             run.add(change)
 
@@ -1110,11 +1118,12 @@ def _effect_changes(
     after = _effect(run.new, new_id)
     if before is None or after is None:
         return changes
-    changes.extend(_command_changes(entity, before, after, category, label, sort))
+    changes.extend(_command_changes(run, entity, before, after, category, label, sort))
     return changes
 
 
 def _command_changes(
+    run: _Run,
     entity: Entity,
     before: JsonObject,
     after: JsonObject,
@@ -1128,32 +1137,80 @@ def _command_changes(
     lists are aligned first (difflib), and only the replaced stretches are paired up position by
     position (diff-rules.md, Effects).
 
-    No sentence is generated: the command type, attribute and class tables come from Advanced
-    Genie Editor and are not yet verified, so the raw command is shown instead (O-5, layer 3).
+    A command reads as a sentence when a template fits it (O-5, layer 2), with the raw command
+    kept in the detail; otherwise the raw command is the change itself (layer 3).
     """
     old_commands = _commands(before)
     new_commands = _commands(after)
-    effect_name = _text(after.get("name")) or _text(before.get("name"))
+    effect_name = _text(after.get("name")) or _text(before.get("name")) or ""
+    lookup = Lookup(
+        unit=lambda unit_id: _unit_name(run, unit_id),
+        tech=lambda tech_id: _tech_name(run, tech_id),
+        vocabulary=run.vocabulary,
+    )
     changes: list[Change] = []
     for old_command, new_command, position in _aligned(old_commands, new_commands):
         old_text, new_text = _command_pair(old_command, new_command)
-        changes.append(
-            Change(
-                category=category,
-                kind="modified",
-                entity=entity,
-                field=label,
-                old=old_text,
-                new=new_text,
-                detail=Message(
-                    "detail.effect_command",
-                    {"effect": effect_name or "", "command": position},
-                ),
-                raw=f"command {position}",
-                sort_key=sort,
-            )
+        base = Change(
+            category=category,
+            kind="modified",
+            entity=entity,
+            field=label,
+            old=old_text,
+            new=new_text,
+            detail=Message("detail.effect_command", {"effect": effect_name, "command": position}),
+            raw=f"command {position}",
+            sort_key=sort,
+        )
+        sentences = _sentences(old_command, new_command, lookup)
+        if sentences is None:
+            changes.append(base)
+            continue
+        raw = " → ".join(text for text in (old_text, new_text) if text)
+        detail = Message(
+            "detail.effect_command_raw", {"effect": effect_name, "command": position, "raw": raw}
+        )
+        changes.extend(
+            replace(base, field=sentence, old=old, new=new, detail=detail)
+            for sentence, old, new in sentences
         )
     return changes
+
+
+def _sentences(
+    old: JsonValue, new: JsonValue, lookup: Lookup
+) -> list[tuple[Message, str, str]] | None:
+    """A command pair as (label, old value, new value) lines, or None to keep it raw.
+
+    The same target and attribute on both sides is one line with both values. Anything else is
+    the old sentence going and the new one coming. A sentence without a value says it in words.
+    """
+    old_sentence = describe(old, lookup) if old is not None else None
+    new_sentence = describe(new, lookup) if new is not None else None
+    if (old is not None and old_sentence is None) or (new is not None and new_sentence is None):
+        return None
+    if (
+        old_sentence is not None
+        and new_sentence is not None
+        and old_sentence.label == new_sentence.label
+        and old_sentence.value is not None
+        and new_sentence.value is not None
+    ):
+        return [(old_sentence.label, old_sentence.value, new_sentence.value)]
+    lines: list[tuple[Message, str, str]] = []
+    if old_sentence is not None:
+        if old_sentence.value is None:
+            gone = Message("effect.removed", {"effect": old_sentence.label.to_json()})
+            lines.append((gone, "", ""))
+        else:
+            lines.append((old_sentence.label, old_sentence.value, ""))
+    if new_sentence is not None:
+        if new_sentence.value is None:
+            came = Message("effect.added", {"effect": new_sentence.label.to_json()})
+            lines.append((came, "", ""))
+        else:
+            lines.append((new_sentence.label, "", new_sentence.value))
+    return lines
 
 
 def _aligned(

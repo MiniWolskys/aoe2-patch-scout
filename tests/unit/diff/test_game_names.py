@@ -139,3 +139,15 @@ def test_required_techs_are_named_and_empty_slots_left_out() -> None:
     changes = _compare(required=[CASTLE, -1]).changes
     [change] = [c for c in changes if c.entity.name == "Crossbowman"]
     assert (change.old, change.new) == ("Feudal Age", "Castle Age")
+
+
+def test_a_tech_that_requires_nothing_lists_no_techs() -> None:
+    old = _build(shock=6, pierce=0, train_time=21, required=[FEUDAL, -1])
+    new = _build(shock=6, pierce=0, train_time=21, required=[0, 0])
+    assert new.stats is not None
+    techs = new.stats["techs"]
+    assert isinstance(techs, dict) and isinstance(techs["200"], dict)
+    techs["200"]["required_tech_count"] = 0
+    changes = [c for c in compare(old, new).changes if c.entity.name == "Crossbowman"]
+    required = [c for c in changes if c.field is not None and c.field.key == "field.required_techs"]
+    assert [(c.old, c.new) for c in required] == [("Feudal Age", "")]
