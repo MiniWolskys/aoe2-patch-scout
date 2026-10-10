@@ -80,10 +80,13 @@ export function initExport(deps) {
  * @param {{
  *   api: import("./api.js").Api,
  *   t: (key: string, values?: Record<string, unknown>) => string,
+ *   version: string,
  * }} deps
  * @returns {{open: () => Promise<void>}}
  */
 export function initSettings(deps) {
+  byId("about-version").textContent = deps.t("about.version", { version: deps.version });
+
   async function openPanel() {
     const settings = await deps.api.get_settings();
     byId("settings-folder").textContent = settings.data_folder;

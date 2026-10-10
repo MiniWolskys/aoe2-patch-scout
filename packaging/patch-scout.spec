@@ -7,6 +7,7 @@
 # without rebuilding, which is what LGPLv3 section 4 asks of us (docs/legal.md).
 
 import importlib.metadata
+import shutil
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_submodules
@@ -79,6 +80,7 @@ exe = EXE(  # noqa: F821
     name=APP_NAME,
     console=False,
     version=str(VERSION_INFO),
+    icon=str(PROJECT / "packaging" / "patch-scout.ico"),
 )
 coll = COLLECT(  # noqa: F821
     exe,
@@ -86,3 +88,9 @@ coll = COLLECT(  # noqa: F821
     a.datas,
     name="PatchScout",
 )
+
+# The licences and notices also go next to the exe, where a user looks for them; the copies in
+# `_internal` stay for the code that reads them (docs/legal.md checklist).
+for name in ("LICENSE", "COPYING.LESSER", "THIRD_PARTY_NOTICES", "README.md"):
+    if (PROJECT / name).is_file():
+        shutil.copy2(PROJECT / name, Path(DISTPATH) / "PatchScout" / name)  # noqa: F821
