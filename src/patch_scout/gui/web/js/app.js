@@ -209,6 +209,12 @@ async function start() {
         capture.showProgress(status);
       }
     },
+    // From the first-launch screen there is nothing else to show: open the progress.
+    onStarted: () => {
+      if (state.view === "first-launch") {
+        showView("capture-view");
+      }
+    },
     onFinished: async (result) => {
       await refreshVersions();
       if (state.view === "capture-view") {

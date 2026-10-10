@@ -168,6 +168,9 @@ def test_starting_a_capture_closes_the_dialog_and_shows_progress(open_shell: Ope
     assert calls(page, "start_capture")[0][0] == "D:/Games/AoE2DE"
     expect(page.locator(".version-row--capture")).to_be_visible()
     expect(page.locator(".version-row--capture .version-row__meta")).to_contain_text("40%")
+    # Started from the first-launch screen, with nothing else to show: the progress opens.
+    expect(page.locator("#capture-view")).to_be_visible()
+    expect(page.locator("#capture-view-meta")).to_contain_text("40%")
 
 
 def test_the_progress_view_lists_every_step(open_shell: OpenShell) -> None:
