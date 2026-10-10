@@ -31,6 +31,7 @@ from patch_scout.diff.model import (
 from patch_scout.diff.names import Names, string_table
 from patch_scout.diff.reachability import Reachable, UnitLookup, all_civs
 from patch_scout.diff.values import at_path, pair, unknown_id, whitespace_only, words
+from patch_scout.diff.vocabulary import Vocabulary
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,7 @@ class _Run:
     new_names: Names
     old_units: UnitLookup
     new_units: UnitLookup
+    vocabulary: Vocabulary
     # A civ's slot differs between builds as soon as one is added before it, so each snapshot
     # keeps its own map. Civs themselves are matched by internal name (P-07).
     old_index: dict[str, int] = field(default_factory=dict)
@@ -132,6 +134,7 @@ def compare(
         new_names=Names(new, (options or Options()).language),
         old_units=UnitLookup(old),
         new_units=UnitLookup(new),
+        vocabulary=Vocabulary(new, old),
     )
     sides = (
         _side(old, old_info or SideInfo()),
@@ -837,7 +840,7 @@ def _field_change(
     projectile: bool = False,
 ) -> None:
     """One allowlisted field of a unit; `projectile` when the records are its projectile's."""
-    for sub_key, sub_label in _sub_fields(allow, {name: records[name] for name in in_scope}):
+    for sub_key, sub_label in _sub_fields(run, allow, {name: records[name] for name in in_scope}):
         label = (
             Message("field.projectile", {"field": sub_label.to_json()}) if projectile else sub_label
         )
@@ -873,7 +876,7 @@ def _field_change(
 
 
 def _sub_fields(
-    allow: Field, records: Mapping[str, tuple[JsonObject | None, JsonObject | None]]
+    run: _Run, allow: Field, records: Mapping[str, tuple[JsonObject | None, JsonObject | None]]
 ) -> list[tuple[JsonValue, Message]]:
     """The value slots one allowlist entry produces: one, or one per class or resource."""
     if allow.kind == "value":
@@ -890,9 +893,41 @@ def _sub_fields(
         return [(key, Message("field.cost", {"resource": _resource_name(key)})) for key in ordered]
     if allow.kind == "train_locations":
         return [
-            (key, Message(f"field.{allow.key}", {"location": unknown_id(key)})) for key in ordered
+            (key, Message(f"field.{allow.key}", {"location": _unit_name(run, key)}))
+            for key in ordered
         ]
-    return [(key, Message(allow.label, {"class": unknown_id(key)})) for key in ordered]
+    return [
+        (key, Message(allow.label, {"class": run.vocabulary.armour_class(key) or unknown_id(key)}))
+        for key in ordered
+    ]
+
+
+def _unit_name(run: _Run, unit_id: JsonValue) -> str:
+    """A unit or building's game name, the new build first; `#<id>` when it has none."""
+    if isinstance(unit_id, int) and not isinstance(unit_id, bool):
+        for units, names in ((run.new_units, run.new_names), (run.old_units, run.old_names)):
+            record = units.any_record(unit_id)
+            if record is not None:
+                name = names.one_line(record.get("language_dll_name"))
+                if name:
+                    return name
+    return unknown_id(unit_id)
+
+
+def _tech_name(run: _Run, tech_id: int) -> str:
+    """A tech's name, the new build first; `#<id>` when it has none."""
+    for snapshot, names in ((run.new, run.new_names), (run.old, run.old_names)):
+        record = _records(snapshot, "techs").get(str(tech_id))
+        name = names.tech_name(record, tech_id)
+        if name:
+            return name
+    return unknown_id(tech_id)
+
+
+def _tech_list(run: _Run, value: JsonValue) -> str:
+    """Required techs by name; the `-1` slots are empty and left out."""
+    ids = [item for item in (value if isinstance(value, list) else []) if isinstance(item, int)]
+    return ", ".join(_tech_name(run, item) for item in ids if item >= 0)
 
 
 def _entries(record: JsonObject | None, allow: Field) -> list[JsonObject]:
@@ -957,12 +992,15 @@ def _techs(run: _Run) -> None:
         for allow in TECH_FIELDS:
             if allow.key == "effect_id":
                 continue  # reported with the effect's commands, just below
-            for sub_key, label in _sub_fields(allow, {"": (before, after)}):
+            for sub_key, label in _sub_fields(run, allow, {"": (before, after)}):
                 old_value = _field_value(before, allow, sub_key)
                 new_value = _field_value(after, allow, sub_key)
                 if old_value == new_value:
                     continue
-                old_text, new_text = pair(old_value, new_value)
+                if allow.key == "required_techs":
+                    old_text, new_text = _tech_list(run, old_value), _tech_list(run, new_value)
+                else:
+                    old_text, new_text = pair(old_value, new_value)
                 run.spread(
                     Change(
                         category="techs",
