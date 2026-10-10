@@ -14,9 +14,9 @@ from typing import Final
 from patch_scout.diff.model import Change, ChangeSet
 from patch_scout.diff.names import Names
 from patch_scout.diff.reachability import UnitLookup
-from patch_scout.diff.values import at_path, display, pair
+from patch_scout.diff.values import at_path, display, pair, words
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
-from patch_scout.tree.layout import ROWS, NodeIn, layout
+from patch_scout.tree.layout import NodeIn, layout
 from patch_scout.tree.tooltip import STATS, Run, parse
 
 _UNAVAILABLE: Final = "NotAvailable"
@@ -120,9 +120,11 @@ def build(
         "removed_civ": not after.has_civ,
         "columns": placed.columns,
         "groups": placed.groups,
-        "rows": ROWS,
+        "rows": placed.rows,
+        "age_rows": list(placed.age_rows),
         "nodes": nodes,
         "links": [[child, parent] for child, parent in placed.links],
+        "bonus": [run.to_json() for run in words(_bonus(before, civ), _bonus(after, civ))],
     }
 
 
@@ -291,6 +293,14 @@ def _name(side: _Side, civ: str, node: JsonObject) -> str:
 
 def _available(node: JsonObject) -> bool:
     return node.get("node_status") not in (None, _UNAVAILABLE)
+
+
+def _bonus(side: _Side, civ: str) -> str:
+    """The civ's bonus text in one version, the game's own wording; empty when it has none."""
+    for entry in side.snapshot.civs:
+        if isinstance(entry, Mapping) and entry.get("internal_name") == civ:
+            return side.names.text(entry.get("bonus_string_id")) or ""
+    return ""
 
 
 def _index(snapshot: Snapshot, civ: str) -> int | None:

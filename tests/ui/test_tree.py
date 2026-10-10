@@ -243,3 +243,20 @@ def test_a_node_the_civ_cannot_get_says_so(open_shell: OpenShell) -> None:
     expect(page.locator(".tree-node.is-unavailable")).to_have_attribute(
         "aria-label", "Militia, Not available"
     )
+
+
+def test_the_left_panel_shows_the_civ_bonuses_with_their_changes_and_the_key(
+    open_shell: OpenShell,
+) -> None:
+    bonus = [
+        {"kind": "same", "text": "Archer civilization\n• Foot archers "},
+        {"kind": "removed", "text": "+1"},
+        {"kind": "added", "text": "+2"},
+    ]
+    page = _open_tree(open_shell, techTree=tech_tree(bonus=bonus))
+
+    side = page.locator(".tree__side")
+    expect(side.locator(".tree__civ-name")).to_have_text("Franks")
+    expect(side.locator(".tree__bonus del")).to_have_text("+1")
+    expect(side.locator(".tree__bonus ins")).to_have_text("+2")
+    expect(side.locator(".tree__key")).to_contain_text("Regional")

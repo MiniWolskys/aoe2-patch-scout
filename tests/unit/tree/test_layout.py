@@ -105,9 +105,18 @@ def test_a_chain_moves_to_a_free_lane_when_its_own_is_blocked() -> None:
     assert len(set(placed.values())) == len(placed)
 
 
-def test_a_child_in_the_same_row_as_its_parent_takes_another_lane() -> None:
-    placed = cells([building(87, 2), node(4, 87, 2), node(5, 87, 2, link=4)])
-    assert placed["Unit:5"] == (1, 3)
+def test_an_upgrade_in_the_same_age_goes_below_in_the_same_column() -> None:
+    """As the game draws the Champion under the Two-Handed Swordsman, both Imperial Age."""
+    tree = layout([building(87, 2), node(4, 87, 2), node(5, 87, 2, link=4), node(6, 87, 3)])
+    placed = {key: (place.column, place.row) for key, place in tree.places.items()}
+    assert placed["Unit:5"] == (0, 4)
+    assert tree.age_rows == [2, 3, 2, 2]
+    assert placed["Unit:6"] == (0, 6)  # the Castle Age starts a row lower
+
+
+def test_every_age_has_a_building_row_and_a_row_below() -> None:
+    assert layout([building(12, 1)]).age_rows == [2, 2, 2, 2]
+    assert layout([]).age_rows == [2, 2, 2, 2]
 
 
 def test_an_empty_tree_lays_out_nothing() -> None:

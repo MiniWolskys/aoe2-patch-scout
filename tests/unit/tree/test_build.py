@@ -277,3 +277,23 @@ def test_technical_changes_alone_do_not_bring_minor_ones() -> None:
 def test_a_change_with_no_civ_scope_marks_every_civ_that_has_the_node() -> None:
     """A generic tech such as Loom has no civ: its changes read under Overall, scope global."""
     assert _view(_hand_set(_archer_change(Scope())))["Unit:4"]["mark"] == "changed"
+
+
+def test_the_civ_bonus_text_comes_as_a_diff_of_its_lines() -> None:
+    def with_bonus(snapshot: Snapshot, text: str) -> Snapshot:
+        civs: Any = snapshot.civs
+        civs[1] = dict(civs[1]) | {"bonus_string_id": 120151}
+        tables: Any = snapshot.strings["tables"]
+        tables["en"] = dict(tables["en"]) | {"120151": text}
+        return snapshot
+
+    old = with_bonus(
+        _build_snapshot(new=False), "Archer civilization" + BREAK + "• Foot archers +1"
+    )
+    new = with_bonus(_build_snapshot(new=True), "Archer civilization" + BREAK + "• Foot archers +2")
+
+    view: Any = build(old, new, compare(old, new), "Alpha")
+
+    runs = [(run["kind"], run["text"]) for run in view["bonus"]]
+    assert ("removed", "+1") in runs and ("added", "+2") in runs
+    assert runs[0] == ("same", "Archer civilization\n• Foot archers ")

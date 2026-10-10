@@ -151,16 +151,17 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
 - **Opening it:** a **Tech tree** button in the comparison header swaps the change list for the tree; it then reads **Back to changes**. The Export button is hidden while the tree shows: there is no tree export, and a screen capture is enough.
 - **One civ list for both:** the civ list and the Main game / Chronicles tabs stay. Choosing a civ in either view chooses it in both.
   - From a civ page, the tree shows that civ. From Overall, it shows the civ chosen last, as the game does; with none chosen yet, the first civ of the tab.
-  - The tree has no Overall row.
+  - The tree has no Overall row, and lists every civ; the change list only those with changes.
   - Back to changes shows the page of the civ chosen last, or Overall if no civ was chosen in the tree.
 - **Layout** (computed in `tree/layout.py`):
-  - four ages as bands, each with a building row and a row for units and techs;
+  - four ages as bands, each with a building row and a row for units and techs, and more rows when a line goes on within the age: the Champion sits under the Two-Handed Swordsman, in the same column, as in the game;
   - one group of columns per building, in the game's order (a building comes right after the building it needs: Barracks, Archery Range, Stable);
   - towers, walls, the Mill's Farm and Market, and the Fish Trap stay with the building or unit they grow from;
-  - lines go down from a node to the upgrade that comes from it, or sideways when both are in the same age (the Armenians' Man-at-Arms and Long Swordsman).
+  - lines leave a node just below it, run across, and go down to the node that comes from it, as in the game; a line never crosses another tile.
 
   The tree scrolls sideways; **Fit to width** scales it to the window.
-- **Tiles:** icon and name, coloured by kind (unit, tech, building, unique). What the civ can't get is dimmed and crossed, as in the game.
+- **Left panel, as in the game:** the civ's crest and name, its bonus text with this patch's changes (removed in red, added in green, line by line), and the key of tile colours.
+- **Tiles:** icon and name, coloured as in the game's key: unit, building, technology; common, regional, unique. What the civ can't get is dimmed and crossed.
 - **Marks** (legend in the header), following the comparison's filters:
   - **gained:** green outline;
   - **lost:** red outline and struck name, drawn as it was in the older version;

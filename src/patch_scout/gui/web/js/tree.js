@@ -3,10 +3,13 @@
  * A civ's tech tree with the comparison's changes marked on it (D-39, ui.md "Tech tree").
  *
  * Python lays the tree out (tree/layout.py): each node has a column and a row. Here a column is
- * a tile's width, groups of columns are spaced apart, and each age is two rows: its buildings,
- * then its units and techs. Lines go down from a node to the one that comes from it.
+ * a tile's width, groups of columns are spaced apart, and each age is a band of rows: its
+ * buildings, its units and techs, and more rows when a line goes on within the age. Lines go
+ * down from a node to the one that comes from it. On the left, as in the game: the civ, its
+ * bonuses and the key.
  */
 
+import { values } from "./comparison.js";
 import { clear, el } from "./dom.js";
 import * as icons from "./icons.js";
 
@@ -29,6 +32,7 @@ const MARKS = ["gained", "lost", "changed", "renamed"];
  *   container: HTMLElement,
  *   tree: Record<string, any>,
  *   civName: string,
+ *   civIcon: Record<string, any> | null,
  *   fit: boolean,
  *   onFit: () => void,
  *   onNode?: (node: Record<string, any>, tile: HTMLElement, shown: boolean) => void,
@@ -37,13 +41,16 @@ const MARKS = ["gained", "lost", "changed", "renamed"];
 export function render(view) {
   const { t, container, tree } = view;
   clear(container);
-  container.append(header(view));
+  container.append(side(view));
+  const main = el("div", { class: "tree__main" });
+  container.append(main);
+  main.append(header(view));
   for (const [flag, key] of [
     ["new_civ", "tree.new_civ"],
     ["removed_civ", "tree.removed_civ"],
   ]) {
     if (tree[flag]) {
-      container.append(el("p", { class: "tree__note", text: t(key) }));
+      main.append(el("p", { class: "tree__note", text: t(key) }));
     }
   }
 
@@ -54,13 +61,16 @@ export function render(view) {
   const canvas = el("div", { class: "tree__canvas" });
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
-  for (let age = 1; age <= 4; age += 1) {
+  const ageRows = tree.age_rows ?? [2, 2, 2, 2];
+  let top = 0;
+  ageRows.forEach((/** @type {number} */ rows, /** @type {number} */ index) => {
     const band = el("div", { class: "tree__age" });
-    band.style.top = `${(age - 1) * 2 * CELL.height}px`;
-    band.style.height = `${2 * CELL.height}px`;
-    band.append(el("span", { class: "tree__age-label label", text: t(`tree.age.${age}`) }));
+    band.style.top = `${top * CELL.height}px`;
+    band.style.height = `${rows * CELL.height}px`;
+    band.append(el("span", { class: "tree__age-label label", text: t(`tree.age.${index + 1}`) }));
     canvas.append(band);
-  }
+    top += rows;
+  });
   /** @type {Map<string, {x: number, y: number}>} */
   const places = new Map();
   for (const node of tree.nodes ?? []) {
@@ -72,7 +82,7 @@ export function render(view) {
   }
   sizer.append(canvas);
   scroller.append(sizer);
-  container.append(scroller);
+  main.append(scroller);
   // Fit scales the whole tree to the width, for a stream that shows it all at once. The view is
   // on screen when it is drawn, so the width can be read now.
   const scale =
@@ -80,6 +90,70 @@ export function render(view) {
   canvas.style.transform = scale < 1 ? `scale(${scale})` : "";
   sizer.style.width = `${width * scale}px`;
   sizer.style.height = `${height * scale}px`;
+}
+
+// Tile colours by kind, as in the game's key: unit, building, technology; common, regional,
+// unique.
+const KINDS = {
+  Unit: "unit",
+  UnitUpgrade: "unit",
+  RegionalUnit: "unit-regional",
+  UniqueUnit: "unit-unique",
+  Research: "tech",
+  UniqueTech: "tech-unique",
+  BuildingTech: "building",
+  BuildingNonTech: "building",
+  RegionalBuilding: "building-regional",
+};
+
+/**
+ * The game's left panel: the civ, its bonus text with this patch's changes, and the key.
+ * @param {Parameters<typeof render>[0]} view
+ * @returns {HTMLElement}
+ */
+function side(view) {
+  const { t, tree } = view;
+  const panel = el("aside", { class: "tree__side" });
+  const civ = el("div", { class: "tree__civ" });
+  const crest = icons.element(view.civIcon);
+  if (crest !== null) {
+    crest.classList.add("tree__crest");
+    civ.append(crest);
+  }
+  civ.append(el("h2", { class: "tree__civ-name", text: view.civName }));
+  panel.append(civ);
+  if ((tree.bonus ?? []).length > 0) {
+    const bonus = values({ words: tree.bonus });
+    bonus.classList.add("tree__bonus");
+    panel.append(bonus);
+  }
+  const key = el("div", { class: "tree__key" });
+  key.append(el("h3", { class: "label", text: t("tree.key.title") }));
+  const grid = el("div", { class: "tree__key-grid" });
+  grid.append(el("span"));
+  for (const column of ["unit", "building", "tech"]) {
+    grid.append(el("span", { class: "tree__key-head", text: t(`tree.key.${column}`) }));
+  }
+  for (const row of ["common", "regional", "unique"]) {
+    grid.append(el("span", { text: t(`tree.key.${row}`) }));
+    for (const column of ["unit", "building", "tech"]) {
+      const kind = row === "common" ? column : `${column}-${row}`;
+      const exists = kind !== "tech-regional" && kind !== "building-unique";
+      grid.append(
+        el("span", {
+          class: exists ? `tree__key-swatch tree-node--${kind}` : "tree__key-none",
+          attrs: { "aria-hidden": "true" },
+        }),
+      );
+    }
+  }
+  key.append(grid);
+  const unavailable = el("p", { class: "tree__key-unavailable" });
+  unavailable.append(el("span", { class: "tree__key-swatch is-unavailable" }));
+  unavailable.append(el("span", { text: t("status.NotAvailable") }));
+  key.append(unavailable);
+  panel.append(key);
+  return panel;
 }
 
 /**
@@ -133,9 +207,9 @@ function position(node) {
  * @returns {HTMLElement}
  */
 function tile(view, node, at) {
-  const unique = String(node.node_type ?? "").startsWith("Unique");
+  const kind = KINDS[/** @type {keyof typeof KINDS} */ (node.node_type)] ?? node.kind;
   const button = el("button", {
-    class: `tree-node tree-node--${unique ? "unique" : node.kind}`,
+    class: `tree-node tree-node--${kind}`,
     attrs: { type: "button" },
   });
   // What the tile says without its colours: unavailable, and its mark.
@@ -208,10 +282,12 @@ function route(parent, child) {
     const toX = leftToRight ? child.x : child.x + TILE.width;
     return `M${fromX} ${parent.y + TILE.height / 2} H${(fromX + toX) / 2} V${y} H${toX}`;
   }
+  // Across just below the parent, as in the game, then down the child's own lane: the layout
+  // keeps that lane clear, so the line crosses no other tile.
   const fromX = parent.x + TILE.width / 2;
   const fromY = parent.y + TILE.height;
   const toX = child.x + TILE.width / 2;
-  const middle = child.y - (CELL.height - TILE.height) / 2;
+  const middle = fromY + (CELL.height - TILE.height) / 2;
   return `M${fromX} ${fromY} V${middle} H${toX} V${child.y}`;
 }
 

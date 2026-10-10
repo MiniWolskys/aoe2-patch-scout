@@ -207,6 +207,10 @@ function renderCivList(view, changes) {
     );
   }
   for (const civ of shown) {
+    // The change list shows the civs with changes; the tree, every civ (D-39).
+    if (!view.treeMode && !civ.added && (civ.count ?? 0) === 0) {
+      continue;
+    }
     list.append(civRow(view, { ...civ, count: counts.get(civ.internal_name) ?? 0 }));
   }
 }

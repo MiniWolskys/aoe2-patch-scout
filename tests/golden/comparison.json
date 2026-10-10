@@ -547,6 +547,14 @@
       "icon": null,
       "internal_name": "Bluelanders",
       "name": "Bluelanders"
+    },
+    {
+      "added": false,
+      "count": 0,
+      "era": "antiquity",
+      "icon": null,
+      "internal_name": "Ancients",
+      "name": "Ancients"
     }
   ],
   "counts": {

@@ -347,6 +347,7 @@ async function start() {
       container,
       tree,
       civName: named?.name ?? civ ?? "",
+      civIcon: named?.icon ?? null,
       fit: state.treeFit,
       onFit: () => {
         state.treeFit = !state.treeFit;

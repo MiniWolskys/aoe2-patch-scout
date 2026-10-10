@@ -2,15 +2,18 @@
 """Where each node of a civ's tech tree goes.
 
 The game's tech tree data gives an order, ages and links, but no positions: the game computes
-them. Here each age is two rows (its buildings, then its units and techs), buildings head groups
-of lanes in file order, and a line of upgrades stays in one lane when the rows below are free.
+them. Here each age is a band of rows: its buildings, then its units and techs, then more rows
+when a line goes on within the age (the Champion under the Two-Handed Swordsman, both Imperial),
+as the game draws it. Buildings head groups of lanes, and a line stays in one lane when it can.
 """
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from itertools import chain, count
 from typing import Final
 
-ROWS: Final = 8
+AGES: Final = 4
+_FIRST_ROWS: Final = 2  # every age has a building row and a row below
 _UNIT_TYPES: Final = frozenset({"Unit", "UnitUpgrade", "UniqueUnit", "RegionalUnit"})
 _TECH_TYPES: Final = frozenset({"Research", "UniqueTech"})
 _BUILDING_TYPES: Final = frozenset({"BuildingTech", "BuildingNonTech", "RegionalBuilding"})
@@ -47,27 +50,41 @@ class Layout:
     links: list[tuple[str, str]] = field(default_factory=list)
     columns: int = 0
     groups: int = 0
+    age_rows: list[int] = field(default_factory=lambda: [_FIRST_ROWS] * AGES)
+
+    @property
+    def rows(self) -> int:
+        """Rows in the whole tree."""
+        return sum(self.age_rows)
+
+
+# A cell inside a group: lane, age (1 to 4), depth in the age (0 is the building row).
+type _Cell = tuple[int, int, int]
 
 
 @dataclass(slots=True)
 class _Group:
     members: list[NodeIn] = field(default_factory=list)
-    taken: set[tuple[int, int]] = field(default_factory=set)
-    lanes: dict[str, tuple[int, int]] = field(default_factory=dict)  # key -> (lane, row)
+    taken: set[_Cell] = field(default_factory=set)
+    cells: dict[str, _Cell] = field(default_factory=dict)
 
-    def first_free(self, rows: range) -> int:
+    def first_free(self, age: int, depth: int) -> int:
         lane = 0
-        while any((lane, row) in self.taken for row in rows):
+        while (lane, age, depth) in self.taken:
             lane += 1
         return lane
 
-    def put(self, key: str, lane: int, row: int) -> None:
-        self.taken.add((lane, row))
-        self.lanes[key] = (lane, row)
+    def clear_between(self, lane: int, start: tuple[int, int], end: tuple[int, int]) -> bool:
+        """Whether a line down the lane, from just after `start` to `end`, crosses no node."""
+        return not any(cell[0] == lane and start < (cell[1], cell[2]) <= end for cell in self.taken)
+
+    def put(self, key: str, cell: _Cell) -> None:
+        self.taken.add(cell)
+        self.cells[key] = cell
 
     @property
     def width(self) -> int:
-        return 1 + max((lane for lane, _ in self.taken), default=0)
+        return 1 + max((cell[0] for cell in self.taken), default=0)
 
 
 def layout(nodes: Sequence[NodeIn]) -> Layout:
@@ -79,12 +96,17 @@ def layout(nodes: Sequence[NodeIn]) -> Layout:
     groups = _groups(list(unique.values()), by_id)
 
     result = Layout()
-    column = 0
-    for index, group in enumerate(groups):
+    for group in groups:
         for member in group.members:
             _place(group, member, by_id)
-        for key, (lane, row) in group.lanes.items():
-            result.places[key] = Place(index, column + lane, row)
+    for group in groups:
+        for _, age, depth in group.cells.values():
+            result.age_rows[age - 1] = max(result.age_rows[age - 1], depth + 1)
+    starts = [sum(result.age_rows[:age]) for age in range(AGES)]
+    column = 0
+    for index, group in enumerate(groups):
+        for key, (lane, age, depth) in group.cells.items():
+            result.places[key] = Place(index, column + lane, starts[age - 1] + depth)
         column += group.width
     result.columns = column
     result.groups = len(groups)
@@ -180,22 +202,27 @@ def _group_of_parent(
 
 
 def _place(group: _Group, node: NodeIn, by_id: dict[tuple[str, int], NodeIn]) -> None:
-    row = _row(node)
+    age = node.age if 1 <= node.age <= AGES else 1
+    depth = 0 if node.use_type == "Building" else 1
     parent = _parent(node, by_id)
-    placed = group.lanes.get(parent.key) if parent is not None else None
-    if placed is not None and placed[1] < row:
-        # Under its parent when the line down to it crosses no other node.
-        below = range(placed[1] + 1, row + 1)
-        blocked = any((placed[0], between) in group.taken for between in below)
-        lane = group.first_free(below) if blocked else placed[0]
-    else:
-        lane = group.first_free(range(row, row + 1))
-    group.put(node.key, lane, row)
-
-
-def _row(node: NodeIn) -> int:
-    age = node.age if 1 <= node.age <= 4 else 1
-    return (age - 1) * 2 + (0 if node.use_type == "Building" else 1)
+    placed = group.cells.get(parent.key) if parent is not None else None
+    if placed is not None:
+        lane, parent_age, parent_depth = placed
+        if (parent_age, parent_depth) >= (age, depth):
+            # A line that goes on within the age: below its parent, in the same lane.
+            age, depth = parent_age, parent_depth + 1
+            while (lane, age, depth) in group.taken:
+                depth += 1
+            group.put(node.key, (lane, age, depth))
+            return
+        # Down its parent's lane, else the first lane clear all the way: the line leaves the
+        # parent just below it and comes down that lane, so it crosses no other node.
+        start = (parent_age, parent_depth)
+        lanes = chain([lane], (other for other in count() if other != lane))
+        clear = next(other for other in lanes if group.clear_between(other, start, (age, depth)))
+        group.put(node.key, (clear, age, depth))
+        return
+    group.put(node.key, (group.first_free(age, depth), age, depth))
 
 
 def _parent(node: NodeIn, by_id: dict[tuple[str, int], NodeIn]) -> NodeIn | None:
