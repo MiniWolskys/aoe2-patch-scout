@@ -29,7 +29,7 @@ The tool diffs AoE2:DE game data between two builds and reports every gameplay-r
 Chosen by the maintainer on 2026-09-15.
 - **Why:** Chronicles: Battle for Greece is a solo mode, available only in campaigns through a DLC. Its civs are unlikely to change. To users it feels like a separate mode, much like Return of Rome, even though its civs live in the main `.dat`.
 - **Capture and diff:** unchanged. The Chronicles civs are captured and compared like every other civ (D-14), and their era (`antiquity` in `civilizations.json`) is kept.
-- **Comparison:** they're kept apart from the base civs. The exact form, e.g. their own group or a filter, is designed with the comparison screen (M4; [ui.md](design/ui.md#open-questions)).
+- **Comparison:** they're kept apart from the base civs. **They have their own tab** above the civ list, "Chronicles" next to "Main game", chosen by the maintainer on 2026-10-10 over a group at the end of the list. The tab shows how many changes it holds, or NEW for a new civ. Return of Rome will get its own tab when it is supported.
 
 ### D-39 Civ overview after v1.0: Decided
 Chosen by the maintainer on 2026-09-15.

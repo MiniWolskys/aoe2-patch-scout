@@ -213,18 +213,44 @@ def test_the_comparison_shows_old_and_new_values(open_shell: OpenShell) -> None:
     expect(row.locator(".change-row__note")).to_contain_text("all civilizations")
 
 
-def test_the_civ_list_keeps_the_chronicles_civs_apart(open_shell: OpenShell) -> None:
+def test_the_chronicles_civs_have_their_own_tab(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
 
-    expect(page.locator(".civ-list__group")).to_have_text("Chronicles")
-    expect(page.locator(".civ-row__name")).to_have_text(["Overall", "Franks", "Spartans"])
+    tabs = page.get_by_role("tab")
+    expect(tabs).to_have_count(2)
+    expect(tabs.first).to_have_text("Main game")
+    expect(tabs.nth(1)).to_contain_text("Chronicles")
+    expect(tabs.first).to_have_attribute("aria-selected", "true")
+    expect(page.locator(".civ-row__name")).to_have_text(["Overall", "Franks"])
+
+    tabs.nth(1).click()
+
+    expect(tabs.nth(1)).to_have_attribute("aria-selected", "true")
+    expect(page.locator(".civ-row__name")).to_have_text(["Spartans"])
+    expect(page.locator("#comparison-title")).to_have_text("Spartans")
+
+    tabs.first.click()
+    expect(page.locator("#comparison-title")).to_have_text("Overall")
+
+
+def test_without_chronicles_changes_there_are_no_tabs(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    data["changeSet"] = change_set(civs=[])
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    expect(page.locator(".civ-row__name").first).to_have_text("Overall")
+    expect(page.get_by_role("tab")).to_have_count(0)
 
 
 def test_a_civ_added_in_the_new_build_shows_a_new_tag(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
 
+    # Spartans are a Chronicles civ: their tab says something new is inside.
+    expect(page.get_by_role("tab").nth(1).locator(".tag--new")).to_have_count(1)
+    page.get_by_role("tab").nth(1).click()
     expect(page.locator(".civ-row .tag--new")).to_have_count(1)
 
 

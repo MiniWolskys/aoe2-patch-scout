@@ -125,7 +125,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
   - **Overall** comes first, with its change count;
   - then each civ with changes, with its crest (the coloured shield of the game's tech tree screen) and count. Snapshots captured before crests were stored show the emblem, lightened, since it is a near-black silhouette;
   - a civ added in the new build shows a **NEW** tag instead of a count;
-  - the Chronicles civs are kept apart from the base civs (D-38); how is open question 9.
+  - the Chronicles civs are in their own tab (D-38): two tabs, **Main game** (Overall and the base civs) and **Chronicles**, show above the list when a Chronicles civ has changes. The Chronicles tab shows its number of changes, or NEW for a new civ; opening it opens its first civ.
 - **Page title:** the civ, or "Overall". "Overall" has the subtitle "Changes to every civilization, with exceptions noted". A legend on the right names the old and new versions.
 - **Change row:**
 
