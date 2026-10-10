@@ -307,3 +307,31 @@ def test_a_parser_that_raises_is_recorded_as_a_parse_error() -> None:
     assert result.available is False
     assert result.attempts[0].result == "parse_error"
     assert "nope" in result.attempts[0].detail
+
+
+class _StoppedError(Exception):
+    pass
+
+
+def test_a_stop_between_steps_ends_the_read_before_the_next_one() -> None:
+    """Stopping a capture used to wait for the whole .dat read: parse, round trip and checks."""
+    calls: list[str] = []
+
+    def parser(raw: bytes) -> DatFile:
+        calls.append("parse")
+        return stats_tier.parse_bytes(raw)
+
+    def checkpoint() -> None:
+        if calls:
+            raise _StoppedError
+
+    with pytest.raises(_StoppedError):
+        stats_tier.read(
+            sample_dat.compressed(sample_dat.sample()),
+            [],
+            {},
+            {},
+            parser=parser,
+            checkpoint=checkpoint,
+        )
+    assert calls == ["parse"]

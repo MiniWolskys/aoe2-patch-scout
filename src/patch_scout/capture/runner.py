@@ -153,7 +153,13 @@ def run(
 
     reporter.start("stats")
     _check(stop)
-    stats = stats_tier.read(compressed, tier.civs, tier.tech_trees, string_section)
+    stats = stats_tier.read(
+        compressed,
+        tier.civs,
+        tier.tech_trees,
+        string_section,
+        checkpoint=lambda: _check(stop),
+    )
     del compressed
     if not stats.available:
         logger.info("stats unavailable: %s", stats.unavailable_reason)
