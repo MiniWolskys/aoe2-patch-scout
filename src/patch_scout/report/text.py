@@ -153,9 +153,13 @@ def scope_text(scope: Scope, catalog: Catalog) -> str:
         return ""
     if scope.kind == "all":
         return catalog.text("scope.all")
+    if scope.kind == "having":
+        return catalog.text("scope.having", count=scope.count)
     civs = _civ_list(scope.civs, catalog)
     if scope.kind == "all_except":
         return catalog.text("scope.all_except", civs=civs)
+    if scope.kind == "having_except":
+        return catalog.text("scope.having_except", count=scope.count, civs=civs)
     return catalog.text("scope.some", civs=civs)
 
 

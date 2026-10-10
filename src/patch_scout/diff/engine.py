@@ -7,7 +7,7 @@ language-neutral (P-20).
 """
 
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Final
 
@@ -69,6 +69,9 @@ class _Run:
     # keeps its own map. Civs themselves are matched by internal name (P-07).
     old_index: dict[str, int] = field(default_factory=dict)
     new_index: dict[str, int] = field(default_factory=dict)
+    # Every civ in the comparison: the civs both builds have, with a tech tree. "All
+    # civilizations" means all of these (diff-rules.md, Per-civ collapsing).
+    every: list[str] = field(default_factory=list)
     reachable: dict[str, Reachable] = field(default_factory=dict)
     changes: list[Change] = field(default_factory=list)
     notices: list[Notice] = field(default_factory=list)
@@ -135,6 +138,11 @@ def compare(
 
     run.old_index = _civ_indices(old)
     run.new_index = _civ_indices(new)
+    run.every = [
+        name
+        for name in run.civ_names
+        if _has_tree(run, name) and name in run.old_index and name in run.new_index
+    ]
     _notices(run)
     civ_refs = _civilizations(run)
     _availability(run)
@@ -302,6 +310,9 @@ def _node_changes(
 ) -> None:
     use_type, node_id = key
     in_scope = [name for name in civs if key in maps[name][0] or key in maps[name][1]]
+    in_scope = _comparable(
+        run, in_scope, [(maps[name][0].get(key), maps[name][1].get(key)) for name in in_scope]
+    )
     if not in_scope:
         return
     # The new build's node when there is one; generators, so neither side is read eagerly.
@@ -321,7 +332,7 @@ def _node_changes(
     lost = [name for name in in_scope if key in maps[name][0] and key not in maps[name][1]]
     for civ_list, kind in ((gained, "added"), (lost, "removed")):
         if civ_list:
-            scope = _scope_for(in_scope, civ_list)
+            scope = _scope_for(run, in_scope, civ_list)
             run.spread(
                 Change("civ_availability", kind, entity, scope, sort_key=sort),  # type: ignore[arg-type]
                 scope,
@@ -336,7 +347,7 @@ def _node_changes(
             if maps[name][0][key].get(aspect) != maps[name][1][key].get(aspect)
         }
         kind = "availability" if aspect == "node_status" else "modified"
-        for group in collapse_module.collapse(common, changed):
+        for group in collapse_module.collapse(common, changed, every=run.every):
             old_text, new_text = pair(group.old, group.new)
             run.spread(
                 Change(
@@ -378,7 +389,7 @@ def _node_text(
             new_text = getattr(run.new_names, resolver)(new_id)
             if isinstance(old_text, str) and isinstance(new_text, str) and old_text != new_text:
                 changed[name] = (old_text, new_text)
-        for group in collapse_module.collapse(common, changed):
+        for group in collapse_module.collapse(common, changed, every=run.every):
             run.spread(
                 Change(
                     category="text",
@@ -415,7 +426,7 @@ def _node_icons(
             remapped[name] = (old_icon.get("picture_index"), new_icon.get("picture_index"))
         elif old_icon.get("hash") != new_icon.get("hash"):
             redrawn[name] = ("", "")
-    for group in collapse_module.collapse(common, remapped):
+    for group in collapse_module.collapse(common, remapped, every=run.every):
         old_text, new_text = pair(group.old, group.new)
         run.spread(
             Change(
@@ -430,7 +441,7 @@ def _node_icons(
             ),
             group.scope,
         )
-    for group in collapse_module.collapse(common, redrawn):
+    for group in collapse_module.collapse(common, redrawn, every=run.every):
         run.spread(
             Change(
                 "icons",
@@ -497,14 +508,33 @@ def _has_tree(run: _Run, internal_name: str) -> bool:
     return internal_name in run.old.tech_trees or internal_name in run.new.tech_trees
 
 
+def _comparable(
+    run: _Run,
+    in_scope: Sequence[str],
+    sides: Iterable[tuple[JsonObject | None, JsonObject | None]],
+) -> list[str]:
+    """Leave out civs only one build has, for an entity both builds have (diff-rules.md).
+
+    A civ added in the new build has no old value: comparing it would report every shared unit
+    and node as "added" for it. A brand-new entity keeps them, since it is new for everyone.
+    """
+    pairs = list(sides)
+    if any(before is not None for before, _ in pairs) and any(
+        after is not None for _, after in pairs
+    ):
+        every = set(run.every)
+        return [name for name in in_scope if name in every]
+    return list(in_scope)
+
+
 def _icon_of(node: JsonObject) -> JsonObject | None:
     icon = node.get("icon")
     return icon if isinstance(icon, dict) else None
 
 
-def _scope_for(in_scope: Sequence[str], civs: Sequence[str]) -> Scope:
+def _scope_for(run: _Run, in_scope: Sequence[str], civs: Sequence[str]) -> Scope:
     """The scope for a change that either happened or did not, with no value pair."""
-    groups = collapse_module.collapse(in_scope, dict.fromkeys(civs, (None, None)))
+    groups = collapse_module.collapse(in_scope, dict.fromkeys(civs, (None, None)), every=run.every)
     return groups[0].scope if groups else Scope("some", tuple(civs))
 
 
@@ -631,6 +661,7 @@ def _unit_change(
             continue
         in_scope.append(internal_name)
         records[internal_name] = (before, after)
+    in_scope = _comparable(run, in_scope, records.values())
     if not in_scope:
         return
     name = run.new_names.record_name(run.new_units.any_record(unit_id), unit_id)
@@ -658,7 +689,7 @@ def _field_change(
             if old_value != new_value:
                 run.changed_values += 1
                 changed[internal_name] = (old_value, new_value)
-        for group in collapse_module.collapse(in_scope, changed):
+        for group in collapse_module.collapse(in_scope, changed, every=run.every):
             old_text, new_text = pair(group.old, group.new)
             run.spread(
                 Change(
