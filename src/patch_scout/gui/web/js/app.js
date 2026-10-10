@@ -278,6 +278,23 @@ async function start() {
         technical: state.filters.technical,
         civs: state.comparison.civ === null ? null : [state.comparison.civ],
         prerelease: sides.some((side) => side?.prerelease === true),
+        // The page on screen, for the image export.
+        page: comparison.currentPage({
+          t,
+          changeSet: state.comparison.changeSet,
+          civ: state.comparison.civ,
+          filters: state.filters,
+          onCiv: () => {},
+          onPick: () => {},
+        }),
+        // "Label · build", without the build when the label already says it.
+        versions: sides
+          .map((side) => {
+            const label = side?.label ?? "";
+            const build = side?.game_build ?? "";
+            return build && !label.includes(build) ? `${label} · ${build}` : label;
+          })
+          .join(" → "),
       };
     },
   });

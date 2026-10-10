@@ -353,6 +353,27 @@ def test_a_failed_comparison_says_so_and_goes_back(open_shell: OpenShell) -> Non
     expect(page.locator("#comparing-view")).to_be_hidden()
 
 
+def test_the_image_export_draws_the_page_for_a_video(open_shell: OpenShell) -> None:
+    import base64
+    import io
+
+    from PIL import Image
+
+    page = open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    page.locator("#comparison-export").click()
+    page.locator("#export-image").click()
+
+    expect(page.locator("#export-status")).to_contain_text("Saved 1 image(s)")
+    [[images, name]] = calls(page, "save_images")
+    assert name == "Overall"
+    png = base64.b64decode(images[0].removeprefix("data:image/png;base64,"))
+    with Image.open(io.BytesIO(png)) as drawn:
+        assert drawn.size == (1920, 1080)
+        # Something was drawn beyond the background: the title, rows and values.
+        assert len(drawn.convert("RGB").getcolors(maxcolors=1 << 20) or []) > 50
+
+
 def test_minor_changes_wait_for_their_filter(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
     search = change(field={"key": "field.search_radius", "args": {}}, level="detail")
