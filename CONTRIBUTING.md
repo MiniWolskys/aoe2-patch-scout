@@ -187,6 +187,7 @@ A change is done when all of these hold:
 - **Adding them:** `uv add` / `uv add --dev`, and always commit `uv.lock`.
 - **Dependabot** (D-27) opens one grouped PR a week for minor and patch updates, plus security fixes at any time. They get reviewed like any PR.
   - **Major updates** come one at a time; read the changelog first.
+  - **Titles:** Dependabot writes "chore(deps): Bump …" with a capital B, and can't be configured otherwise. The PR title check accepts a summary starting with "Bump " as the one exception to the lower-case rule.
 - **The Biome binary version** is pinned in CI and bumped by hand, because Dependabot can't update it.
 
 ### Documentation

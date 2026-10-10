@@ -146,7 +146,31 @@ def change_set(**overrides: Any) -> dict[str, Any]:
         ],
         "counts": {"overall": 2, "total": 3},
     }
-    return data | overrides
+    merged = data | overrides
+    if "entries" not in overrides:
+        merged["entries"] = [entry(item) for item in merged["changes"]]
+    # Entries refer to their changes by position, as `ChangeSet.to_json` writes them.
+    merged["entries"] = [
+        item | {"changes": [merged["changes"].index(change) for change in item["changes"]]}
+        for item in merged["entries"]
+    ]
+    return merged
+
+
+def entry(*changes: dict[str, Any], **overrides: Any) -> dict[str, Any]:
+    """An entry of the given changes; `change_set` turns them into positions."""
+    first = changes[0]
+    row: dict[str, Any] = {
+        "category": first["category"],
+        "kind": first["kind"] if len(changes) == 1 else "modified",
+        "entity": first["entity"],
+        "scope": first["scope"],
+        "civ": first["civ"],
+        "changes": list(changes),
+        "hidden": 0,
+        "low_priority": first["low_priority"],
+    }
+    return row | overrides
 
 
 def fixture_data(**overrides: Any) -> dict[str, Any]:

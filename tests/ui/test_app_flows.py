@@ -5,7 +5,15 @@ from collections.abc import Callable
 from typing import Any
 
 from playwright.sync_api import Page, expect
-from support.ui_data import calls, change, change_set, fixture_data, startup_data, version
+from support.ui_data import (
+    calls,
+    change,
+    change_set,
+    entry,
+    fixture_data,
+    startup_data,
+    version,
+)
 
 type OpenShell = Callable[..., Page]
 
@@ -240,6 +248,59 @@ def test_low_priority_changes_are_hidden_until_the_filter_is_on(open_shell: Open
 
     expect(page.locator("del")).to_have_text("unit.")
     expect(page.locator("ins")).to_have_text("foot soldier.")
+
+
+def test_objects_with_no_name_are_hidden_until_the_filter_is_on(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    helper = {"kind": "tech", "id": "172", "name": "#172", "where": None, "icon": None}
+    data["changeSet"] = change_set(
+        changes=[change(), change(category="techs", entity=helper | {"named": False})]
+    )
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    expect(page.locator(".change-row__name")).to_have_text(["Knight"])
+
+    page.locator("#comparison-filters").click()
+    page.locator("#filter-unnamed").check()
+
+    expect(page.locator(".change-row__name")).to_have_text(["Knight", "#172"])
+
+
+def test_a_projectile_field_is_labelled_as_part_of_its_shooter(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    nested = {"key": "field.attacks", "args": {"class": "#3"}}
+    data["changeSet"] = change_set(
+        changes=[change(field={"key": "field.projectile", "args": {"field": nested}})]
+    )
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    expect(page.locator(".change-row__field")).to_have_text("Projectile: Attack vs #3")
+
+
+def test_a_unit_with_several_changed_fields_is_one_row(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    speed = change(field={"key": "field.speed", "args": {}}, old="1.35", new="1.4")
+    data["changeSet"] = change_set(changes=[change(), speed], entries=[entry(change(), speed)])
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    expect(page.locator(".change-row")).to_have_count(1)
+    expect(page.locator(".change-row__field")).to_have_text(["Hit points", "Movement speed"])
+    expect(page.locator(".value-new")).to_have_text(["110", "1.4"])
+
+
+def test_a_new_unit_says_how_many_values_it_leaves_out(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    hit_points = change(old="", new="65")
+    data["changeSet"] = change_set(
+        changes=[hit_points], entries=[entry(hit_points, kind="added", hidden=12)]
+    )
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    expect(page.locator(".change-row__kind")).to_have_text("Added:")
+    expect(page.locator(".change-row__hidden")).to_contain_text("12 more values")
 
 
 def test_the_search_filter_narrows_the_list(open_shell: OpenShell) -> None:
