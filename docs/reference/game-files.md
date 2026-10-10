@@ -79,6 +79,8 @@ Store all of these in the snapshot metadata.
 | Strings, Chronicles content | `resources\en\strings\key-value\key-value-paphos-strings-utf8.txt` | Text | §9 |
 | Non-localized strings | `resources\_common\strings\key-value\non-localized-key-value-strings-utf8.txt` | Text | §9 |
 | Icons | `widgetui\textures\ingame\{units,tech,buildings}\` and more | DDS / PNG | §10 |
+| Names of effect types, attributes, unit and armour classes | `resources\_common\xs\Constants.xs` | XS script | §11 |
+| Scripted tech and bonus effects | `resources\_common\xs\Effects.xs` | XS script | §11 |
 
 **Also inspected** [verified]: `sharedbuildings.json`, `objreplacement.json` and `dropsites.json`; see §8.
 
@@ -350,3 +352,31 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
 See [snapshot-format.md](../design/snapshot-format.md) (icon store) and [diff-rules.md](../design/diff-rules.md) (redraw vs remap).
 - Convert only icons referenced by a snapshot.
 - A missing or unreadable icon is recorded with `hash: null` and a reason. It never fails a capture.
+
+## 11. XS scripts (`resources\_common\xs\`)
+
+**`Constants.xs` names the IDs the `.dat` uses** [verified 101.103.54800.0]. It is the game's default XS scripting constants file, made of lines like `extern const int cAddAttribute = 4;`. Sections are titled by a comment line between `//====` rules. A capture keeps them in the snapshot's `scripts` section ([snapshot-format.md](../design/snapshot-format.md#scripts)).
+
+| Section title | Names | Example |
+|---|---|---|
+| `Effect Constants` | Effect command types (and negative Gaia variants) | `cAddAttribute = 4`, `cDisableTech = 102` |
+| `Effect Type Constants` | Modes: disable/enable, set/add | `cAttributeEnable = 1`, `cAttributeAdd = 1` |
+| `Tech Effect Constants` | Unit attributes, the `c` slot of commands 0, 4 and 5 | `cBlastAttackLevel = 44` |
+| `Object Classes` | Unit classes; the value is the class + 900 | `cArcherClass = 900` |
+| `Damage Classes` | Attack and armour classes | `cDamageClassShockInfantry = 29` |
+| `Attributes` | Player resources | `cAttributeFood = 0` |
+
+**Cross-checks** [verified 101.103.54800.0]:
+- Displayed melee and pierce armour equal the armour of classes 4 (`Melee`) and 3 (`Pierce`) in 1,169 of the 1,170 units that have both.
+- Class 29 is `ShockInfantry`, as in the game's own Battle Drills text ("+2 vs Shock Infantry").
+- `Effects.xs` calls `xsEffectAmount(type, unit or class, attribute, value, player)`. That matches the `.dat` command slots: `a` is a unit, `b` a class (without the 900 offset), `c` an attribute and `d` the value.
+
+**Attack and armour amounts are packed into `d`** for attributes 8 (armour) and 9 (attack): `d = class × 256 + amount` [verified 101.103.54800.0].
+- Checked against the help texts of the Blacksmith and archery techs. Fletching, Bodkin Arrow and Bracer give (3, +1); Forging gives (4, +1); Blast Furnace gives (4, +2); Plate Mail Armor gives (4, +1) and (3, +2).
+- **A negative `d` doesn't decode the same way** (77 commands). For example, "C-Bonus, Arch + Champi +1 armor" holds `d = -1025`. Those commands keep the raw form.
+
+**Not named in the file** [verified 101.103.54800.0]:
+- armour classes 0, 31 (about 1,200 uses), 40, 41 and 60;
+- effect command types 15, 18, 21, 26, 31, 36, 40, 200–204 and 255.
+
+**`Effects.xs` holds scripted logic** for some techs and bonuses (Ordo Cavalry, Chieftains, Stronghold…), as numbered functions. How a tech calls one is unknown: effect type 255 doesn't match the function numbers. The capture keeps the file as text, so a change to it can be shown.

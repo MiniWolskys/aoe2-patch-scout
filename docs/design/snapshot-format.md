@@ -36,6 +36,7 @@ A snapshot is the **only** thing the diff reads. It must stay readable after any
   "eras": [ ... ],
   "strings": { ... },
   "stat_icons": { ... },
+  "scripts": { ... },
   "stats": { ... } | null
 }
 ```
@@ -174,6 +175,24 @@ Maps a stat key to an icon ref. The game's stat icons come from `widgetui\textur
 `garrison`, `convert`, `work_rate`, `blast_radius`, `hp_regen`, `hp_loss`, `transport`. The
 less certain files (the bleed and bypass damage variants and the six `powerup*` icons) are
 left out ([game-files.md §10](../reference/game-files.md#other-icon-sets)). Line of sight and train time have no game icon. The UI falls back to text labels when an icon is missing.
+
+### `scripts`
+The game's XS script files ([game-files.md §11](../reference/game-files.md#11-xs-scripts-resources_commonxs)):
+
+```jsonc
+"scripts": {
+  "constants": {                          // Constants.xs: [name, value] by section title, file order
+    "Damage Classes": [["cDamageClassInfantry", 1], ["cDamageClassShockInfantry", 29], ...],
+    "Tech Effect Constants": [["cHitpoints", 0], ...],
+    ...
+  },
+  "effects": "//====...\n..."             // Effects.xs, the whole text as read
+}
+```
+
+- Values keep their XS type: int, float or string. Constants before the first section title go under `""`.
+- Both files are optional. A missing one leaves its key out and is listed in `flags.missing_sections` as `scripts.constants` or `scripts.effects`.
+- Snapshots written before this section existed read it as `{}`.
 
 ## Stats-tier section
 
