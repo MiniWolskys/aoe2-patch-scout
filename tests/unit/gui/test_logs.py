@@ -58,3 +58,14 @@ def test_recent_problems_keep_only_the_last_ones() -> None:
     finally:
         log.removeHandler(recent)
     assert [line.rsplit(" ", 1)[1] for line in recent.lines()] == ["2", "3", "4"]
+
+
+def test_a_data_folder_that_cant_be_written_still_logs(
+    tmp_path: Path, root_logger: logging.Logger
+) -> None:
+    blocked = tmp_path / "PatchScout"
+    blocked.write_text("a file where the folder should be", encoding="utf-8")
+    setup = logs.setup(blocked, debug=False)
+    assert setup.path is None
+    logging.getLogger("patch_scout.test").error("still recorded")
+    assert any("still recorded" in line for line in setup.recent.lines())

@@ -5,7 +5,8 @@ import logging
 from pathlib import Path
 
 from patch_scout.errors import PatchScoutError
-from patch_scout.snapshot import SUFFIX, Snapshot, read, write
+from patch_scout.snapshot import SUFFIX, Snapshot, SnapshotFormatError, read, write
+from patch_scout.snapshot.schema import CAPTURE_ID
 from patch_scout.store.paths import DataFolder
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,8 @@ class SnapshotStore:
 
     def path_for(self, capture_id: str) -> Path:
         """Return the file a capture ID maps to, whether or not it exists."""
+        if not CAPTURE_ID.match(capture_id):
+            raise SnapshotFormatError(f"not a valid capture ID: {capture_id!r}")
         return self._folder.snapshots / f"{capture_id}{SUFFIX}"
 
     def save(self, snapshot: Snapshot) -> Path:
@@ -39,7 +42,10 @@ class SnapshotStore:
         path = self.path_for(capture_id)
         if not path.is_file():
             raise SnapshotNotFoundError(capture_id)
-        return read(path)
+        snapshot = read(path)
+        if snapshot.capture_id != capture_id:
+            raise SnapshotFormatError(f"{path.name} holds snapshot {snapshot.capture_id}")
+        return snapshot
 
     def capture_ids(self) -> list[str]:
         """Return every capture ID with a snapshot file, sorted."""

@@ -20,6 +20,7 @@ import io
 import json
 import re
 import zipfile
+import zlib
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final, Literal
@@ -148,13 +149,17 @@ def import_(folder: DataFolder, path: Path) -> ImportResult:
     """Add the version an archive holds, unless the library already has it."""
     try:
         zipped = zipfile.ZipFile(path)
-    except (zipfile.BadZipFile, OSError) as exc:
+    except (zipfile.BadZipFile, OSError, ValueError) as exc:
         raise ArchiveError("not_an_archive", str(exc)) from exc
-    with zipped:
-        manifest = _json(zipped, MANIFEST)
-        snapshot = read_snapshot(zipped)
-        entry = _json(zipped, ENTRY)
-        icons = _icons(zipped)
+    try:
+        with zipped:
+            manifest = _json(zipped, MANIFEST)
+            snapshot = read_snapshot(zipped)
+            entry = _json(zipped, ENTRY)
+            icons = _icons(zipped)
+    except (zipfile.BadZipFile, zlib.error, OSError, EOFError, ValueError) as exc:
+        # A damaged member (bad CRC, broken deflate stream) shows only when it is read.
+        raise ArchiveError("bad_snapshot", f"damaged archive: {exc}") from exc
     store = SnapshotStore(folder)
     library = Library(folder)
     if snapshot.capture_id in store.capture_ids():
@@ -187,7 +192,9 @@ def read_snapshot(zipped: zipfile.ZipFile) -> Snapshot:
     if len(data) > MAX_SNAPSHOT_BYTES:
         raise ArchiveError("too_large", f"{SNAPSHOT} is over {MAX_SNAPSHOT_BYTES} bytes")
     try:
-        return loads(data)
+        snapshot = loads(data)
+        snapshot.capture_id  # noqa: B018  # a plain name only: it becomes a file name
+        return snapshot
     except UnsupportedSchemaError as exc:
         raise ArchiveError("newer_version", str(exc)) from exc
     except (SnapshotFormatError, TypeError, ValueError) as exc:

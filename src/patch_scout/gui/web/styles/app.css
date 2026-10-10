@@ -26,6 +26,17 @@ body:not([data-ready]) {
   visibility: hidden;
 }
 
+/* The page couldn't start: only the reason shows */
+body[data-failed] > :not(.startup-error, script) {
+  display: none;
+}
+
+.startup-error {
+  max-width: 640px;
+  margin: 18vh auto 0;
+  padding: 0 24px;
+}
+
 /* Icons: vendored Lucide SVGs used as masks, drawn in the text colour (D-43) */
 
 .icon {

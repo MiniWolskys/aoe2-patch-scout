@@ -54,7 +54,7 @@ class SettingsStore:
         if path.is_file():
             try:
                 settings = _read(json.loads(path.read_text(encoding="utf-8")))
-            except (OSError, json.JSONDecodeError):
+            except (OSError, ValueError):  # ValueError covers bad JSON and undecodable bytes
                 logger.exception("settings.json could not be read; using the defaults")
         self._cached = settings
         return settings

@@ -43,22 +43,34 @@ class RecentProblems(logging.Handler):
 class Logging:
     """What `setup` installed."""
 
-    path: Path
+    path: Path | None  # None when the data folder can't be written
     recent: RecentProblems
 
 
 def setup(data_folder: Path, *, debug: bool) -> Logging:
     """Log to stderr, to a rotating file in the data folder, and to recent problems."""
-    path = data_folder / LOG_FILE
-    path.parent.mkdir(parents=True, exist_ok=True)
     root = logging.getLogger()
     root.setLevel(logging.DEBUG if debug else logging.INFO)
     formatter = logging.Formatter(_FORMAT)
     stream = logging.StreamHandler()
     stream.setFormatter(formatter)
-    file = RotatingFileHandler(path, maxBytes=MAX_BYTES, backupCount=BACKUPS, encoding="utf-8")
-    file.setFormatter(formatter)
     recent = RecentProblems()
-    for handler in (stream, file, recent):
+    handlers: list[logging.Handler] = [stream, recent]
+    path: Path | None = None
+    candidate = data_folder / LOG_FILE
+    try:
+        candidate.parent.mkdir(parents=True, exist_ok=True)
+        file = RotatingFileHandler(
+            candidate, maxBytes=MAX_BYTES, backupCount=BACKUPS, encoding="utf-8"
+        )
+        file.setFormatter(formatter)
+        handlers.append(file)
+        path = candidate
+    except OSError:
+        # The app still starts and says why the data folder fails; Diagnostics keeps the problems.
+        pass
+    for handler in handlers:
         root.addHandler(handler)
+    if path is None:
+        logging.getLogger(__name__).error("the log file can't be written in %s", data_folder)
     return Logging(path=path, recent=recent)

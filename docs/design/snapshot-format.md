@@ -12,6 +12,7 @@ A snapshot is the **only** thing the diff reads. It must stay readable after any
 - **Deterministic.** The same install captured twice gives byte-identical JSON, apart from `meta.captured_at` and `meta.capture_id`. Keys are sorted, lists keep source order, and floats are written with Python's shortest `repr`.
 - **Keep what you don't understand.** Unknown JSON keys in game files are stored under `extra`, so new game data shows up as a change instead of disappearing.
 - **Immutable.** A snapshot file is never modified after it's written. Labels and flags the user edits live in the library index (P-18).
+- **A damaged file never stops the app.** A snapshot that can't be read (cut short, not gzip, wrong section types) is left out of the version list with a warning in Diagnostics; captures and comparisons carry on with the others.
 
 ## Container
 
@@ -45,7 +46,7 @@ A snapshot is the **only** thing the diff reads. It must stay readable after any
 
 | Field | Type | Notes |
 |---|---|---|
-| `capture_id` | string | Random ID (UUID4 hex); also the filename. |
+| `capture_id` | string | Random ID (UUID4 hex); also the filename, so it must be a plain name: 1–64 letters, digits, `-` or `_`, and match the file it is read from. Anything else is refused on load and on import. |
 | `tool_version` | string | App version that captured it. |
 | `captured_at` | string | UTC, ISO 8601. |
 | `label_at_capture` | string | Label given at capture. The current label is in the library index. |

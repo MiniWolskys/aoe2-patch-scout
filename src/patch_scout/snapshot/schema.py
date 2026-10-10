@@ -5,12 +5,34 @@ The sections and their rules are specified in docs/design/snapshot-format.md. A 
 plain JSON values only, so it stays readable after any future game format change (D-05).
 """
 
+import re
 from dataclasses import dataclass, field, fields
 from typing import Final, Self
 
 from patch_scout.errors import PatchScoutError
 
 SCHEMA_VERSION: Final = 1
+# A capture ID is also a file name, so it may only be a plain one (UUID4 hex in practice): an
+# archive from someone else must never name a file outside the snapshots folder.
+CAPTURE_ID: Final = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+# The type each section must have; anything else is a damaged or foreign file.
+_SECTION_TYPES: Final[dict[str, type | tuple[type, ...]]] = {
+    "meta": dict,
+    "sources": dict,
+    "flags": dict,
+    "civs": list,
+    "tech_trees": dict,
+    "building_offers": dict,
+    "unit_lines": list,
+    "linked_techs": list,
+    "linked_units": list,
+    "eras": list,
+    "strings": dict,
+    "stat_icons": dict,
+    "stats": (dict, type(None)),
+    "scripts": dict,
+    "schema_version": int,
+}
 
 type JsonValue = bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"] | None
 type JsonObject = dict[str, JsonValue]
@@ -43,7 +65,10 @@ class Snapshot:
     @property
     def capture_id(self) -> str:
         """The snapshot's ID, which is also its file name."""
-        return _text(self.meta, "capture_id")
+        capture_id = _text(self.meta, "capture_id")
+        if not CAPTURE_ID.match(capture_id):
+            raise SnapshotFormatError(f"not a valid capture ID: {capture_id!r}")
+        return capture_id
 
     @property
     def game_build(self) -> str | None:
@@ -77,7 +102,12 @@ class Snapshot:
         missing = sorted({"meta", "sources", "flags"} - set(data))
         if missing:
             raise SnapshotFormatError(f"missing snapshot sections: {', '.join(missing)}")
-        return cls(**data)  # type: ignore[arg-type]  # checked above; sections stay plain JSON
+        for name, value in data.items():
+            if isinstance(value, bool) or not isinstance(value, _SECTION_TYPES[name]):
+                raise SnapshotFormatError(f"snapshot section {name} has the wrong type")
+        snapshot = cls(**data)  # type: ignore[arg-type]  # checked above; sections stay plain JSON
+        snapshot.capture_id  # noqa: B018  # validates the ID, which is also a file name
+        return snapshot
 
 
 def _text(section: JsonObject, key: str) -> str:
