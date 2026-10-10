@@ -29,3 +29,12 @@ def test_pin_mime_types_overrides_a_wrong_registry_type(extension: str, mime_typ
     pin_mime_types()
 
     assert mimetypes.guess_type(f"file{extension}") == (mime_type, None)
+
+
+def test_the_file_server_queues_the_pages_parallel_requests() -> None:
+    from wsgiref.simple_server import WSGIServer
+
+    from patch_scout.gui.web_files import LISTEN_BACKLOG, allow_parallel_loads
+
+    allow_parallel_loads()
+    assert WSGIServer.request_queue_size == LISTEN_BACKLOG >= 32

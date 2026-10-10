@@ -78,6 +78,7 @@ a = Analysis(
   - Chromium refuses ES modules served as `text/plain`.
 - **So the app pins the types it serves** before starting (`gui/web_files.py`): `text/javascript` for `.js`, `text/css`, `image/svg+xml`, `font/ttf`.
   - On the dev machine (2026-09-15), `.js` already mapped to `text/javascript`, and `.ttf` to nothing.
+- **Listen backlog** [verified 2026-10-10]: pywebview's file server is a `wsgiref` server with Python's default backlog of 5 pending connections. The page loads about 20 files at once, and **Windows refuses connections past the backlog** instead of queuing them. In a local test, with the server briefly busy, 35 of 40 simultaneous connections were refused with a backlog of 5 and none with 64. A page missing one module never starts: CI showed it as random blank pages. The app raises the backlog to 64 before starting (`allow_parallel_loads`), and the UI tests' server uses the same value.
 - **Page path:** pywebview resolves a relative page path against `sys.argv[0]`, which is `.venv\Scripts` under `uv run` (`webview/util.py`, `get_app_root`). The app passes the absolute path of `index.html`.
 
 ## Antivirus and SmartScreen

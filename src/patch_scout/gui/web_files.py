@@ -26,3 +26,17 @@ def pin_mime_types() -> None:
     """Register the frontend's file types, overriding whatever the registry says."""
     for extension, mime_type in WEB_TYPES.items():
         mimetypes.add_type(mime_type, extension)
+
+
+# Pending connections a local file server keeps. The page loads ~20 files at once (modules,
+# stylesheets, fonts); with the default of 5, Windows refuses the connections past it instead
+# of letting them wait, and a page missing one module never starts (CI showed it as random
+# blank pages).
+LISTEN_BACKLOG: Final = 64
+
+
+def allow_parallel_loads() -> None:
+    """Let pywebview's file server (a wsgiref server) queue the page's parallel requests."""
+    from wsgiref.simple_server import WSGIServer
+
+    WSGIServer.request_queue_size = LISTEN_BACKLOG

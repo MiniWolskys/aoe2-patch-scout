@@ -14,7 +14,7 @@ import webview
 from patch_scout.gui import logs
 from patch_scout.gui.api import Api
 from patch_scout.gui.instance import SingleInstance, tell_already_running
-from patch_scout.gui.web_files import pin_mime_types, web_root
+from patch_scout.gui.web_files import allow_parallel_loads, pin_mime_types, web_root
 from patch_scout.gui.webview2 import (
     DOWNLOAD_URL,
     RegistryReader,
@@ -109,6 +109,7 @@ def main(
     folder = DataFolder.default()
     logged = logs.setup(folder.root, debug=debug)
     pin_mime_types()
+    allow_parallel_loads()
     catalog = load_catalog(LANGUAGE)
 
     runtime = installed_runtime_version(read_value)

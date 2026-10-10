@@ -12,7 +12,7 @@ import pytest
 from playwright.sync_api import Page
 from support.ui_data import fixture_data
 
-from patch_scout.gui.web_files import pin_mime_types, web_root
+from patch_scout.gui.web_files import LISTEN_BACKLOG, pin_mime_types, web_root
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -22,12 +22,18 @@ class QuietHandler(SimpleHTTPRequestHandler):
         pass
 
 
+class _Server(ThreadingHTTPServer):
+    """The test server queues the page's parallel requests, like the app's (web_files.py)."""
+
+    request_queue_size = LISTEN_BACKLOG
+
+
 @pytest.fixture(scope="session")
 def web_server() -> Iterator[str]:
     """Serve gui/web/ on 127.0.0.1 with the app's file types; yield the base URL."""
     pin_mime_types()
     handler = functools.partial(QuietHandler, directory=str(web_root()))
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    server = _Server(("127.0.0.1", 0), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     yield f"http://127.0.0.1:{server.server_port}"
@@ -148,6 +154,8 @@ def open_shell(page: Page, web_server: str) -> Callable[..., Page]:
         # `data-ready` only means the page's own script ran; a stylesheet can still be in flight,
         # and a half-styled page has different hit targets.
         page.wait_for_load_state("load")
+        # Layout checks measure text: wait for the web fonts, or a fallback font's metrics win.
+        page.evaluate("document.fonts.ready.then(() => true)")
         return page
 
     return open_
