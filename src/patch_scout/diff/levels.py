@@ -44,6 +44,10 @@ _DETAIL_TECH_FIELDS: Final = frozenset(
 )
 # A civ's tech tree effect: the availability category already says what it does.
 _TREE_EFFECT: Final = "field.tech_tree_effect"
+# What a tech tree sentence says that the Availability category already shows.
+_AVAILABILITY_SENTENCES: Final = frozenset(
+    {"effect.disable_tech", "effect.enable", "effect.disable"}
+)
 _EFFECT_IDS: Final = frozenset(
     {"field.tech_effect", "field.effect_id", "field.tech_tree_effect", "field.team_bonus_effect"}
 )
@@ -111,11 +115,29 @@ def _effect_level(change: Change, key: str | None) -> Level:
         # A command with no sentence may still be a real change (the Huns' Atheism on
         # 101.103.54800.0 uses unnamed types), so only tech tree commands step back.
         return "technical" if key == _TREE_EFFECT else "headline"
+    if _availability_sentence(change):
+        return "detail"
     if change.detail is None and key in _EFFECT_IDS:
         return "detail"  # an effect ID; its commands are reported on their own lines
     if _rounding(change.old, change.new):
         return "technical"
     return "headline"
+
+
+def _availability_sentence(change: Change) -> bool:
+    """A civ's tech tree enabling or disabling something: Availability says it already.
+
+    Treadmill Crane on 101.103.54800.0 read twice: "Available → Not available (Bengalis, …)" and
+    "Bengalis · New: Disables Treadmill Crane".
+    """
+    detail = change.detail
+    if detail is None or detail.key != "detail.effect_command_raw" or change.field is None:
+        return False
+    if detail.args.get("source") != _TREE_EFFECT:
+        return False
+    sentence = change.field.args.get("effect")
+    key = sentence.get("key") if isinstance(sentence, dict) else change.field.key
+    return key in _AVAILABILITY_SENTENCES
 
 
 def _rounding(old: str | None, new: str | None) -> bool:

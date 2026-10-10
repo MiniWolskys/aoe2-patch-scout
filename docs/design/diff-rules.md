@@ -228,6 +228,7 @@ The rules come from measuring 101.103.48987.0 → 101.103.54800.0 against its of
 | A building switching between `ResearchRequired` and `ResearchedCompleted` | detail | Available either way |
 | Tech repeatable flag, required tech count, tech type; an effect ID change | detail | Bookkeeping; an effect's commands are reported on their own lines |
 | A raw command in a civ's tech tree effect | technical | The availability lines already say it |
+| A sentence in a civ's tech tree effect that enables or disables a unit or tech | detail | The availability lines already say it (Treadmill Crane on 101.103.54800.0: "Not available (Bengalis, …)" and "Bengalis · New: Disables Treadmill Crane") |
 | A value that only changed by rounding (less than 0.1 %, e.g. 0.99999 → 1) | technical | No effect |
 | A text change in spacing only | technical | No effect |
 

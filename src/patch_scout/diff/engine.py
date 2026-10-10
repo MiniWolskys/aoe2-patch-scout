@@ -1245,7 +1245,8 @@ def _command_changes(
             continue
         raw = " → ".join(text for text in (old_text, new_text) if text)
         detail = Message(
-            "detail.effect_command_raw", {"effect": effect_name, "command": position, "raw": raw}
+            "detail.effect_command_raw",
+            {"effect": effect_name, "command": position, "raw": raw, "source": label.key},
         )
         changes.extend(
             replace(base, field=sentence, old=old, new=new, detail=detail)
