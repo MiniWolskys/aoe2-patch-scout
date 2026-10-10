@@ -915,6 +915,95 @@ body[data-failed] > :not(.startup-error, script) {
   content: "";
 }
 
+/* The game's tooltip for a tech tree node, in the app's colours */
+.tree-panel {
+  position: fixed;
+  z-index: 20;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  pointer-events: none;
+}
+
+.tree-panel__line {
+  margin: 0 0 6px;
+  line-height: 1.35;
+}
+
+.tree-panel .is-bold {
+  font-weight: 600;
+}
+
+.tree-panel .is-italic {
+  font-style: italic;
+}
+
+.tree-panel .is-grey {
+  color: var(--text-2);
+}
+
+.tree-panel__stats,
+.tree-panel__cost {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.tree-panel__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tree-panel__icon {
+  width: 20px;
+  height: 20px;
+  box-shadow: none;
+}
+
+.tree-panel__arrow {
+  margin: 0 3px;
+  color: var(--text-3);
+}
+
+.tree-panel__renamed {
+  margin: 0 0 6px;
+  color: var(--text-2);
+}
+
+.tree-panel__changes {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.tree-panel__change {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.tree-panel__change .change-values {
+  font-size: var(--fs-sm);
+}
+
+.tree-panel__note {
+  margin: 4px 0 0;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
 /* Dialogs */
 
 .dialog__title {

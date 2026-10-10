@@ -11,6 +11,7 @@ import { applyTranslations, createTranslator } from "./i18n.js";
 import * as icons from "./icons.js";
 import { initDiagnostics, initExport, initPicker, initSettings } from "./panels.js";
 import * as techTree from "./tree.js";
+import * as treePanel from "./tree-panel.js";
 import { initVersionList, render as renderVersions } from "./version-list.js";
 
 const VIEWS = ["first-launch", "capture-view", "details-view", "comparing-view", "comparison-view"];
@@ -209,6 +210,7 @@ async function start() {
     show(byId("comparison-page"), !inTree);
     show(byId("tree-view"), inTree);
     show(byId("comparison-export"), !inTree);
+    treePanel.hide();
     const toggle = byId("comparison-tree");
     toggle.textContent = t(inTree ? "tree.back" : "tree.open");
     toggle.setAttribute("aria-pressed", String(inTree));
@@ -327,6 +329,13 @@ async function start() {
       onFit: () => {
         state.treeFit = !state.treeFit;
         void drawTree();
+      },
+      onNode: (node, tile, shown) => {
+        if (shown) {
+          treePanel.show({ t, changeSet: current.changeSet }, node, tile);
+        } else {
+          treePanel.hide();
+        }
       },
     });
   }

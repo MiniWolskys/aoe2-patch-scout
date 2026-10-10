@@ -126,3 +126,88 @@ def test_a_tree_that_cannot_be_drawn_goes_back_to_the_changes(open_shell: OpenSh
 
     expect(page.locator("#toast")).to_contain_text("tech tree")
     expect(page.locator("#comparison-page")).to_be_visible()
+
+
+def _open_tree(open_shell: OpenShell, **overrides: Any) -> Page:
+    page = _compared(open_shell, **overrides)
+    page.locator("#comparison-tree").click()
+    expect(page.locator(".tree-node").first).to_be_visible()
+    return page
+
+
+def test_hovering_a_node_shows_the_games_tooltip_with_old_and_new_values(
+    open_shell: OpenShell,
+) -> None:
+    page = _open_tree(open_shell)
+
+    page.locator(".tree-node.mark-changed").hover()
+
+    panel = page.locator("#tree-panel")
+    expect(panel).to_be_visible()
+    expect(panel).to_contain_text("All-purpose Foot Archer.")
+    expect(panel.locator(".is-bold")).to_have_text("Archer")
+    expect(panel.locator(".tree-panel__stats .value-old")).to_have_text(["30"])
+    expect(panel.locator(".tree-panel__stats .value-new")).to_have_text(["35"])
+    expect(panel.locator(".tree-panel__cost .value-old")).to_have_text(["45"])
+    expect(panel.locator(".tree-panel__cost .value-new")).to_have_text(["40"])
+    expect(panel.locator(".tree-panel__changes .change-values")).to_have_count(1)
+    expect(panel).to_contain_text("before civilization bonuses")
+
+
+def test_a_missing_value_reads_as_a_question_mark(open_shell: OpenShell) -> None:
+    page = _open_tree(open_shell)
+
+    page.locator(".tree-node.mark-changed").hover()
+
+    expect(page.locator("#tree-panel [data-stat='range']")).to_have_text("?")
+
+
+def test_moving_away_hides_the_panel(open_shell: OpenShell) -> None:
+    page = _open_tree(open_shell)
+    page.locator(".tree-node.mark-changed").hover()
+    expect(page.locator("#tree-panel")).to_be_visible()
+
+    page.mouse.move(5, 5)
+
+    expect(page.locator("#tree-panel")).to_be_hidden()
+
+
+def test_keyboard_focus_shows_the_panel_and_escape_hides_it(open_shell: OpenShell) -> None:
+    page = _open_tree(open_shell)
+
+    page.locator(".tree-node", has_text="Crossbowman").focus()
+
+    panel = page.locator("#tree-panel")
+    expect(panel).to_be_visible()
+    expect(page.locator(".tree-node", has_text="Crossbowman")).to_have_attribute(
+        "aria-describedby", "tree-panel"
+    )
+    page.keyboard.press("Escape")
+    expect(panel).to_be_hidden()
+
+
+def test_the_panel_stays_on_screen_next_to_the_right_edge(open_shell: OpenShell) -> None:
+    page = _open_tree(open_shell)
+    page.set_viewport_size({"width": 1100, "height": 600})
+    scroller = page.locator(".tree__scroll")
+    scroller.evaluate("element => { element.scrollLeft = element.scrollWidth }")
+    target = page.locator(".tree-node", has_text="Militia")
+    target.scroll_into_view_if_needed()
+
+    target.hover()
+
+    box = page.locator("#tree-panel").bounding_box()
+    assert box is not None
+    assert box["x"] >= 0 and box["y"] >= 0
+    assert box["x"] + box["width"] <= 1100
+    assert box["y"] + box["height"] <= 600
+
+
+def test_a_renamed_node_says_its_old_name(open_shell: OpenShell) -> None:
+    tree = tech_tree()
+    tree["nodes"][2] |= {"mark": "renamed", "old_name": "Longboat"}
+    page = _open_tree(open_shell, techTree=tree)
+
+    page.locator(".tree-node", has_text="Crossbowman").hover()
+
+    expect(page.locator("#tree-panel")).to_contain_text("Formerly Longboat")
