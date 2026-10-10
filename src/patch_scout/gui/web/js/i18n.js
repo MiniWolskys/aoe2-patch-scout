@@ -66,6 +66,27 @@ export function createTranslator(messages) {
 }
 
 /**
+ * Like `t`, but a value that is itself a `{key, args}` message is resolved first, as the Python
+ * catalog's `message` does; e.g. "Projectile: {field}" with the field as a nested message.
+ * @param {(key: string, values?: Record<string, unknown>) => string} t
+ * @param {string} key
+ * @param {Record<string, unknown>} [args]
+ * @returns {string}
+ */
+export function message(t, key, args = {}) {
+  /** @type {Record<string, unknown>} */
+  const values = {};
+  for (const [name, value] of Object.entries(args)) {
+    const nested = /** @type {{key?: unknown, args?: Record<string, unknown>}} */ (value);
+    values[name] =
+      value !== null && typeof value === "object" && typeof nested.key === "string"
+        ? message(t, nested.key, nested.args ?? {})
+        : value;
+  }
+  return t(key, values);
+}
+
+/**
  * Fill in `data-i18n` text and `data-i18n-attr` attributes under `root`.
  * `data-i18n-attr` holds space-separated `attribute:key` pairs.
  * @param {ParentNode} root

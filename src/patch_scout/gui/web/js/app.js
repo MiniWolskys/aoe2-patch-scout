@@ -28,7 +28,7 @@ async function start() {
    *   comparison: {oldId: string, newId: string, changeSet: Record<string, any>,
    *     civ: string | null} | null,
    *   capture: import("./api.js").CaptureStatus | null,
-   *   filters: {low: boolean, unreachable: boolean, search: string},
+   *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, search: string},
    *   view: string,
    * }} */
   const state = {
@@ -36,7 +36,7 @@ async function start() {
     openId: null,
     comparison: null,
     capture: startup.capture,
-    filters: { low: false, unreachable: false, search: "" },
+    filters: { low: false, unreachable: false, unnamed: false, search: "" },
     view: "first-launch",
   };
 
@@ -206,6 +206,7 @@ async function start() {
         oldId: state.comparison.oldId,
         newId: state.comparison.newId,
         low: state.filters.low,
+        unnamed: state.filters.unnamed,
         civs: state.comparison.civ === null ? null : [state.comparison.civ],
         prerelease: sides.some((side) => side?.prerelease === true),
       };
@@ -238,6 +239,13 @@ async function start() {
     const target = event.target;
     if (target instanceof HTMLInputElement) {
       state.filters.low = target.checked;
+      drawComparison();
+    }
+  });
+  input("filter-unnamed").addEventListener("change", (event) => {
+    const target = event.target;
+    if (target instanceof HTMLInputElement) {
+      state.filters.unnamed = target.checked;
       drawComparison();
     }
   });
