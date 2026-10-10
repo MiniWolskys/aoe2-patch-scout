@@ -19,6 +19,7 @@ A snapshot is the **only** thing the diff reads. It must stay readable after any
 - **File:** `<capture_id>.snapshot.json.gz`: UTF-8 JSON, gzip-compressed.
 - **Size target:** a few MB; revisit above ~20 MB (P-03). **Measured on build 101.103.48987.0: 2.41 MB** for a full capture with stats, 60 civs and every string table entry.
 - **Icons:** stored outside the snapshot, in the shared icon store, and referenced by hash.
+- **Index:** `<capture_id>.index.json` next to each snapshot: capture ID, game build, capture date, the stats flags, the label and pre-release flag given at capture, and `sources`. The version list, the library rebuild and the identical-input check (P-05) read it instead of the snapshot, which is about 164 MB in memory. It is derived data: written with the snapshot, rebuilt from it when missing, damaged or naming another snapshot, and deleted with it. The app keeps at most two whole snapshots in memory, the two a comparison needs.
 
 ## Top level
 

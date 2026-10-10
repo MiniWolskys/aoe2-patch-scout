@@ -14,7 +14,7 @@ from typing import Final, Literal, Self
 from patch_scout.errors import PatchScoutError
 from patch_scout.snapshot import JsonValue, Snapshot
 from patch_scout.store.paths import DataFolder
-from patch_scout.store.snapshots import SnapshotStore
+from patch_scout.store.snapshots import SnapshotIndex, SnapshotStore
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,18 @@ class LibraryEntry:
     notes: str
     origin: Origin
     added_at: str
+
+    @classmethod
+    def for_index(cls, index: SnapshotIndex, origin: Origin = "imported") -> Self:
+        """The entry a snapshot found without one starts with, from its index."""
+        return cls(
+            capture_id=index.capture_id,
+            label=index.label_at_capture or index.capture_id,
+            prerelease=index.prerelease_at_capture,
+            notes="",
+            origin=origin,
+            added_at=now_iso(),
+        )
 
     @classmethod
     def for_snapshot(cls, snapshot: Snapshot, origin: Origin = "captured") -> Self:
@@ -132,7 +144,7 @@ class Library:
             if capture_id in self._entries:
                 continue
             try:
-                self._entries[capture_id] = LibraryEntry.for_snapshot(store.load(capture_id))
+                self._entries[capture_id] = LibraryEntry.for_index(store.index(capture_id))
             except PatchScoutError:
                 logger.warning("snapshot %s could not be read; left out of the library", capture_id)
         for capture_id in set(self._entries) - set(store.capture_ids()):

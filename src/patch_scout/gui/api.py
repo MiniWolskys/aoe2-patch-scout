@@ -36,10 +36,13 @@ from patch_scout.store import (
     archive,
 )
 from patch_scout.store.settings import Settings, SettingsStore
+from patch_scout.store.snapshots import SnapshotIndex
 
 logger = logging.getLogger(__name__)
 
 # How many icons the page may ask for at once; a comparison shows far fewer than this.
+# Whole snapshots kept in memory: a comparison needs two.
+MAX_LOADED: Final = 2
 MAX_ICONS: Final = 400
 
 type FolderPicker = Callable[[], str | None]
@@ -98,6 +101,7 @@ class Api:
         self._library = Library(self._folder)
         self._icons = IconStore(self._folder)
         self._capture: _Capture | None = None
+        # Insertion-ordered: the first key is the snapshot used least recently.
         self._loaded: dict[str, Snapshot] = {}
         self._window: Any = None
         self._last_comparison: tuple[tuple[object, ...], ChangeSet] | None = None
@@ -143,7 +147,7 @@ class Api:
         with _Guard("get_version"):
             snapshot = self._snapshot(capture_id)
             entry = self._library.get(capture_id)
-            return _version_json(snapshot, entry) | {
+            return _version_json(SnapshotIndex.of(snapshot), entry) | {
                 "source_path": snapshot.meta.get("source_path"),
                 "flags": snapshot.flags,
                 "meta": snapshot.meta,
@@ -543,21 +547,24 @@ class Api:
         versions: list[tuple[tuple[int, ...], str, JsonObject]] = []
         for capture_id in self._snapshots.capture_ids():
             try:
-                snapshot = self._snapshot(capture_id)
+                index = self._snapshots.index(capture_id)  # never the whole snapshot
             except PatchScoutError:
                 logger.warning("snapshot %s could not be read; leaving it out", capture_id)
                 continue
             entry = self._library.get(capture_id)
             versions.append(
-                (_build_key(snapshot), snapshot.captured_at, _version_json(snapshot, entry))
+                (_build_key(index.game_build), index.captured_at, _version_json(index, entry))
             )
         versions.sort(key=lambda item: (item[0], item[1]), reverse=True)
         return [item[2] for item in versions]
 
     def _snapshot(self, capture_id: str) -> Snapshot:
-        if capture_id not in self._loaded:
-            self._loaded[capture_id] = self._snapshots.load(capture_id)
-        return self._loaded[capture_id]
+        """A whole snapshot; only the two used last stay in memory (~164 MB each)."""
+        snapshot = self._loaded.pop(capture_id, None) or self._snapshots.load(capture_id)
+        self._loaded[capture_id] = snapshot
+        while len(self._loaded) > MAX_LOADED:
+            self._loaded.pop(next(iter(self._loaded)))
+        return snapshot
 
     def _side_info(self, capture_id: str) -> SideInfo:
         entry = self._library.get(capture_id)
@@ -619,18 +626,18 @@ class _Guard:
             logger.debug("%s", "".join(traceback.format_exception(error)))
 
 
-def _version_json(snapshot: Snapshot, entry: LibraryEntry | None) -> JsonObject:
+def _version_json(index: SnapshotIndex, entry: LibraryEntry | None) -> JsonObject:
     return {
-        "capture_id": snapshot.capture_id,
-        "label": entry.label if entry else snapshot.capture_id,
+        "capture_id": index.capture_id,
+        "label": entry.label if entry else index.capture_id,
         "prerelease": entry.prerelease if entry else False,
         "notes": entry.notes if entry else "",
         "origin": entry.origin if entry else "imported",
-        "game_build": snapshot.game_build,
-        "captured_at": snapshot.captured_at,
-        "stats_available": snapshot.stats_available,
-        "stats_reason": snapshot.flags.get("stats_unavailable_reason"),
-        "format_verified": snapshot.flags.get("format_verified"),
+        "game_build": index.game_build,
+        "captured_at": index.captured_at,
+        "stats_available": index.stats_available,
+        "stats_reason": index.stats_unavailable_reason,
+        "format_verified": index.format_verified,
     }
 
 
@@ -675,9 +682,8 @@ def _trimmed(value: JsonValue) -> JsonValue:
     return value
 
 
-def _build_key(snapshot: Snapshot) -> tuple[int, ...]:
-    build = snapshot.game_build or ""
-    return tuple(int(part) if part.isdigit() else -1 for part in build.split("."))
+def _build_key(build: str | None) -> tuple[int, ...]:
+    return tuple(int(part) if part.isdigit() else -1 for part in (build or "").split("."))
 
 
 def _package_version(name: str) -> str | None:
