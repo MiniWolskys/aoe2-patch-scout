@@ -429,6 +429,73 @@ def test_a_civ_added_in_the_new_build_does_not_split_a_shared_change() -> None:
     ]
 
 
+def _tree(*extra: JsonValue) -> list[JsonValue]:
+    archer: JsonValue = {
+        "use_type": "Unit",
+        "node_id": 4,
+        "node_status": "ResearchedCompleted",
+        "name_string_id": 5004,
+    }
+    return [archer, *extra]
+
+
+def _cranequins(status: str) -> JsonValue:
+    return {"use_type": "Tech", "node_id": 1452, "node_status": status, "name_string_id": 7452}
+
+
+def test_a_node_added_as_not_available_is_not_reported_as_added() -> None:
+    """Regression: "Added: Cranequins" named civs whose new node is NotAvailable."""
+    civs = [_civ_record("Gaia", 0), _civ_record("Alpha", 1), _civ_record("Beta", 2)]
+    old = replace(
+        _build(civs, _archer({1: 10, 2: 10}, 3)), tech_trees={"Alpha": _tree(), "Beta": _tree()}
+    )
+    new = replace(
+        _build(civs, _archer({1: 10, 2: 10}, 3)),
+        tech_trees={
+            "Alpha": _tree(_cranequins("ResearchedCompleted")),
+            "Beta": _tree(_cranequins("NotAvailable")),
+        },
+    )
+
+    added = [
+        change
+        for change in compare(old, new).changes
+        if change.category == "civ_availability" and change.entity.id == "1452"
+    ]
+
+    assert [(change.kind, change.scope.civs) for change in added] == [("added", ("Alpha",))]
+
+
+def _offers(*techs: JsonValue) -> JsonValue:
+    return {"buildings": [{"id": 87, "name": "Archery Range", "units": [], "techs": list(techs)}]}
+
+
+def test_an_offer_the_civ_cannot_use_is_left_out_and_offers_read_by_name() -> None:
+    civs = [_civ_record("Gaia", 0), _civ_record("Alpha", 1)]
+    # Tech 4 shares its ID with the Archer unit node: it must not be read as the Archer.
+    thumb_ring: JsonValue = {"ID": 4, "Name": "Thumb Ring", "RequiredAge": 3}
+    cranequins: JsonValue = {"ID": 1452, "Name": "Cranequins", "RequiredAge": 3}
+    bodkin: JsonValue = {"ID": 200, "Name": "Bodkin Arrow", "RequiredAge": 3}
+    old = replace(
+        _build(civs, _archer({1: 10}, 2)),
+        tech_trees={"Alpha": _tree()},
+        building_offers={"Alpha": _offers(thumb_ring)},
+    )
+    new = replace(
+        _build(civs, _archer({1: 10}, 2)),
+        tech_trees={"Alpha": _tree(_cranequins("NotAvailable"))},
+        building_offers={"Alpha": _offers(cranequins, bodkin)},
+    )
+
+    offered = [
+        change
+        for change in compare(old, new).changes
+        if change.field is not None and change.field.key == "field.offered_techs"
+    ]
+
+    assert [(change.old, change.new) for change in offered] == [("Thumb Ring", "Bodkin Arrow")]
+
+
 def test_civ_lists_follow_the_order_of_civilizations_json() -> None:
     """diff-rules.md: civ lists are sorted in civilizations.json order, not alphabetically."""
     civs = [

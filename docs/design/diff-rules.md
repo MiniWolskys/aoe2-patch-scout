@@ -43,6 +43,8 @@ Shown in this order. Categories marked *low* are collapsed by default.
 
 1. **Civilizations:** civs added or removed; era changes.
 2. **Civ availability:** per-civ tech tree changes (units, techs, buildings gained or lost, node status changes); building offer changes.
+   - The game's tech trees and offer lists also list what a civ **can't** get (`NotAvailable`). A node that appears or disappears as `NotAvailable` is not gained or lost, and an offered item whose node is `NotAvailable` for that civ is left out of the offer comparison. *Seen on build 101.103.54800.0: Cranequins is in 15 civs' trees but available to 6, and in the Italians' Archery Range offers.*
+   - Offered items are matched by ID and shown by name: the civ's tech tree label, else the offer list's own name.
 3. **Civ and team bonuses:**
    - The civ's bonus **text** diff (the game's own words).
    - Changed bonus **effects** as sentences (see Effects).

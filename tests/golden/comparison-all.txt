@@ -27,6 +27,9 @@ REDLANDERS
 BLUELANDERS
   Availability
     • Archer (Archery Range) · Availability · NotAvailable → ResearchedCompleted · (Bluelanders)
+    • Archery Range · (Bluelanders)
+        - Techs offered · added Fletching
+        - Units offered · added Archer
     • Fletching · Availability · NotAvailable → ResearchedCompleted · (Bluelanders)
   Unit stats
     • Archer · Hit points · 35 → 45 · (Bluelanders)
