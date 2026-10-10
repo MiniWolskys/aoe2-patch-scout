@@ -51,6 +51,34 @@ class BackupStore:
         temporary.replace(path)
         return path
 
+    def forget(self, capture_id: str) -> int:
+        """Delete a capture's manifest and the stored files no other capture uses.
+
+        Returns how many files were removed. If another manifest can't be read, nothing but this
+        capture's manifest is removed: it can't say which files it still needs.
+        """
+        manifest = self._folder.backups / f"{capture_id}.json"
+        if not manifest.is_file():
+            return 0
+        own = _digests(manifest)
+        manifest.unlink()
+        removed = 1
+        if own is None:
+            return removed
+        kept: set[str] = set()
+        for other in self._folder.backups.glob("*.json"):
+            digests = _digests(other)
+            if digests is None:
+                logger.warning("backup manifest %s can't be read; keeping every file", other)
+                return removed
+            kept |= digests
+        for digest in own - kept:
+            path = self.object_path(digest)
+            if path.is_file():
+                path.unlink()
+                removed += 1
+        return removed
+
     def purge(self) -> int:
         """Delete every stored object and manifest; returns how many files were removed."""
         folder = self._folder.backups
@@ -64,3 +92,15 @@ class BackupStore:
             elif path.is_dir():
                 path.rmdir()
         return removed
+
+
+def _digests(manifest: Path) -> set[str] | None:
+    """The object hashes a manifest uses; None when it can't be read."""
+    try:
+        files = json.loads(manifest.read_text(encoding="utf-8")).get("files")
+    except (OSError, ValueError, AttributeError):
+        return None
+    if not isinstance(files, dict):
+        return None
+    # Only plain hash names: a damaged manifest must never point outside the objects folder.
+    return {value for value in files.values() if isinstance(value, str) and value.isalnum()}

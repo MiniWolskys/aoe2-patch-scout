@@ -284,7 +284,7 @@ The game's XS script files ([game-files.md §11](../reference/game-files.md#11-x
 
 - **What:** every input file listed in `sources` is copied to `backups/objects/<sha256[0:2]>/<sha256>` unless an object with that hash already exists. Files unchanged since an earlier capture take no extra space.
 - **Manifest:** `backups/<capture_id>.json` maps each relative path to its object hash, so the exact input folder can be rebuilt for re-capture with a fixed extractor.
-- **Scope:** icons (DDS) are not backed up; converted icons are already kept. The Settings screen can turn backups off or purge them. Raw backups are never exported.
+- **Scope:** icons (DDS) are not backed up; converted icons are already kept. The Settings screen can turn backups off or purge them. Deleting a version deletes its manifest and the stored files no other version uses; if another manifest can't be read, its files are all kept. Raw backups are never exported.
 
 ## Export archive
 

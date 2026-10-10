@@ -130,11 +130,13 @@ def read(
     strings: JsonObject,
     *,
     parser: Parser = parse_bytes,
+    checkpoint: Callable[[], None] = lambda: None,
 ) -> StatsResult:
     """Read the `.dat`, trying each candidate layout until one passes every gate.
 
     Each failed attempt is released before the next one starts: a parsed DE file takes about a
-    gigabyte (genieutils-py.md).
+    gigabyte (genieutils-py.md). `checkpoint` runs between steps and may raise to stop the read:
+    a stopped capture then waits for one step, not for the whole read.
     """
     result = StatsResult()
     try:
@@ -147,7 +149,8 @@ def read(
     logger.info("the .dat says %s; trying %s", result.format_version, ", ".join(layouts))
 
     for layout in layouts:
-        attempt = _try_layout(raw, layout, civs, tech_trees, strings, parser, result)
+        checkpoint()
+        attempt = _try_layout(raw, layout, civs, tech_trees, strings, parser, result, checkpoint)
         result.attempts.append(attempt)
         if attempt.result == "passed":
             result.layout_version = layout
@@ -165,6 +168,7 @@ def _try_layout(
     strings: JsonObject,
     parser: Parser,
     result: StatsResult,
+    checkpoint: Callable[[], None],
 ) -> Attempt:
     stream = raw if layout == result.format_version else substitute(raw, layout)
     dat = None
@@ -174,15 +178,18 @@ def _try_layout(
         except Exception as exc:  # any layout mismatch surfaces here, in many shapes
             logger.info("layout %s did not parse: %s", layout, exc)
             return Attempt(layout, "parse_error", f"{type(exc).__name__}: {exc}")
+        checkpoint()
         passed, detail = round_trip(dat, stream)
         if not passed:
             return Attempt(layout, "roundtrip_mismatch", detail)
+        checkpoint()
         checks = sanity_checks(dat, civs, tech_trees, strings)
         failed = [check for check in checks if not check.passed]
         if failed:
             result.checks = checks
             return Attempt(layout, "sanity_failed", "; ".join(check.detail for check in failed))
         result.checks = checks
+        checkpoint()
         result.stats = normalize(dat)
         return Attempt(layout, "passed", detail)
     finally:

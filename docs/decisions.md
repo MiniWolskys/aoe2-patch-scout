@@ -31,13 +31,14 @@ Chosen by the maintainer on 2026-09-15.
 - **Capture and diff:** unchanged. The Chronicles civs are captured and compared like every other civ (D-14), and their era (`antiquity` in `civilizations.json`) is kept.
 - **Comparison:** they're kept apart from the base civs. **They have their own tab** above the civ list, "Chronicles" next to "Main game", chosen by the maintainer on 2026-10-10 over a group at the end of the list. The tab shows how many changes it holds, or NEW for a new civ. Return of Rome will get its own tab when it is supported.
 
-### D-39 Civ overview after v1.0: Decided
+### D-39 Civ overview; its tech tree before v1.0: Decided
 Chosen by the maintainer on 2026-09-15.
 - **What:** a view of one civ's full tech tree in one version: availability, civ and team bonuses, unit and tech stats, with a comparison's changes highlighted.
 - **Why:** a single change, such as a new unit, only makes sense next to what the civ already has and lacks.
 - **When:** after v1.0. v1 shows changes only.
 - **Constraint from now on:** snapshots already hold everything the overview needs: every tech tree node with its status, building offers, bonus texts, units, techs and effects. Captures (M1–M2) must keep all of it, so the overview also works on older snapshots.
 - **Not the same as P-17:** it shows the context and doesn't compute bonus-applied stats (D-20).
+- **Amended 2026-10-10 by the maintainer:** the **tech tree** part comes **before v1.0**, once every other v1.0 task is done. It is laid out like the game's tech tree (ages as rows, buildings heading columns, lines between upgrades), styled in the app's design. It shows the new version's tree with the comparison's changes marked on it: gained, lost, and changed. It opens with one button from the comparison and shares its civ picker. The spec is agreed before it is built.
 
 ### D-15 GUI in v1: Decided
 v1 ships a pywebview desktop GUI.
