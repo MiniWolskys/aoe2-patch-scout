@@ -4,18 +4,21 @@
 Update the golden files deliberately with `uv run pytest --update-golden`, and read the diff.
 """
 
+import base64
+import io
 import json
 from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from PIL import Image
 from support import pairs
 
 from patch_scout.diff import compare
 from patch_scout.diff.model import ChangeSet, Scope, Side
 from patch_scout.i18n.catalog import Catalog, load_catalog
 from patch_scout.report import Filters, render_html, render_text
-from patch_scout.report.html import MICROSOFT_NOTICE
+from patch_scout.report.html import ICON_PIXELS, MICROSOFT_NOTICE, shrink_icon
 from patch_scout.report.text import scope_text
 from patch_scout.store import IconStore
 
@@ -124,6 +127,50 @@ def test_the_html_export_is_one_self_contained_file(
     assert "<style>" in document
     assert 'src="http' not in document
     assert "data:image/png;base64," in document
+
+
+def test_the_html_export_embeds_each_icon_once(
+    prepared: tuple[ChangeSet, IconStore], catalog: Catalog
+) -> None:
+    """Regression: every row embedded its icon again, 739 MB on the first real patch."""
+    change_set, store = prepared
+    document = render_html(
+        change_set, catalog, icons=store.read_png, filters=Filters(low_priority=True)
+    )
+    used = {
+        change.entity.icon["hash"]
+        for change in change_set.changes
+        if change.entity.icon and change.entity.icon.get("hash")
+    }
+    assert len(used) < sum(1 for change in change_set.changes if change.entity.icon)
+    assert document.count("data:image/png;base64,") == len(used)
+
+
+def test_the_html_export_shrinks_icons_to_the_size_they_are_shown_at(
+    prepared: tuple[ChangeSet, IconStore], catalog: Catalog
+) -> None:
+    change_set, store = prepared
+    document = render_html(change_set, catalog, icons=store.read_png)
+    encoded = document.split("data:image/png;base64,", 1)[1].split(")", 1)[0]
+    with Image.open(io.BytesIO(base64.b64decode(encoded))) as image:
+        assert max(image.size) <= ICON_PIXELS
+
+
+def test_the_icon_style_does_not_apply_to_the_table_cell_holding_it(
+    prepared: tuple[ChangeSet, IconStore], catalog: Catalog
+) -> None:
+    """Regression: a `.icon` rule made `<td class="icon">` a block and broke multi-row entries."""
+    change_set, store = prepared
+    document = render_html(change_set, catalog, icons=store.read_png)
+    assert '<span class="game-icon i-' in document
+    assert "\n.icon {" not in document
+
+
+def test_a_full_size_game_icon_is_shrunk_before_it_is_embedded() -> None:
+    big = io.BytesIO()
+    Image.new("RGBA", (256, 256), (200, 30, 30, 255)).save(big, format="PNG")
+    with Image.open(io.BytesIO(shrink_icon(big.getvalue()))) as image:
+        assert image.size == (ICON_PIXELS, ICON_PIXELS)
 
 
 def test_the_html_export_carries_the_microsoft_notice(
