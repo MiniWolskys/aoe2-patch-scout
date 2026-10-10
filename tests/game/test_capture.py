@@ -12,6 +12,7 @@ import pytest
 from patch_scout import locate
 from patch_scout.capture import runner, stats_tier
 from patch_scout.capture.runner import CaptureRequest
+from patch_scout.diff.vocabulary import Vocabulary
 from patch_scout.snapshot import Snapshot, dumps
 from patch_scout.store import DataFolder
 
@@ -176,3 +177,36 @@ def test_a_snapshot_of_a_real_install_stays_a_sensible_size(
     snapshot, _ = captured
     megabytes = len(dumps(snapshot)) / 1_000_000
     assert megabytes < 60  # uncompressed; the gzipped file is far smaller (P-03)
+
+
+def test_the_xs_constants_name_the_armour_classes_the_dat_displays(
+    captured: tuple[Snapshot, DataFolder],
+) -> None:
+    """Displayed melee and pierce armour follow classes 4 and 3, as Constants.xs names them."""
+    snapshot, _ = captured
+    names = Vocabulary(snapshot)
+    assert (names.armour_class(3), names.armour_class(4)) == ("Pierce", "Melee")
+    assert snapshot.stats is not None
+    units = snapshot.stats["units"]
+    assert isinstance(units, dict)
+    agree = disagree = 0
+    for entry in units.values():
+        base = entry.get("base") if isinstance(entry, dict) else None
+        type_50 = base.get("type_50") if isinstance(base, dict) else None
+        creatable = base.get("creatable") if isinstance(base, dict) else None
+        if not isinstance(type_50, dict) or not isinstance(creatable, dict):
+            continue
+        armours = {
+            item.get("class_"): item.get("amount")
+            for item in type_50.get("armours") or []
+            if isinstance(item, dict)
+        }
+        if 3 not in armours or 4 not in armours:
+            continue
+        shown = (creatable.get("displayed_pierce_armour"), type_50.get("displayed_melee_armour"))
+        if shown == (armours[3], armours[4]):
+            agree += 1
+        else:
+            disagree += 1
+    assert agree > 1000
+    assert disagree <= agree // 100  # 1 of 1,170 on build 101.103.54800.0
