@@ -537,3 +537,24 @@ def test_a_civ_tech_tree_comes_with_its_marks(api: Api, install: Path, tmp_path:
     nodes = tree["nodes"]
     assert isinstance(nodes, list) and nodes
     assert api.get_tech_tree(first, second, "Nowhere") is None
+
+
+def test_diagnostics_name_the_pillow_version_without_its_metadata(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The packaged build doesn't carry Pillow's metadata; the module still knows its version."""
+    import importlib.metadata
+
+    from PIL import __version__ as pillow
+
+    real = importlib.metadata.version
+
+    def no_pillow(name: str) -> str:
+        if name.lower() == "pillow":
+            raise importlib.metadata.PackageNotFoundError(name)
+        return real(name)
+
+    monkeypatch.setattr(importlib.metadata, "version", no_pillow)
+
+    environment: Any = api.get_diagnostics()["environment"]
+    assert environment["pillow_version"] == pillow

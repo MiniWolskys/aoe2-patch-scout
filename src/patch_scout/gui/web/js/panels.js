@@ -157,10 +157,21 @@ export function initDiagnostics(deps) {
     const environment = byId("diagnostics-environment");
     clear(environment);
     for (const [name, value] of Object.entries(latest.environment ?? {})) {
-      environment.append(el("dt", { class: "label", text: name }));
-      environment.append(el("dd", { class: "mono", text: String(value ?? "") }));
+      // In words when the catalog knows the key; a new key still shows, as it is.
+      let label = String(name);
+      try {
+        label = deps.t(`diagnostics.env.${name}`);
+      } catch {
+        // a key the catalog doesn't name yet: shown as it is
+      }
+      environment.append(el("dt", { class: "label", text: label }));
+      const known = value !== null && value !== undefined && value !== "";
+      environment.append(
+        el("dd", { class: "mono", text: known ? String(value) : deps.t("diagnostics.unknown") }),
+      );
     }
-    byId("diagnostics-log").textContent = (latest.log ?? []).join("\n");
+    byId("diagnostics-log").textContent =
+      (latest.log ?? []).join("\n") || deps.t("diagnostics.no_log");
     byId("diagnostics-problems").textContent =
       (latest.problems ?? []).join("\n") || deps.t("diagnostics.no_problems");
     renderGates(latest.snapshot);
@@ -260,6 +271,22 @@ export function initDiagnostics(deps) {
   }
 
   byId("diagnostics-close").addEventListener("click", () => dialogs.close("diagnostics-scrim"));
+  // The app has no right-click menu outside debug mode, so each box copies its whole content.
+  for (const [button, box] of [
+    ["diagnostics-log-copy", "diagnostics-log"],
+    ["diagnostics-problems-copy", "diagnostics-problems"],
+    ["diagnostics-section-copy", "diagnostics-section-body"],
+  ]) {
+    byId(button).addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(byId(box).textContent ?? "");
+        dialogs.toast(deps.t("diagnostics.box_copied"));
+      } catch (error) {
+        console.error("the clipboard refused the text", error);
+        dialogs.toast(deps.t("export.copy_failed"));
+      }
+    });
+  }
   byId("diagnostics-version").addEventListener("change", () => void refreshSection());
   byId("diagnostics-section").addEventListener("change", () => void refreshSection());
   byId("diagnostics-copy").addEventListener("click", async () => {

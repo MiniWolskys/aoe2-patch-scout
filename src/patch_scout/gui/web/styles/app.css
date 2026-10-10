@@ -1130,6 +1130,12 @@ body[data-failed] > :not(.startup-error, script) {
   overflow-y: auto;
 }
 
+/* The body scrolls as a whole: its parts keep their size instead of shrinking to fit, which
+   collapsed the Diagnostics boxes to a sliver. */
+.dialog__body > * {
+  flex-shrink: 0;
+}
+
 .dialog__actions {
   display: flex;
   justify-content: flex-end;
@@ -1183,6 +1189,9 @@ body[data-failed] > :not(.startup-error, script) {
 
 .preview {
   max-height: 320px;
+  /* pywebview turns text selection off for the page; previews are text to select and copy. */
+  cursor: text;
+  user-select: text;
   margin: 0;
   padding: 12px;
   border-radius: var(--radius-control);
@@ -1208,4 +1217,22 @@ body[data-failed] > :not(.startup-error, script) {
     inset 0 0 0 1px var(--line-strong),
     var(--shadow-float);
   font-size: var(--fs-sm);
+}
+
+/* Diagnostics: a box's title with its Copy button, and boxes tall enough to read */
+.diagnostics__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.diagnostics__head .label {
+  margin: 0;
+}
+
+.preview--box {
+  min-height: 120px;
+  max-height: 260px;
+  resize: vertical;
 }
