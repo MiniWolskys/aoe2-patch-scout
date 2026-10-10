@@ -93,6 +93,9 @@ def build(
     for key, (node, side) in drawn.items():
         place = placed.places[key]
         node_changes = [c for c in changes if _concerns(c, node, civ)]
+        mark = _mark(key, node, node_changes, before, after)
+        if mark is None and not _available(node):
+            node_changes = []  # changes for the civs that have it; this civ doesn't
         nodes.append(
             {
                 "key": key,
@@ -102,7 +105,7 @@ def build(
                 "old_name": _old_name(node_changes),
                 # As drawn: a node from the older tree is shown as it was, marked lost.
                 "available": _available(node),
-                "mark": _mark(key, node_changes, before, after),
+                "mark": mark,
                 "icon": node.get("icon") if isinstance(node.get("icon"), dict) else None,
                 "group": place.group,
                 "column": place.column,
@@ -126,7 +129,9 @@ def build(
 # --- marks ----------------------------------------------------------------------------------
 
 
-def _mark(key: str, changes: list[Change], before: _Side, after: _Side) -> str | None:
+def _mark(
+    key: str, node: JsonObject, changes: list[Change], before: _Side, after: _Side
+) -> str | None:
     if before.has_civ and after.has_civ:
         was = before.nodes.get(key)
         now = after.nodes.get(key)
@@ -138,6 +143,8 @@ def _mark(key: str, changes: list[Change], before: _Side, after: _Side) -> str |
             return "lost"
     elif not after.has_civ:
         return "lost" if _available(before.nodes[key]) else None
+    if not _available(node):
+        return None  # "all civilizations that have it" says nothing about a civ without it
     if any(change.kind == "renamed" for change in changes):
         return "renamed"
     return "changed" if changes else None

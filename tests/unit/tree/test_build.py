@@ -244,3 +244,25 @@ def test_a_low_priority_change_marks_only_when_those_are_shown() -> None:
     )
     assert _view(_hand_set(text))["Unit:4"]["mark"] is None
     assert _view(_hand_set(text), low_priority=True)["Unit:4"]["mark"] == "changed"
+
+
+def test_a_node_the_civ_cannot_get_is_never_marked_changed() -> None:
+    """A change for "all civilizations that have it" says nothing about a civ without it."""
+    change = Change(
+        "unit_stats",
+        "modified",
+        Entity("unit", "74", "Militia"),
+        Scope("having", count=40),
+        Message("field.hit_points"),
+        old="40",
+        new="45",
+    )
+    old_tree = _build_snapshot(new=False)
+    new_tree = _build_snapshot(new=True)
+    for snapshot in (old_tree, new_tree):
+        tree = snapshot.tech_trees["Alpha"]
+        assert isinstance(tree, list)
+        tree.append(_node("Unit", 74, 1, "NotAvailable", name_string_id=5083))
+    view: Any = build(old_tree, new_tree, _hand_set(change), "Alpha")
+    assert _nodes(view)["Unit:74"]["mark"] is None
+    assert _nodes(view)["Unit:74"]["changes"] == []
