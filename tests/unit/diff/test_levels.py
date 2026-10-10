@@ -284,3 +284,13 @@ def test_levels_are_in_the_change_set_json() -> None:
         "headline",
         "detail",
     }
+
+
+def test_an_unchanged_unit_no_civ_could_get_before_still_reads_as_added() -> None:
+    change_set = _compare(new={"crossbow_in_tree": True})
+    [entry] = [
+        e
+        for e in change_set.entries
+        if e.entity.name == "Mounted Crossbowman" and e.category == "unit_stats"
+    ]
+    assert entry.kind == "added"

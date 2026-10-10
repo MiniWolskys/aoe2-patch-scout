@@ -834,7 +834,17 @@ def _unit_stats(run: _Run) -> None:
     reachable_now = _any_reachable(run.reachable.values())
     run.new_to_players = reachable_now - run.reachable_before
     unit_ids = sorted(set(run.old_units.unit_ids) | set(run.new_units.unit_ids))
+    # Most units are identical in both builds. With the civs in the same order, such a unit can't
+    # change, unless it just became reachable (it then reads as Added): skip the per-civ work.
+    same_order = all(run.old_index.get(name) == run.new_index.get(name) for name in run.every)
     for unit_id in unit_ids:
+        if (
+            same_order
+            and unit_id not in run.new_to_players
+            and run.old_units.entry(unit_id) == run.new_units.entry(unit_id)
+        ):
+            _remember_string(run, at_path(run.new_units.any_record(unit_id), "language_dll_name"))
+            continue
         _unit_change(run, unit_id, civs)
 
 
@@ -1513,11 +1523,23 @@ def _offer_map(snapshot: Snapshot, internal_name: str) -> dict[int, JsonObject]:
 
 
 def _records(snapshot: Snapshot, section: str) -> dict[str, JsonObject]:
+    """A stats section's records by ID; built once per section, since lookups are many."""
     stats = snapshot.stats or {}
     records = stats.get(section)
     if not isinstance(records, dict):
         return {}
-    return {key: value for key, value in records.items() if isinstance(value, dict)}
+    cached = _RECORDS.get((id(records), section))
+    if cached is not None and cached[0] is records:
+        return cached[1]
+    found = {key: value for key, value in records.items() if isinstance(value, dict)}
+    if len(_RECORDS) >= 16:
+        _RECORDS.clear()
+    _RECORDS[(id(records), section)] = (records, found)
+    return found
+
+
+# Section dict -> its records; the section is kept so a reused id() can't match.
+_RECORDS: dict[tuple[int, str], tuple[JsonObject, dict[str, JsonObject]]] = {}
 
 
 def _effect(snapshot: Snapshot, effect_id: JsonValue) -> JsonObject | None:
