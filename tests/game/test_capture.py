@@ -196,9 +196,10 @@ def test_the_xs_constants_name_the_armour_classes_the_dat_displays(
         creatable = base.get("creatable") if isinstance(base, dict) else None
         if not isinstance(type_50, dict) or not isinstance(creatable, dict):
             continue
+        listed = type_50.get("armours")
         armours = {
             item.get("class_"): item.get("amount")
-            for item in type_50.get("armours") or []
+            for item in (listed if isinstance(listed, list) else [])
             if isinstance(item, dict)
         }
         if 3 not in armours or 4 not in armours:
