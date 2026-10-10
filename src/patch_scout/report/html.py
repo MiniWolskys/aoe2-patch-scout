@@ -19,7 +19,7 @@ from PIL import Image
 
 from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Entry, Side
 from patch_scout.i18n.catalog import Catalog
-from patch_scout.report.text import Filters, field_text, scope_text
+from patch_scout.report.text import Filters, field_text, pages, scope_text
 from patch_scout.snapshot import JsonObject
 
 type IconReader = Callable[[str], bytes | None]
@@ -147,13 +147,8 @@ def _notices(change_set: ChangeSet, catalog: Catalog) -> str:
 
 
 def _body(change_set: ChangeSet, catalog: Catalog, filters: Filters, icons: "_IconClasses") -> str:
-    pages: list[tuple[str, str | None]] = [(catalog.text("report.overall"), None)]
-    pages += [(civ.name, civ.internal_name) for civ in change_set.civs]
     sections: list[str] = []
-    for title, internal_name in pages:
-        entries = [entry for entry in change_set.entries_for(internal_name) if filters.keeps(entry)]
-        if not entries:
-            continue
+    for title, entries in pages(change_set, catalog, filters):
         sections.append(f"<h2>{html.escape(title)}</h2>")
         for category in CATEGORIES:
             in_category = [entry for entry in entries if entry.category == category]

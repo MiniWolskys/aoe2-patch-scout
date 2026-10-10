@@ -256,6 +256,7 @@ def _civilizations(run: _Run) -> list[CivRef]:
                     sort_key=(_CIV_FIRST, "", ""),
                 )
             )
+            _new_civ_summary(run, internal_name, entity, civ)
             continue
         before = old_civs[internal_name]
         if before.get("era") != civ.get("era"):
@@ -289,6 +290,62 @@ def _civilizations(run: _Run) -> list[CivRef]:
     return refs
 
 
+def _new_civ_summary(run: _Run, internal_name: str, entity: Entity, civ: JsonObject) -> None:
+    """A new civ has nothing to compare with: show its bonus text and its tech tree instead.
+
+    The tech tree reads as one entry, one line per building, rather than every node and building
+    offer "Added" (diff-rules.md, New civilizations).
+    """
+    scope = Scope("some", (internal_name,))
+    bonus = run.new_names.text(civ.get("bonus_string_id"))
+    _remember_string(run, civ.get("bonus_string_id"))
+    if bonus:
+        run.add(
+            Change(
+                category="bonuses",
+                kind="text_changed",
+                entity=entity,
+                scope=scope,
+                field=Message("field.civ_bonus_text"),
+                words=words("", bonus),
+                civ=internal_name,
+                sort_key=(_CIV_FIRST, "", ""),
+            )
+        )
+    nodes = run.new.tech_trees.get(internal_name)
+    lines: dict[JsonValue, list[str]] = {}
+    for node in nodes if isinstance(nodes, list) else []:
+        if not isinstance(node, dict) or node.get("node_status") == "NotAvailable":
+            continue
+        label = run.new_names.one_line(node.get("name_string_id"))
+        if not label:
+            continue
+        # Buildings get a line of their own; units and techs go under where they are made.
+        where = "buildings" if node.get("use_type") == "Building" else node.get("building_id")
+        lines.setdefault(where, []).append(label)
+    for position, (where, labels) in enumerate(lines.items()):
+        building = _building_name(run, internal_name, where) if where != "buildings" else None
+        if where != "buildings" and building is None:
+            building = unknown_id(where)
+        field = (
+            Message("field.tech_tree_buildings")
+            if building is None
+            else Message("field.tech_tree_at", {"building": building})
+        )
+        run.add(
+            Change(
+                category="civ_availability",
+                kind="added",
+                entity=entity,
+                scope=scope,
+                field=field,
+                new=", ".join(labels),
+                civ=internal_name,
+                sort_key=(_CIV_FIRST, "", f"{position:04d}"),
+            )
+        )
+
+
 # --- category 2: availability ----------------------------------------------------------------
 
 # What a tech tree node can change about itself, as (aspect key, catalog key).
@@ -312,7 +369,8 @@ def _availability(run: _Run) -> None:
         keys |= set(old_nodes) | set(new_nodes)
     for key in sorted(keys):
         _node_changes(run, key, civs, maps)
-    for internal_name in civs:
+    # A civ only one build has has no offers to compare; a new civ's tree is summarised instead.
+    for internal_name in run.every:
         _offers(run, internal_name)
 
 
