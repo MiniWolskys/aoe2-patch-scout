@@ -131,8 +131,10 @@ The screens were designed in three rounds of mockups with sample data. The mocku
   | Icon | Game icon, 40px, framed |
   | Entity | Name, plus kind and where it's made, e.g. "Unit · Stable" |
   | Field | Stat icon and label |
-  | Values | Old value, arrow, new value. The arrows line up down the list. |
-  | Note | Exceptions as civ chips, e.g. "Except Franks, Persians" |
+  | Values | Old value, arrow, new value. The arrows line up down the list. A long value wraps within its half. |
+  | Note | Exceptions as civ chips, e.g. "Except Franks, Persians", on the entry's first line; each change's detail (e.g. its effect command) on that change's own line |
+
+  The columns are proportional, never sized by their content, so every row has the same columns.
 
   A text change replaces the values and note columns with a word diff: removed words struck through in red, added words in green.
 
