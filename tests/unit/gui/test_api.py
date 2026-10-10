@@ -3,7 +3,10 @@
 
 import json
 import logging
+import threading
+import time
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -443,3 +446,77 @@ def test_startup_survives_a_damaged_snapshot(api: Api, folder: DataFolder) -> No
     (folder.snapshots / "broken.snapshot.json.gz").write_bytes(b"not gzip")
     startup = api.get_startup()
     assert startup["versions"] == []
+
+
+def test_two_pages_asking_for_one_snapshot_at_once_load_it_once(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """pywebview runs each call on its own thread; a snapshot is about 164 MB in memory."""
+    loads: list[str] = []
+
+    def slow_load(capture_id: str) -> Any:
+        loads.append(capture_id)
+        time.sleep(0.2)
+        return object()
+
+    monkeypatch.setattr(api._snapshots, "load", slow_load)
+    threads = [threading.Thread(target=api._snapshot, args=("abc",)) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert loads == ["abc"]
+
+
+def test_two_pages_asking_for_one_comparison_at_once_compare_once(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runs: list[int] = []
+
+    def slow_compare(*_: Any, **__: Any) -> Any:
+        runs.append(1)
+        time.sleep(0.2)
+        return object()
+
+    monkeypatch.setattr("patch_scout.gui.api.compare", slow_compare)
+    old, new = SimpleNamespace(capture_id="old"), SimpleNamespace(capture_id="new")
+    threads = [
+        threading.Thread(target=api._compared, args=(old, new), kwargs={"show_unreachable": False})
+        for _ in range(2)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert runs == [1]
+
+
+def test_a_double_click_starts_one_capture(
+    api: Api, install: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started: list[int] = []
+    release = threading.Event()
+
+    def blocked_capture(*_: Any) -> None:
+        started.append(1)
+        release.wait(5)
+
+    monkeypatch.setattr(api, "_run_capture", blocked_capture)
+
+    def slow_request(**_: Any) -> Any:
+        time.sleep(0.1)  # widens the gap between "is one running?" and starting one
+        return object()
+
+    monkeypatch.setattr("patch_scout.gui.api.CaptureRequest", slow_request)
+    results: list[Any] = []
+    threads = [
+        threading.Thread(target=lambda: results.append(api.start_capture(str(install), "x")))
+        for _ in range(2)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    release.set()
+    assert sorted(result["started"] for result in results) == [False, True]
+    assert started == [1]
