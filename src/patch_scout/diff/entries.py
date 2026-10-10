@@ -92,6 +92,10 @@ def _trivial(change: Change) -> bool:
     if change.kind != "modified" or change.field is None:
         return False
     old, new = change.old or "", change.new or ""
+    if not old and not new:
+        # A sentence that says it all in its label, e.g. "New: Enables Champi Runner" (101.103.
+        # 54800.0): it has no value because it needs none, and it is never trivial.
+        return False
     return (not old and new in DEFAULT_VALUES) or (not new and old in DEFAULT_VALUES)
 
 

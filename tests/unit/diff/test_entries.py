@@ -129,3 +129,18 @@ def test_a_change_without_a_field_is_an_entry_of_its_own() -> None:
 def test_an_entry_with_one_change_keeps_that_changes_kind() -> None:
     text = Change("text", "text_changed", KNIGHT, ALL, field=Message("field.help_text"), words=())
     assert [entry.kind for entry in group([text])] == ["text_changed"]
+
+
+def test_a_sentence_that_says_it_all_in_its_label_is_listed() -> None:
+    """Paphos full tech tree on 101.103.54800.0: "Enables Champi Runner" has no value to show."""
+    tech = Entity("tech", "1215", "Paphos full tech tree prereq")
+    enables = Message("effect.added", {"effect": {"key": "effect.enable", "args": {"unit": "X"}}})
+    required = Change(
+        "techs", "modified", tech, ALL, field=Message("field.required_techs"), old="a", new="b"
+    )
+    sentence = Change("techs", "modified", tech, ALL, field=enables, old="", new="")
+
+    [entry] = group([required, sentence])
+
+    assert entry.changes == (required, sentence)
+    assert entry.hidden == 0
