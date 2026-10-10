@@ -6,6 +6,8 @@ the order of the changes. Everything user-visible is a catalog key, so the chang
 language-neutral (P-20).
 """
 
+import difflib
+import json
 import logging
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -1027,7 +1029,11 @@ def _command_changes(
     label: Message,
     sort: tuple[int, str, str] = (_GLOBAL, "", ""),
 ) -> list[Change]:
-    """Effect commands are compared as ordered lists; each difference gets its own entry.
+    """Effect commands are compared as a sequence; each difference gets its own entry.
+
+    A command inserted or removed is one change, not a shift of every command after it: the
+    lists are aligned first (difflib), and only the replaced stretches are paired up position by
+    position (diff-rules.md, Effects).
 
     No sentence is generated: the command type, attribute and class tables come from Advanced
     Genie Editor and are not yet verified, so the raw command is shown instead (O-5, layer 3).
@@ -1036,11 +1042,7 @@ def _command_changes(
     new_commands = _commands(after)
     effect_name = _text(after.get("name")) or _text(before.get("name"))
     changes: list[Change] = []
-    for position in range(max(len(old_commands), len(new_commands))):
-        old_command = old_commands[position] if position < len(old_commands) else None
-        new_command = new_commands[position] if position < len(new_commands) else None
-        if old_command == new_command:
-            continue
+    for old_command, new_command, position in _aligned(old_commands, new_commands):
         old_text, new_text = _command_pair(old_command, new_command)
         changes.append(
             Change(
@@ -1059,6 +1061,29 @@ def _command_changes(
             )
         )
     return changes
+
+
+def _aligned(
+    old: Sequence[JsonValue], new: Sequence[JsonValue]
+) -> list[tuple[JsonValue, JsonValue, int]]:
+    """The differing commands as (old or None, new or None, position), in order.
+
+    The position is the command's index in the new effect, or in the old one when it was
+    removed.
+    """
+    keys_old = [json.dumps(command, sort_keys=True) for command in old]
+    keys_new = [json.dumps(command, sort_keys=True) for command in new]
+    matcher = difflib.SequenceMatcher(a=keys_old, b=keys_new, autojunk=False)
+    found: list[tuple[JsonValue, JsonValue, int]] = []
+    for tag, old_start, old_end, new_start, new_end in matcher.get_opcodes():
+        if tag == "equal":
+            continue
+        for offset in range(max(old_end - old_start, new_end - new_start)):
+            old_index, new_index = old_start + offset, new_start + offset
+            before = old[old_index] if old_index < old_end else None
+            after = new[new_index] if new_index < new_end else None
+            found.append((before, after, new_index if after is not None else old_index))
+    return found
 
 
 def _commands(effect: JsonObject) -> list[JsonValue]:
