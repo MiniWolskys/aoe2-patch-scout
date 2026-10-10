@@ -61,6 +61,7 @@ def _key(change: Change, position: int) -> _Key:
 
 
 def _entry(members: list[Change]) -> Entry:
+    members = _distinct(members)
     first = members[0]
     kind: Kind = first.kind if len(members) == 1 else "modified"
     # A field that only appears or disappears with a default value says nothing to a reader.
@@ -84,6 +85,24 @@ def _entry(members: list[Change]) -> Entry:
     )
 
 
+def _distinct(members: list[Change]) -> list[Change]:
+    """The changes without lines that read exactly like an earlier one.
+
+    The game has several records for some buildings, one per look, all named alike: an effect on
+    each read "Dock: Garrison Capacity · removed +5" four times (Gurjaras on 101.103.54800.0).
+    The change set keeps them all; only the entry lists the line once.
+    """
+    seen: set[tuple[object, ...]] = set()
+    distinct: list[Change] = []
+    for change in members:
+        field = change.field.to_json() if change.field is not None else None
+        key = (repr(field), change.kind, change.old, change.new, change.level, tuple(change.words))
+        if key not in seen:
+            seen.add(key)
+            distinct.append(change)
+    return distinct
+
+
 def _is_new(change: Change) -> bool:
     return change.kind == "modified" and not change.old and bool(change.new)
 
@@ -92,6 +111,10 @@ def _trivial(change: Change) -> bool:
     if change.kind != "modified" or change.field is None:
         return False
     old, new = change.old or "", change.new or ""
+    if not old and not new:
+        # A sentence that says it all in its label, e.g. "New: Enables Champi Runner" (101.103.
+        # 54800.0): it has no value because it needs none, and it is never trivial.
+        return False
     return (not old and new in DEFAULT_VALUES) or (not new and old in DEFAULT_VALUES)
 
 

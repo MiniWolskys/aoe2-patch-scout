@@ -1194,9 +1194,11 @@ def _effect_changes(
         )
     before = _effect(run.old, old_id)
     after = _effect(run.new, new_id)
-    if before is None or after is None:
+    if before is None and after is None:
         return changes
-    changes.extend(_command_changes(run, entity, before, after, category, label, sort))
+    # A tech that gains or loses its effect: every command is new or gone. Cranequins on
+    # 101.103.54800.0 went from no effect to effect 1452, and only the ID said so.
+    changes.extend(_command_changes(run, entity, before or {}, after or {}, category, label, sort))
     return changes
 
 

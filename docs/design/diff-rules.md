@@ -52,7 +52,7 @@ Shown in this order. Categories marked *low* are collapsed by default.
    - Changed bonus **effects** as sentences (see Effects).
    - `civ_dat.resources` changes, such as starting resources.
 4. **Unit stats:** allowlisted fields of the raw unit records, collapsed per civ.
-5. **Techs:** cost, research time, required techs, research location, effect ID; the effect's commands as sentences. An effect ID change is reported once, with the effect's commands.
+5. **Techs:** cost, research time, required techs, research location, effect ID; the effect's commands as sentences. An effect ID change is reported once, with the effect's commands. A tech that gains an effect it didn't have lists every command as new, and one that loses its effect lists every command as gone (Cranequins on 101.103.54800.0 went from no effect to +1 range and +2 vs Infantry, and only the ID said so).
 6. **Other effects:** effect command changes not covered by 3 or 5, and **scripted effects**: each numbered function of `Effects.xs` whose code changed, appeared or disappeared is one line named by its title ("Effect of Atheism for Huns · Script changed"). The game's code is never copied into the report. Snapshots captured before scripts were kept compare nothing here.
 7. **Text** *(low)*: name and help text changes for entities not already reported above. Help text changes are attached to the entity's entry when it has one. **A tech tree node's new name** is not low priority: it is a `renamed` change in Civ availability, with the old and new names ("Longship · Name · Longboat → Longship"; missed on 101.103.54800.0).
 8. **Icons** *(low)*: `icon_redrawn`, `icon_remapped`.
@@ -88,7 +88,7 @@ Every allowlist change goes through a PR that adds a fixture case showing the fi
 
 For each civ, the diff reports only the units that civ can actually get. Reachability is computed at diff time from both snapshots; captures always keep every unit (P-03).
 
-1. **Seeds:** the unit and building IDs of the civ's tech tree nodes and building offers, in either snapshot.
+1. **Seeds:** the unit and building IDs of the civ's tech tree nodes and building offers, in either snapshot, **except what the civ's tree marks `NotAvailable`**: trees and offers also list what a civ can't get. *Before 2026-10-10 those counted, so the new Heavy Mounted Crossbowman read "all 15 civilizations that have it" on 101.103.54800.0, though only 10 can get it, and a ram's change read "all civilizations" for civs without rams.*
 2. **Linked forms.** From every reachable unit, follow these links, and repeat until no unit is added:
    - `Building.transform_unit`: the other form of a transforming unit, e.g. Trebuchet ↔ Trebuchet (Packed);
    - `Unit.blood_unit_id`, only when the target's `language_dll_name` resolves to a string, e.g. Konnik → Konnik (Dismounted).
@@ -155,7 +155,8 @@ The change set is field-level: one change per field and value group. The app and
 - **A new unit** (in Unit stats, every field goes from nothing to a value): the entry is marked Added and lists only its **main stats**, without empty or default values (`0`, `-1`). The main stats are hit points, line of sight, speed, attacks, armours, displayed attack and armours, maximum range, reload time, cost and train time. The entry ends with the number of values it leaves out.
 - **A removed unit:** one line, with the number of values left out.
 - **Other categories** keep every change they have, e.g. a building that only gained offered items.
-- **Any entry:** a field that only appears or disappears with a default value (`added 0`) is counted, not listed. A placeholder unit that the patch fills in otherwise shows dozens of them.
+- **Any entry:** a line that reads exactly like one already listed is listed once. The game has several records for some buildings, one per look, all named alike (four Docks on 101.103.54800.0); the change set keeps every change.
+- **Any entry:** a field that only appears or disappears with a default value (`added 0`) is counted, not listed. A placeholder unit that the patch fills in otherwise shows dozens of them. A sentence with no value, such as "New: Enables Champi Runner", is never a default: its label says it all. *Before 2026-10-10 such sentences were counted, which hid the Chronicles civs' full tech tree fix on 101.103.54800.0.*
 - **Counts:** the civ list counts entries.
 - **In the change set JSON,** an entry lists its changes by position in `changes`, so no change is written twice.
 
@@ -192,6 +193,8 @@ Every changed effect command is shown in up to three layers, most readable first
 | `EnableObject` (mode enable / disable) | `Enables {unit}` / `Disables {unit}` | none |
 | `UpgradeUnit` | `Upgrades {unit} to {unit}` | none |
 | `DisableTech` | `Disables {tech}` | none |
+| `AddTechCost` (mode set / multiply) | `{tech}: Cost`, or `{tech}: {resource} cost` for one resource | `=0` / `×0.85` |
+| `ModTechTime` (mode set / multiply, every resource) | `{tech}: Research time` | `=0` / `×0.75` |
 | `ModResource` setting `EffectFunctionNumber` | `Runs the scripted effect: {title}` | none |
 
 - **Target:** the unit in `a`, else the class in `b` ("Cavalry class"). A command with neither stays raw.
@@ -199,7 +202,8 @@ Every changed effect command is shown in up to three layers, most readable first
 - **Attack and armour** (attributes 9 and 8) unpack `d` as class × 256 + amount, e.g. "Archer: Attack vs Pierce · +1". A negative `d`, or a multiplied attack or armour, stays raw: its packing isn't verified.
 - **An attribute the constants don't name** stays raw, and so do attributes whose value probably packs data in a way not yet verified: `ResourceCost`, `AddArmorType`, `AddAttackType`, `RemoveArmorType` and `RemoveAttackType`. Attack and armour are recognised by their XS names (`Attack`, `Armor`), not by number.
 - **Two commands that differ only in a slot the sentence doesn't show** stay raw, so a change never reads "×1.5 → ×1.5".
-- **Other types** (`SpawnUnit`, `ModifyTech`, `SetPlayerData`, the unit-attribute variants 10–12, the tech cost and time types 100, 101, 103) have no template yet: their slot meanings aren't verified from game files.
+- **Tech cost and time** (`AddTechCost`, `ModTechTime`): `a` is the tech, `b` the resource (`-1` every one; food, wood, stone or gold for a cost), `c` the mode. Verified on 101.103.54800.0 from bonuses named after what they do: mode 0 sets ("free Careening, Dry Dock" sets their food and gold to 0), mode 2 multiplies (the Italians' "Age up 15% cheaper" is ×0.85). Modes 1 and -1, other `b` values, and a time with a resource stay raw.
+- **Other types** (`SpawnUnit`, `ModifyTech`, `SetPlayerData`, the unit-attribute variants 10–12, `SetTechCost`) have no template yet: their slot meanings aren't verified from game files. Types the constants don't name, such as 15 (120 commands on 101.103.54800.0), stay raw.
 
 **How a changed command reads:**
 - **Same target and attribute on both sides:** one line with both values, e.g. "Archer: Attack vs Pierce · +1 → +2".

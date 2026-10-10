@@ -150,6 +150,7 @@ A change is grouped by value across civs: "(all civs)", "(Franks only)"…, base
 ### D-37 Unit reachability: Decided
 Chosen by the maintainer on 2026-09-15, from the M0 link spike ([game-files.md §7](reference/game-files.md#7-futuravailableunitsjson--paphosfutureavailableunitsjson)).
 - **Seeds:** a civ's tech tree nodes and building offers, in either snapshot.
+  - **Amended 2026-10-10** (patch-note coverage check, to be confirmed by the maintainer): nodes the civ's tree marks `NotAvailable`, and offered units its tree marks `NotAvailable`, are not seeds. The rule's intent is the units a civ can actually get; counting them made the new Heavy Mounted Crossbowman read "all 15 civilizations that have it" when 10 can get it.
 - **Also reachable:** transform forms, and named dismount-style forms (`blood_unit_id`). These links are followed until nothing new is added.
 - **Projectiles** are reported on the unit that fires them, not as units of their own.
 - **Not followed:** corpses and rubble, tracking units, drop sites, annexes, stack units, and the reverse train-location link.

@@ -117,3 +117,19 @@ def test_a_civ_missing_from_one_build_is_read_from_the_other(snapshot: Snapshot)
     lookup = UnitLookup(snapshot)
     reach = for_civ(snapshot, snapshot, "Franks", (None, 0), (lookup, lookup))
     assert reach.includes(39)
+
+
+def test_a_unit_the_civ_cannot_get_is_not_a_seed() -> None:
+    """Heavy Mounted Crossbowman on 101.103.54800.0: 15 trees list it, 10 civs can get it.
+
+    A civ's tree and its building offers name what it can't get as well, marked NotAvailable.
+    """
+    franks = [
+        {"use_type": "Unit", "node_id": 38, "node_status": "ResearchedCompleted"},
+        {"use_type": "Unit", "node_id": 2716, "node_status": "NotAvailable"},
+    ]
+    built = make_snapshot(
+        tech_trees={"Franks": franks},
+        building_offers={"Franks": {"buildings": [{"id": 87, "units": [2716, 4]}]}},
+    )
+    assert seeds(built, "Franks") == {38, 87, 4}

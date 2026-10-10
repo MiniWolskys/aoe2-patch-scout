@@ -4,7 +4,7 @@
 from support.snapshots import make_snapshot
 
 from patch_scout.diff import compare
-from patch_scout.diff.effects import Lookup, Sentence, describe
+from patch_scout.diff.effects import TIMES, Lookup, Sentence, describe
 from patch_scout.diff.model import Change, Message
 from patch_scout.diff.vocabulary import Vocabulary
 from patch_scout.i18n.catalog import load_catalog
@@ -20,7 +20,9 @@ CONSTANTS: JsonValue = {
         ["cMulAttribute", 5],
         ["cMulResource", 6],
         ["cSpawnUnit", 7],
+        ["cAddTechCost", 101],
         ["cDisableTech", 102],
+        ["cModTechTime", 103],
     ],
     "Tech Effect Constants": [
         ["cHitpoints", 0],
@@ -129,6 +131,36 @@ def test_types_without_a_template_or_a_name_stay_raw() -> None:
     assert describe(_command(255), LOOKUP) is None  # not named in Constants.xs
     assert describe(_command(4, a=4, c=44, d=1.0), LOOKUP) is None  # attribute not named
     assert describe(_command(4, c=0, d=1.0), LOOKUP) is None  # no unit and no class
+
+
+def test_a_tech_cost_is_set_or_multiplied() -> None:
+    """The modes come from bonuses whose names say what they do (101.103.54800.0).
+
+    Italians: "Age up 15% cheaper" multiplies every resource (b = -1) by 0.85 (c = 2). "Free
+    Careening, Dry Dock" sets food and gold (b = 0, 3) to 0 (c = 0).
+    """
+    assert _read(describe(_command(101, a=199, b=-1, c=2, d=0.85), LOOKUP)) == (
+        "Fletching: Cost",
+        f"{TIMES}0.85",
+    )
+    assert _read(describe(_command(101, a=199, b=3, c=0, d=0.0), LOOKUP)) == (
+        "Fletching: Gold cost",
+        "=0",
+    )
+
+
+def test_a_research_time_is_set_or_multiplied() -> None:
+    assert _read(describe(_command(103, a=199, b=-1, c=2, d=0.75), LOOKUP)) == (
+        "Fletching: Research time",
+        f"{TIMES}0.75",
+    )
+
+
+def test_tech_cost_and_time_modes_not_verified_stay_raw() -> None:
+    assert describe(_command(101, a=199, b=0, c=1, d=10.0), LOOKUP) is None  # add: unverified
+    assert describe(_command(101, a=199, b=0, c=-1, d=750.0), LOOKUP) is None
+    assert describe(_command(101, a=199, b=507, c=0, d=17.0), LOOKUP) is None  # not a cost
+    assert describe(_command(103, a=199, b=3, c=0, d=15.0), LOOKUP) is None  # b unexplained
 
 
 def test_a_type_is_only_trusted_when_the_snapshot_names_it() -> None:
