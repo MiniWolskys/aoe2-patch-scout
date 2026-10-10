@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from typing import Final
 
-from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Entry, Scope, Side
+from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Entry, Message, Scope, Side
 from patch_scout.i18n.catalog import Catalog
 from patch_scout.report.present import present
 
@@ -62,7 +62,7 @@ def render(change_set: ChangeSet, catalog: Catalog, filters: Filters | None = No
     chosen = filters or Filters()
     lines: list[str] = [catalog.text("report.title"), ""]
     lines += _header(change_set, catalog)
-    lines += _notices(change_set, catalog)
+    lines += _notices(change_set, catalog, chosen)
     if change_set.identical:
         lines += ["", catalog.text("report.identical")]
         return "\n".join(lines) + "\n"
@@ -126,11 +126,41 @@ def _header(change_set: ChangeSet, catalog: Catalog) -> list[str]:
     ]
 
 
-def _side(side: Side, catalog: Catalog) -> str:
+def side_parts(side: Side) -> list[str]:
+    """Label, build (unless the label already says it) and capture date, for an export header."""
     parts = [side.label]
-    if side.game_build:
+    if side.game_build and side.game_build not in side.label:
         parts.append(side.game_build)
-    parts.append(side.captured_at)
+    parts.append(side.captured_at[:10])
+    return parts
+
+
+def export_notices(change_set: ChangeSet, filters: Filters) -> list[Message]:
+    """The notices for readers of an export, who can't change its filters.
+
+    "Hidden unless you turn on…" becomes what this export leaves out, counted against its own
+    filters, and disappears when nothing is left out.
+    """
+    notices: list[Message] = []
+    for notice in change_set.notices:
+        if notice.kind == "levels_hidden":
+            left_out = sum(
+                1
+                for change in change_set.changes
+                if change.entity.named and not filters.shows(change)
+            )
+            if left_out:
+                notices.append(Message("report.levels_left_out", {"count": left_out}))
+        elif notice.kind == "unnamed_hidden":
+            if not filters.unnamed:
+                notices.append(Message("report.unnamed_left_out", dict(notice.message.args)))
+        else:
+            notices.append(notice.message)
+    return notices
+
+
+def _side(side: Side, catalog: Catalog) -> str:
+    parts = side_parts(side)
     if side.prerelease:
         parts.append(catalog.text("report.prerelease"))
     if not side.stats_available:
@@ -138,13 +168,11 @@ def _side(side: Side, catalog: Catalog) -> str:
     return " · ".join(parts)
 
 
-def _notices(change_set: ChangeSet, catalog: Catalog) -> list[str]:
-    if not change_set.notices:
+def _notices(change_set: ChangeSet, catalog: Catalog, filters: Filters) -> list[str]:
+    notices = export_notices(change_set, filters)
+    if not notices:
         return []
-    return [""] + [
-        f"{NOTICE} {catalog.text(notice.message.key, **notice.message.args)}"
-        for notice in change_set.notices
-    ]
+    return [""] + [f"{NOTICE} {catalog.text(notice.key, **notice.args)}" for notice in notices]
 
 
 def _category_lines(entries: Sequence[Entry], catalog: Catalog) -> list[str]:
