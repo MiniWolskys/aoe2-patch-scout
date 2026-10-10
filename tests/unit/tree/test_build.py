@@ -190,7 +190,7 @@ def test_every_node_has_a_place_and_the_upgrade_line_is_linked() -> None:
     view: Any = build(OLD, NEW, compare(OLD, NEW), "Alpha")
     assert ["Unit:24", "Unit:4"] in view["links"]
     for node in _nodes(view).values():
-        assert isinstance(node["column"], int) and isinstance(node["row"], int)
+        assert isinstance(node["column"], (int, float)) and isinstance(node["row"], int)
 
 
 def test_a_new_civ_has_no_gained_or_lost_marks() -> None:

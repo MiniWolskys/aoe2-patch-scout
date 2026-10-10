@@ -157,7 +157,10 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
   - four ages as bands, each with a building row and a row for units and techs, and more rows when a line goes on within the age: the Champion sits under the Two-Handed Swordsman, in the same column, as in the game;
   - one group of columns per building, in the game's order (a building comes right after the building it needs: Barracks, Archery Range, Stable);
   - towers, walls, the Mill's Farm and Market, and the Fish Trap stay with the building or unit they grow from;
-  - lines leave a node just below it, run across, and go down to the node that comes from it, as in the game; a line never crosses another tile.
+  - each building is centred over its columns, unless another building shares its row (the Mill and its Farm);
+  - a building's bar reaches the top of each of its columns when that node starts a line (Barracks to Militia, Spearman and Arson; not to the Hand Cannoneer under the Elite Skirmisher);
+  - lines leave a node just below it, run across, and go down to the node that comes from it, as in the game; a line never crosses another tile;
+  - a node whose link names the wrong type of node still goes under it, without a line, as the game does (Squires under Gambesons).
 
   The tree scrolls sideways; **Fit to width** scales it to the window.
 - **Left panel, as in the game:** the civ's crest and name, its bonus text with this patch's changes (removed in red, added in green, line by line), and the key of tile colours.

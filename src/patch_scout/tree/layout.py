@@ -35,10 +35,13 @@ class NodeIn:
 
 @dataclass(frozen=True, slots=True)
 class Place:
-    """A node's group, its column across the whole tree, and its row."""
+    """A node's group, its column across the whole tree, and its row.
+
+    A building centred over its group sits between two columns, e.g. 1.5.
+    """
 
     group: int
-    column: int
+    column: float
     row: int
 
 
@@ -105,8 +108,10 @@ def layout(nodes: Sequence[NodeIn]) -> Layout:
     starts = [sum(result.age_rows[:age]) for age in range(AGES)]
     column = 0
     for index, group in enumerate(groups):
+        centre = _centre(group)
         for key, (lane, age, depth) in group.cells.items():
-            result.places[key] = Place(index, column + lane, starts[age - 1] + depth)
+            at = centre if key == group.members[0].key and centre is not None else lane
+            result.places[key] = Place(index, column + at, starts[age - 1] + depth)
         column += group.width
     result.columns = column
     result.groups = len(groups)
@@ -114,7 +119,48 @@ def layout(nodes: Sequence[NodeIn]) -> Layout:
         parent = _parent(node, by_id)
         if parent is not None:
             result.links.append((node.key, parent.key))
+    for group in groups:
+        result.links.extend(_from_building(group, unique, by_id))
     return result
+
+
+def _centre(group: _Group) -> float | None:
+    """Where the group's building goes: centred over its lanes, as in the game.
+
+    Not when another building shares its row (the Mill and its Farm): it keeps its lane.
+    """
+    root = group.members[0] if group.members else None
+    if root is None or root.use_type != "Building" or root.key not in group.cells:
+        return None
+    _, age, depth = group.cells[root.key]
+    if any((a, d) == (age, depth) for k, (_, a, d) in group.cells.items() if k != root.key):
+        return None
+    return (group.width - 1) / 2
+
+
+def _from_building(
+    group: _Group, nodes: dict[str, NodeIn], by_id: dict[tuple[str, int], NodeIn]
+) -> list[tuple[str, str]]:
+    """The building's own lines: to the top of each lane, when that node starts a line.
+
+    As in the game: Barracks to Militia, Spearman and Arson; not to a node below another one,
+    such as the Hand Cannoneer under the Elite Skirmisher.
+    """
+    root = group.members[0] if group.members else None
+    if root is None or root.use_type != "Building" or root.key not in group.cells:
+        return []
+    start = group.cells[root.key][1:]
+    tops: dict[int, tuple[tuple[int, int], str]] = {}
+    for key, (lane, age, depth) in group.cells.items():
+        below = key != root.key and (age, depth) > start
+        if below and (lane not in tops or (age, depth) < tops[lane][0]):
+            tops[lane] = ((age, depth), key)
+    links: list[tuple[str, str]] = []
+    for _, key in sorted(tops.values()):
+        node = nodes[key]
+        if node.use_type != "Building" and _placement_parent(node, by_id) is None:
+            links.append((key, root.key))
+    return links
 
 
 def _groups(nodes: list[NodeIn], by_id: dict[tuple[str, int], NodeIn]) -> list[_Group]:
@@ -204,7 +250,7 @@ def _group_of_parent(
 def _place(group: _Group, node: NodeIn, by_id: dict[tuple[str, int], NodeIn]) -> None:
     age = node.age if 1 <= node.age <= AGES else 1
     depth = 0 if node.use_type == "Building" else 1
-    parent = _parent(node, by_id)
+    parent = _placement_parent(node, by_id)
     placed = group.cells.get(parent.key) if parent is not None else None
     if placed is not None:
         lane, parent_age, parent_depth = placed
@@ -232,6 +278,20 @@ def _parent(node: NodeIn, by_id: dict[tuple[str, int], NodeIn]) -> NodeIn | None
         found = by_id.get((use_type, node.link_id))
         if found is not None and found.key != node.key:
             return found
+    return None
+
+
+def _placement_parent(node: NodeIn, by_id: dict[tuple[str, int], NodeIn]) -> NodeIn | None:
+    """The node this one goes under. A link whose type names no such node is tried with any
+    type: Squires links to Gambesons (875) but says BuildingTech, and the game still draws it
+    under Gambesons. No line is drawn for such a link."""
+    found = _parent(node, by_id)
+    if found is not None or node.link_id is None or node.link_id < 0:
+        return found
+    for use_type in ("Unit", "Tech", "Building"):
+        other = by_id.get((use_type, node.link_id))
+        if other is not None and other.key != node.key:
+            return other
     return None
 
 

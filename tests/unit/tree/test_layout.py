@@ -16,7 +16,7 @@ def node(
     return NodeIn(f"{use_type}:{node_id}", use_type, node_id, at, age, link, link_type, "Unit")
 
 
-def cells(tree_nodes: list[NodeIn]) -> dict[str, tuple[int, int]]:
+def cells(tree_nodes: list[NodeIn]) -> dict[str, tuple[float, int]]:
     tree = layout(tree_nodes)
     return {key: (place.column, place.row) for key, place in tree.places.items()}
 
@@ -137,3 +137,43 @@ def test_a_plain_building_linked_to_a_unit_joins_that_units_group() -> None:
     tree = layout([fish_trap, building(12, 1), building(45, 1), node(13, 45, 1)])
     assert tree.places["Building:199"].group == tree.places["Building:45"].group
     assert tree.groups == 2
+
+
+def test_a_building_is_centred_over_its_columns() -> None:
+    tree = layout([building(87, 2), node(4, 87, 2), node(7, 87, 2), node(39, 87, 2)])
+    assert tree.places["Building:87"].column == 1.0  # over lanes 0, 1 and 2
+
+
+def test_a_building_sharing_its_row_stays_in_its_lane() -> None:
+    """The Mill and its Farm are both in the Dark Age building row: no room to centre."""
+    tree = layout(
+        [building(68, 1), building(50, 1, link=68, kind="BuildingNonTech"), node(500, 68, 2)]
+    )
+    assert tree.places["Building:68"].column == 0
+
+
+def test_the_building_links_to_the_top_of_each_column_that_starts_a_line() -> None:
+    """As in the game: Archer, Skirmisher and Thumb Ring, not the Hand Cannoneer below."""
+    tree = layout(
+        [
+            building(87, 2),
+            node(4, 87, 2),
+            node(24, 87, 3, link=4),
+            node(7, 87, 2),
+            node(6, 87, 3, link=7),
+            node(5, 87, 4),  # Hand Cannoneer: under the Crossbowman, no line of its own
+            node(437, 87, 3, use_type="Tech"),
+        ]
+    )
+    to_building = {child for child, parent in tree.links if parent == "Building:87"}
+    assert to_building == {"Unit:4", "Unit:7", "Tech:437"}
+
+
+def test_a_link_with_the_wrong_type_still_places_under_its_parent_without_a_line() -> None:
+    """Squires links to Gambesons (875) but says BuildingTech: the game stacks it below."""
+    gambesons = NodeIn("Tech:875", "Tech", 875, 12, 3, None, "Research", "Research")
+    squires = NodeIn("Tech:874", "Tech", 874, 12, 3, 875, "BuildingTech", "Research")
+    tree = layout([building(12, 1), node(74, 12, 1), node(93, 12, 2), gambesons, squires])
+    assert tree.places["Tech:874"].column == tree.places["Tech:875"].column
+    assert tree.places["Tech:874"].row == tree.places["Tech:875"].row + 1
+    assert ("Tech:874", "Tech:875") not in tree.links
