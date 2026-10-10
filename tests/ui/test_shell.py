@@ -62,13 +62,13 @@ def test_the_shell_controls_are_ready_to_use(open_shell: OpenShell) -> None:
             expect(buttons.nth(index)).to_be_enabled()
 
 
-def test_import_is_shown_but_not_available_yet(open_shell: OpenShell) -> None:
+def test_both_import_buttons_are_available(open_shell: OpenShell) -> None:
     page = open_shell()
 
     buttons = page.get_by_role("button", name="Import", exact=True)
     expect(buttons).to_have_count(2)
     for index in range(2):
-        expect(buttons.nth(index)).to_be_disabled()
+        expect(buttons.nth(index)).to_be_enabled()
 
 
 def test_the_bundled_fonts_load(open_shell: OpenShell) -> None:

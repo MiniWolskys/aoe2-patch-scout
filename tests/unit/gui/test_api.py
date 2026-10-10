@@ -348,3 +348,28 @@ def test_diagnostics_list_recent_problems_and_the_log_file(folder: DataFolder) -
     assert isinstance(problems, list) and any("compare_versions" in str(p) for p in problems)
     environment = diagnostics["environment"]
     assert isinstance(environment, dict) and environment["log_file"] == "x.log"
+
+
+def test_a_version_exports_and_imports_into_another_library(
+    api: Api, install: Path, tmp_path: Path
+) -> None:
+    capture_id = capture(api, install, label="Live")
+    path = tmp_path / "live.aoe2snap"
+    assert api.export_version(capture_id, str(path)) == {"saved": True, "path": str(path)}
+
+    other = Api(load_catalog("en"), "en", "1.2.3", DataFolder(tmp_path / "Other"))
+    result = other.import_version(str(path))
+    assert result["imported"] is True and result["added"] is True
+    assert result["capture_id"] == capture_id
+    labels = [version["label"] for version in other.get_versions() if isinstance(version, dict)]
+    assert labels == ["Live"]
+
+
+def test_an_archive_that_cant_be_imported_says_why(api: Api, tmp_path: Path) -> None:
+    path = tmp_path / "broken.aoe2snap"
+    path.write_text("not a zip", encoding="utf-8")
+    assert api.import_version(str(path)) == {"imported": False, "error": "not_an_archive"}
+
+
+def test_cancelling_the_file_pickers_does_nothing(api: Api) -> None:
+    assert api.import_version() == {"imported": False, "error": None}

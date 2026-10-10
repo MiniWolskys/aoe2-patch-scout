@@ -41,7 +41,6 @@
           type="button"
           class="button button--ghost"
           id="import-button"
-          disabled
           data-i18n-attr="aria-label:version_list.import"
         >
           <span class="icon icon--import" aria-hidden="true"></span>
@@ -103,9 +102,8 @@
             <button
               type="button"
               class="button button--ghost"
-              disabled
+              id="first-launch-import"
               data-i18n="first_launch.import.action"
-              data-i18n-attr="title:version_list.import_later"
             ></button>
           </article>
         </div>
@@ -165,6 +163,7 @@
 
         <div class="view__actions">
           <button type="button" class="button button--accent" id="details-compare" data-i18n="details.compare_with"></button>
+          <button type="button" class="button button--ghost" id="details-export" data-i18n="details.export"></button>
           <button type="button" class="button button--ghost" id="details-diagnostics" data-i18n="details.open_diagnostics"></button>
           <button type="button" class="button button--ghost" id="details-delete" data-i18n="details.delete"></button>
         </div>

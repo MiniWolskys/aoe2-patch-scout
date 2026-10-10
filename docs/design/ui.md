@@ -96,7 +96,9 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 
 ### Import
 
-**Import** takes the baseline pack (P-21) and snapshot archives. An imported version is added to the list and opened.
+**Import** takes the baseline pack (P-21) and version archives (`.aoe2snap`). The file is chosen first; then "Importing…" shows while the archive is checked and stored (a few seconds for a real one). An imported version is added to the list and opened. A version already in the list is opened, not duplicated, and keeps its own label. An archive that can't be used says why in a toast: not an archive, incomplete, unreadable game data, a broken icon, too large, or saved by a newer Patch Scout.
+
+**Export** is in the version details. It saves the version as an archive where the user chooses. A version ticked as pre-release asks for confirmation first (P-14).
 
 ### First launch
 

@@ -278,6 +278,45 @@ def test_a_projectile_field_is_labelled_as_part_of_its_shooter(open_shell: OpenS
     expect(page.locator(".change-row__field")).to_have_text("Projectile: Attack vs #3")
 
 
+def test_importing_a_version_opens_it(open_shell: OpenShell) -> None:
+    data = with_versions(version("old", "Live build"))
+    data["importResult"] = {"imported": True, "capture_id": "old", "added": True}
+    page = open_shell(data=data)
+
+    page.locator("#import-button").click()
+
+    expect(page.locator("#toast")).to_contain_text("Version imported.")
+    expect(page.locator("#details-view")).to_be_visible()
+    assert calls(page, "import_version") == [["C:/tmp/live.aoe2snap"]]
+
+
+def test_an_archive_that_cant_be_imported_says_why(open_shell: OpenShell) -> None:
+    data = with_versions(version("old", "Live build"))
+    data["importResult"] = {"imported": False, "error": "newer_version"}
+    page = open_shell(data=data)
+
+    page.locator("#import-button").click()
+
+    expect(page.locator("#toast")).to_contain_text("saved by a newer Patch Scout")
+
+
+def test_exporting_a_pre_release_version_asks_first(open_shell: OpenShell) -> None:
+    data = with_versions(version("pup", "PUP", prerelease=True))
+    data["details"]["pup"] = data["details"]["__default"] | {
+        "capture_id": "pup",
+        "prerelease": True,
+    }
+    page = open_shell(data=data)
+    page.locator(".version-row").first.click()
+
+    page.locator("#details-export").click()
+    expect(page.locator("#confirm-title")).to_have_text("Export a pre-release version?")
+    page.locator("#confirm-yes").click()
+
+    expect(page.locator("#toast")).to_contain_text("Saved to C:/tmp/live.aoe2snap")
+    assert calls(page, "export_version") == [["pup"]]
+
+
 def test_a_failed_comparison_says_so_and_goes_back(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
     data["changeSet"] = None  # the bridge answers nothing usable
