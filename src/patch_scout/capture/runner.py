@@ -268,7 +268,7 @@ def _identical_snapshot(snapshots: SnapshotStore, sources: JsonObject) -> str | 
     """Find a stored snapshot whose inputs all match, comparing only the files read so far."""
     for capture_id in snapshots.capture_ids():
         try:
-            stored = snapshots.load(capture_id)
+            stored = snapshots.index(capture_id)  # the fingerprints only, not the snapshot
         except PatchScoutError:
             logger.warning("snapshot %s could not be read while comparing inputs", capture_id)
             continue
