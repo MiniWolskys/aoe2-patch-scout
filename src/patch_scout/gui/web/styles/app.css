@@ -730,6 +730,388 @@ body[data-failed] > :not(.startup-error, script) {
   align-self: start;
 }
 
+/* Tech tree (D-39, ui.md "Tech tree"): tiles are placed by tree.js from the layout */
+
+.tree {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: 290px minmax(0, 1fr);
+}
+
+/* The game's left panel: the civ, its bonuses, the key */
+.tree__side {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 18px;
+  border-right: 1px solid var(--line-subtle);
+  background: var(--bg-panel);
+  overflow-y: auto;
+}
+
+.tree__civ {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tree__crest {
+  width: 48px;
+  height: 48px;
+}
+
+.tree__civ-name {
+  margin: 0;
+  font-size: var(--fs-dialog);
+  font-weight: 600;
+}
+
+.tree__bonus {
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.tree__key {
+  margin-top: auto;
+}
+
+.tree__key h3 {
+  margin: 0 0 8px;
+  color: var(--text-3);
+}
+
+.tree__key-grid {
+  display: grid;
+  grid-template-columns: auto repeat(3, 1fr);
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.tree__key-head {
+  text-align: center;
+}
+
+.tree__key-swatch,
+.tree__key-none {
+  justify-self: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-icon);
+}
+
+.tree__key-none {
+  border-style: dashed;
+  opacity: 0.4;
+}
+
+.tree__key-unavailable {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+
+.tree__key-unavailable .tree__key-swatch {
+  justify-self: start;
+  opacity: 1;
+}
+
+.tree__main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  padding: 20px 28px 0;
+}
+
+.tree__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  margin-bottom: 8px;
+}
+
+.tree__legend {
+  display: flex;
+  gap: 16px;
+  margin: 0 auto 0 0;
+  padding: 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  list-style: none;
+}
+
+.tree__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tree__swatch {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-icon);
+}
+
+.tree__note {
+  margin: 0 0 8px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.tree__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.tree__canvas {
+  position: relative;
+  transform-origin: 0 0;
+}
+
+.tree__age {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--line-subtle);
+}
+
+.tree__age:nth-child(even) {
+  background: var(--tree-age);
+}
+
+/* The age names stay in view while the tree scrolls sideways */
+.tree__age-label {
+  position: sticky;
+  left: 0;
+  display: inline-block;
+  padding: 10px 12px;
+  color: var(--text-3);
+}
+
+.tree__lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  fill: none;
+  stroke: var(--tree-line);
+  stroke-width: 2;
+}
+
+.tree-node {
+  position: absolute;
+  display: flex;
+  width: 76px;
+  height: 86px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px 4px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--tree-unit);
+  color: var(--text);
+  cursor: default;
+}
+
+.tree-node--unit {
+  background: var(--tree-unit);
+}
+
+.tree-node--unit-regional {
+  background: var(--tree-unit-regional);
+}
+
+.tree-node--unit-unique {
+  background: var(--tree-unit-unique);
+}
+
+.tree-node--tech {
+  background: var(--tree-tech);
+}
+
+.tree-node--tech-unique {
+  background: var(--tree-tech-unique);
+}
+
+.tree-node--building {
+  background: var(--tree-building);
+}
+
+.tree-node--building-regional {
+  background: var(--tree-building-regional);
+}
+
+.tree-node:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tree-node__no-icon {
+  width: var(--game-icon-size);
+  height: var(--game-icon-size);
+}
+
+.tree-node__name {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--fs-tag);
+  line-height: 1.15;
+  text-align: center;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* What the civ can't get: dimmed and crossed, as in the game */
+.tree__key-swatch.is-unavailable,
+.tree-node.is-unavailable {
+  opacity: 0.4;
+  background:
+    linear-gradient(
+      to top right,
+      transparent calc(50% - 1px),
+      var(--old) calc(50% - 1px),
+      var(--old) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ),
+    var(--bg-raised);
+}
+
+.mark-gained .tree__swatch,
+.tree-node.mark-gained {
+  border-color: var(--new);
+  box-shadow: 0 0 0 2px var(--new-soft);
+}
+
+.mark-lost .tree__swatch,
+.tree-node.mark-lost {
+  border-color: var(--old);
+  box-shadow: 0 0 0 2px var(--old-soft);
+}
+
+.tree-node.mark-lost .tree-node__name {
+  text-decoration: line-through;
+}
+
+/* Changed: a dot in the corner, so the tile's colour still says what it is */
+.mark-changed .tree__swatch,
+.tree-node.mark-changed,
+.tree-node.mark-renamed {
+  border-color: var(--accent);
+}
+
+.tree-node.mark-changed::after,
+.tree-node.mark-renamed::after {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--bg-base);
+  border-radius: 50%;
+  background: var(--accent);
+  content: "";
+}
+
+/* The game's tooltip for a tech tree node, in the app's colours */
+.tree-panel {
+  position: fixed;
+  z-index: 20;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-float);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  pointer-events: none;
+}
+
+.tree-panel__line {
+  margin: 0 0 6px;
+  line-height: 1.35;
+}
+
+.tree-panel .is-bold {
+  font-weight: 600;
+}
+
+.tree-panel .is-italic {
+  font-style: italic;
+}
+
+.tree-panel .is-grey {
+  color: var(--text-2);
+}
+
+.tree-panel__stats,
+.tree-panel__cost {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.tree-panel__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tree-panel__icon {
+  width: 20px;
+  height: 20px;
+  box-shadow: none;
+}
+
+.tree-panel__arrow {
+  margin: 0 3px;
+  color: var(--text-3);
+}
+
+.tree-panel__renamed {
+  margin: 0 0 6px;
+  color: var(--text-2);
+}
+
+.tree-panel__changes {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.tree-panel__change {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.tree-panel__change .change-values {
+  font-size: var(--fs-sm);
+}
+
+.tree-panel__note {
+  margin: 4px 0 0;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
 /* Dialogs */
 
 .dialog__title {

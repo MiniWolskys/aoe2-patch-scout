@@ -195,9 +195,16 @@ def compare(
             added=ref.added,
             count=counts.get(ref.internal_name, 0),
         )
+        # Every civ with a tech tree, with or without changes: the tech tree view lets any civ
+        # be chosen (D-39). The change list leaves out those with nothing to show. Gaia has none.
         for ref in civ_refs
-        if ref.added or counts.get(ref.internal_name, 0)
+        if ref.added
+        or counts.get(ref.internal_name, 0)
+        or ref.internal_name in run.new.tech_trees
+        or ref.internal_name in run.old.tech_trees
     )
+    # Alphabetical, as the game lists them (by name in the chosen language).
+    civs = tuple(sorted(civs, key=lambda civ: civ.name.casefold()))
     return ChangeSet(
         old=sides[0],
         new=sides[1],

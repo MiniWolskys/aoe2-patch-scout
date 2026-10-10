@@ -26,6 +26,7 @@ const CATEGORIES = [
  *   t: (key: string, values?: Record<string, unknown>) => string,
  *   changeSet: Record<string, any>,
  *   civ: string | null,
+ *   treeMode?: boolean,
  *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, details: boolean,
  *     technical: boolean, search: string},
  *   onCiv: (internalName: string | null) => void,
@@ -193,7 +194,8 @@ function renderCivList(view, changes) {
     list.append(tabs);
   }
   const shown = inChronicles ? chronicles : base;
-  if (!inChronicles) {
+  // The tree is one civ's: it has no Overall page.
+  if (!inChronicles && !view.treeMode) {
     list.append(
       civRow(view, {
         internal_name: null,
@@ -205,6 +207,10 @@ function renderCivList(view, changes) {
     );
   }
   for (const civ of shown) {
+    // The change list shows the civs with changes; the tree, every civ (D-39).
+    if (!view.treeMode && !civ.added && (civ.count ?? 0) === 0) {
+      continue;
+    }
     list.append(civRow(view, { ...civ, count: counts.get(civ.internal_name) ?? 0 }));
   }
 }
@@ -367,7 +373,7 @@ function changeRow(view, entry) {
  * @param {Record<string, any>} change
  * @returns {HTMLElement}
  */
-function fieldCell(view, change) {
+export function fieldCell(view, change) {
   const field = el("div", { class: "change-row__field" });
   // When the comparison has stat icons, every label gets an icon slot, so labels line up; with
   // none (an older snapshot), no slot, so nothing shifts.
@@ -392,7 +398,7 @@ function fieldCell(view, change) {
  * @param {Record<string, any>} change
  * @returns {HTMLElement}
  */
-function values(change) {
+export function values(change) {
   const box = el("div", { class: "change-values" });
   const words = change.words ?? [];
   if (words.length > 0) {

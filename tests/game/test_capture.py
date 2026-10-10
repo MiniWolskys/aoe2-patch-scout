@@ -211,3 +211,32 @@ def test_the_xs_constants_name_the_armour_classes_the_dat_displays(
             disagree += 1
     assert agree > 1000
     assert disagree <= agree // 100  # 1 of 1,170 on build 101.103.54800.0
+
+
+def test_every_civ_tech_tree_is_drawn_without_overlaps(
+    captured: tuple[Snapshot, DataFolder],
+) -> None:
+    """The tech tree view (D-39) on real data: every civ, every available node, one cell each."""
+    from typing import Any
+
+    from patch_scout.diff import compare
+    from patch_scout.tree.build import build
+
+    snapshot, _ = captured
+    change_set = compare(snapshot, snapshot)
+    for civ, nodes in snapshot.tech_trees.items():
+        view: Any = build(snapshot, snapshot, change_set, civ)
+        assert view is not None, civ
+        drawn = {node["key"]: node for node in view["nodes"]}
+        cells = [(node["column"], node["row"]) for node in drawn.values()]
+        assert len(cells) == len(set(cells)), civ
+        for child, parent in view["links"]:
+            assert child in drawn and parent in drawn, civ
+        tree: Any = nodes
+        available = {
+            f"{node['use_type']}:{node['node_id']}"
+            for node in tree
+            if node.get("node_status") != "NotAvailable"
+        }
+        assert available <= set(drawn), civ
+        assert all(node["mark"] is None for node in drawn.values()), civ

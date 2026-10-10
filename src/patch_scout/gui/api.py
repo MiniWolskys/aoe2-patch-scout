@@ -37,6 +37,7 @@ from patch_scout.store import (
 )
 from patch_scout.store.settings import Settings, SettingsStore
 from patch_scout.store.snapshots import SnapshotIndex
+from patch_scout.tree import build as tree_build
 
 logger = logging.getLogger(__name__)
 
@@ -295,6 +296,33 @@ class Api:
             except OSError as exc:  # only reopening it at the next launch is lost
                 logger.warning("the comparison couldn't be remembered: %s", exc)
             return present(change_set, self._catalog).to_json()
+
+    def get_tech_tree(
+        self,
+        old_id: str,
+        new_id: str,
+        civ: str,
+        details: bool = False,
+        technical: bool = False,
+        low_priority: bool = False,
+    ) -> JsonObject | None:
+        """One civ's tech tree with the comparison's changes marked on it (D-39)."""
+        with _Guard("get_tech_tree"):
+            first, second = self._snapshot(old_id), self._snapshot(new_id)
+            older, newer = order(first, second)
+            if civ not in older.tech_trees and civ not in newer.tech_trees:
+                return None
+            change_set = self._compared(older, newer, show_unreachable=False)
+            return tree_build.build(
+                older,
+                newer,
+                present(change_set, self._catalog),
+                civ,
+                details=details,
+                technical=technical,
+                low_priority=low_priority,
+                language=self._language,
+            )
 
     def get_icons(self, hashes: Sequence[str]) -> JsonObject:
         """Data URIs for the icons a view is about to show."""

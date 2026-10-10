@@ -51,6 +51,17 @@
   --warn-soft: #35291a;
   --focus: #f1d493; /* keyboard focus ring */
 
+  /* Tech tree tiles (D-39): the game's colours by node type, muted to sit on --bg-base */
+  --tree-unit: #2c4a66;
+  --tree-unit-regional: #34407a;
+  --tree-unit-unique: #533266;
+  --tree-tech: #2f5333;
+  --tree-tech-unique: #3c6b35;
+  --tree-building: #6b3c1f;
+  --tree-building-regional: #7a3424;
+  --tree-line: #5e5040;
+  --tree-age: #18140f; /* every other age band */
+
   /* Overlays */
   --scrim: rgb(6 5 4 / 64%);
   --shadow-dialog: 0 24px 60px rgb(0 0 0 / 60%);

@@ -194,6 +194,7 @@
             <span class="version-picker__build" id="picker-new-build"></span>
           </button>
           <div class="comparison-header__spacer"></div>
+          <button type="button" class="button button--ghost" id="comparison-tree" aria-pressed="false" data-i18n="tree.open"></button>
           <button type="button" class="button button--ghost" id="comparison-filters" aria-expanded="false" data-i18n="comparison.filters"></button>
           <button type="button" class="button button--accent" id="comparison-export" data-i18n="comparison.export"></button>
         </header>
@@ -237,6 +238,8 @@
             <p class="page__subtitle" id="comparison-subtitle"></p>
             <div id="comparison-changes"></div>
           </div>
+          <!-- The civ's tech tree with the changes marked on it (D-39, ui.md "Tech tree") -->
+          <div class="tree" id="tree-view" hidden></div>
         </div>
       </section>
     </main>

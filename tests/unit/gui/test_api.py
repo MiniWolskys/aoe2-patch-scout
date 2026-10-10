@@ -520,3 +520,20 @@ def test_a_double_click_starts_one_capture(
     release.set()
     assert sorted(result["started"] for result in results) == [False, True]
     assert started == [1]
+
+
+def test_a_civ_tech_tree_comes_with_its_marks(api: Api, install: Path, tmp_path: Path) -> None:
+    first = capture(api, install, "Live")
+    other = game_tree.write(
+        tmp_path / "new",
+        dat_bytes=sample_dat.sample_bytes(archer_hp=40),
+        unavailable_civs=(),
+    )
+    second = capture(api, other, "PUP")
+
+    tree = api.get_tech_tree(first, second, "Redlanders")
+
+    assert tree is not None and tree["civ"] == "Redlanders"
+    nodes = tree["nodes"]
+    assert isinstance(nodes, list) and nodes
+    assert api.get_tech_tree(first, second, "Nowhere") is None

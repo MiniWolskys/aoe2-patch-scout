@@ -93,6 +93,9 @@ FAKE_BRIDGE = """
     clear_capture: answer("clear_capture", { cleared: true }),
     compare_versions: answer("compare_versions", data.changeSet),
     get_icons: answer("get_icons", data.icons ?? {}),
+    get_tech_tree: answer("get_tech_tree", (oldId, newId, civ) =>
+      data.techTreeError ? null : { ...(data.techTree ?? {}), civ },
+    ),
     export_text: answer("export_text", { text: data.exportText ?? "" }),
     save_export: answer(
       "save_export",

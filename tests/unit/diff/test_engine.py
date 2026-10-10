@@ -144,9 +144,9 @@ def test_a_redrawn_icon_is_reported_as_low_priority(change_set: ChangeSet) -> No
 
 def test_the_civ_list_counts_the_changes_on_each_page(change_set: ChangeSet) -> None:
     counts = {civ.internal_name: civ.count for civ in change_set.civs}
-    # Archer HP 30 → 35 for Redlanders and Ancients reads "all except Bluelanders", on Overall.
-    assert set(counts) == {"Redlanders", "Bluelanders"}
-    assert all(count > 0 for count in counts.values())
+    # Archer HP 30 → 35 for Redlanders and Ancients reads "all except Bluelanders", on Overall:
+    # the Ancients have no page of their own, but every civ is listed, for the tech tree (D-39).
+    assert counts == {"Redlanders": 1, "Bluelanders": 4, "Ancients": 0}
 
 
 def test_the_change_set_is_the_same_every_time(pair: pairs.Pair) -> None:
@@ -516,3 +516,9 @@ def test_civ_lists_follow_the_order_of_civilizations_json() -> None:
     changes = [change for change in compare(old, new).changes if change.category == "unit_stats"]
 
     assert changes[0].scope.civs == ("Zulu", "Aztecs")
+
+
+def test_civs_are_listed_alphabetically_as_in_the_game(change_set: ChangeSet) -> None:
+    """The game lists civilizations by their English name, not in the data's order."""
+    names = [civ.name for civ in change_set.civs]
+    assert names == sorted(names, key=str.casefold)
