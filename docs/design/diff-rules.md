@@ -131,7 +131,7 @@ For each unit ID and allowlisted field of the raw unit records:
 | One value pair, more than 8 civs in scope (not all), all changed | `Onager — attack 50 → 55 (all 45 civilizations that have it)` |
 | One value pair, more than 8 civs in scope (not all), most changed | `(all 45 civilizations that have it, except Goths)` |
 | One value pair, few civs changed | `Knight — HP 120 → 130 (Franks)` |
-| Several value pairs | One line per group, largest group first |
+| Several value pairs | One line per group, largest group first. The largest group, when no other is as large, may use the "except" forms; the civs of the other groups are among its exceptions and are named on their own lines: `Champion — attack vs Shock infantry 8 → 9 (all civilizations except Achaemenids, …)` and `6 → 9 (Achaemenids, …)` |
 
 **Thresholds:**
 - The app names at most 8 civs in a list ("… and 3 more"), with the full list on hover. **Exports name every civ**: they are read out or pasted, so nothing may be cut.

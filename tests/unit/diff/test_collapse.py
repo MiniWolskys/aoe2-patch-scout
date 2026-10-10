@@ -109,3 +109,18 @@ def test_a_few_owners_changing_among_many_are_named() -> None:
     groups = collapse(owners, {"Huns": (1, 2)}, every=EVERY)
     assert groups[0].scope.kind == "some"
     assert groups[0].scope.civs == ("Huns",)
+
+
+def test_the_largest_of_several_pairs_reads_as_all_except() -> None:
+    """Champion on 101.103.54800.0: 8 → 9 for most civs, 6 → 9 for the Chronicles civs."""
+    changed = {civ: (8, 9) for civ in CIVS if civ != "Persians"} | {"Persians": (6, 9)}
+    groups = collapse(CIVS, changed, every=CIVS)
+    assert [(group.old, group.scope.kind, group.scope.civs) for group in groups] == [
+        (8, "all_except", ("Persians",)),
+        (6, "some", ("Persians",)),
+    ]
+
+
+def test_two_pairs_of_the_same_size_are_both_named() -> None:
+    changed = {"Aztecs": (1, 2), "Britons": (1, 2), "Franks": (1, 3), "Goths": (1, 3)}
+    assert all(group.scope.kind == "some" for group in collapse(CIVS, changed, every=CIVS))
