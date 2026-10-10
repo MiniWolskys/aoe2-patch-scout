@@ -298,6 +298,21 @@ ins {
   object-fit: cover;
 }
 
+/* An emblem drawn for a light background (no crest in older snapshots): lightened to show */
+.game-icon--silhouette {
+  filter: invert(0.88);
+}
+
+/* A stat icon next to a field label (D-09) */
+.change-row__stat {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 0;
+  box-shadow: none;
+  object-fit: contain;
+}
+
 /* Version list */
 
 .version-list {
@@ -396,10 +411,11 @@ ins {
 
 .notice {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  height: var(--notice-height);
-  padding: 0 24px;
+  min-height: var(--notice-height);
+  padding: 10px 24px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--line-subtle);
   color: var(--text-2);
   font-size: 14.5px;

@@ -268,6 +268,8 @@ class ChangeSet:
     identical: bool = False
     # The changes grouped one entry per entity (diff-rules.md); what the renderers draw.
     entries: tuple[Entry, ...] = ()
+    # Stat key -> icon reference, for the stat icons next to field labels (D-09).
+    stat_icons: Mapping[str, JsonValue] = field(default_factory=dict)
 
     @property
     def overall_count(self) -> int:
@@ -293,6 +295,7 @@ class ChangeSet:
             "civs": [civ.to_json() for civ in self.civs],
             "changes": [change.to_json() for change in self.changes],
             "entries": [entry.to_json(positions) for entry in self.entries],
+            "stat_icons": dict(self.stat_icons),
             "counts": {"overall": self.overall_count, "total": len(self.entries)},
         }
 

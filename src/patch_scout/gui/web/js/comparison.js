@@ -36,9 +36,11 @@ export function render(view) {
 
   const notices = changeSet.notices ?? [];
   show(byId("comparison-notice"), notices.length > 0);
-  byId("comparison-notice-text").textContent = notices
-    .map((notice) => t(notice.message.key, notice.message.args))
-    .join(" · ");
+  const noticeText = byId("comparison-notice-text");
+  clear(noticeText);
+  for (const notice of notices) {
+    noticeText.append(el("span", { text: t(notice.message.key, notice.message.args) }));
+  }
 
   // One entry per entity, page and scope (diff-rules.md); the civ counts count entries too.
   // An entry lists its changes by position in `changes`, so none is sent twice.
@@ -273,10 +275,17 @@ function changeRow(view, entry) {
  */
 function fieldCell(view, change) {
   const field = el("div", { class: "change-row__field" });
-  if (change.stat_icon) {
-    field.append(
-      el("span", { class: "change-row__stat", attrs: { "data-stat": change.stat_icon } }),
-    );
+  // When the comparison has stat icons, every label gets an icon slot, so labels line up; with
+  // none (an older snapshot), no slot, so nothing shifts.
+  const statIcons = view.changeSet.stat_icons ?? {};
+  if (Object.keys(statIcons).length > 0) {
+    const icon = change.stat_icon ? icons.element(statIcons[change.stat_icon]) : null;
+    const slot = icon ?? el("span", { attrs: { "aria-hidden": "true" } });
+    slot.classList.add("change-row__stat");
+    if (icon !== null) {
+      icon.dataset.stat = change.stat_icon;
+    }
+    field.append(slot);
   }
   if (change.field) {
     field.append(document.createTextNode(message(view.t, change.field.key, change.field.args)));
@@ -363,6 +372,11 @@ export function iconHashes(changeSet) {
   for (const change of changeSet.changes ?? []) {
     if (change.entity?.icon?.hash) {
       hashes.push(change.entity.icon.hash);
+    }
+  }
+  for (const icon of Object.values(changeSet.stat_icons ?? {})) {
+    if (icon?.hash) {
+      hashes.push(icon.hash);
     }
   }
   return hashes;

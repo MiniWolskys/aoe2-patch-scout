@@ -155,15 +155,7 @@
         "key": "detail.effect_command"
       },
       "entity": {
-        "icon": {
-          "category": "emblems",
-          "hash": null,
-          "height": null,
-          "missing_reason": "file not found",
-          "picture_index": null,
-          "source": null,
-          "width": null
-        },
+        "icon": null,
         "id": "Redlanders",
         "kind": "civ",
         "name": "Redlanders",
@@ -586,15 +578,7 @@
       "added": false,
       "count": 2,
       "era": "base",
-      "icon": {
-        "category": "emblems",
-        "hash": null,
-        "height": null,
-        "missing_reason": "file not found",
-        "picture_index": null,
-        "source": null,
-        "width": null
-      },
+      "icon": null,
       "internal_name": "Redlanders",
       "name": "Redlanders"
     },
@@ -602,15 +586,7 @@
       "added": false,
       "count": 4,
       "era": "base",
-      "icon": {
-        "category": "emblems",
-        "hash": null,
-        "height": null,
-        "missing_reason": "file not found",
-        "picture_index": null,
-        "source": null,
-        "width": null
-      },
+      "icon": null,
       "internal_name": "Bluelanders",
       "name": "Bluelanders"
     },
@@ -618,15 +594,7 @@
       "added": false,
       "count": 1,
       "era": "antiquity",
-      "icon": {
-        "category": "emblems",
-        "hash": null,
-        "height": null,
-        "missing_reason": "no image path",
-        "picture_index": null,
-        "source": null,
-        "width": null
-      },
+      "icon": null,
       "internal_name": "Ancients",
       "name": "Ancients"
     }
@@ -735,15 +703,7 @@
       ],
       "civ": "Redlanders",
       "entity": {
-        "icon": {
-          "category": "emblems",
-          "hash": null,
-          "height": null,
-          "missing_reason": "file not found",
-          "picture_index": null,
-          "source": null,
-          "width": null
-        },
+        "icon": null,
         "id": "Redlanders",
         "kind": "civ",
         "name": "Redlanders",
@@ -1097,5 +1057,25 @@
     "label": "Live build",
     "prerelease": false,
     "stats_available": true
+  },
+  "stat_icons": {
+    "hp": {
+      "category": "stat_icons",
+      "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+      "height": 4,
+      "missing_reason": null,
+      "picture_index": null,
+      "source": "widgetui/textures/ingame/staticons/hp.png",
+      "width": 4
+    },
+    "melee_attack": {
+      "category": "stat_icons",
+      "hash": "6e29b1b4e7eedd80dc89bab0599a0bee7014bb113f30c4b5fb68701fb7852362",
+      "height": 4,
+      "missing_reason": null,
+      "picture_index": null,
+      "source": "widgetui/textures/ingame/staticons/damage.png",
+      "width": 4
+    }
   }
 }
