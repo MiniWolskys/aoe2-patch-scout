@@ -108,6 +108,7 @@
   "field.conversion_chance_mod": "Conversion resistance",
   "field.cost": "Cost in {resource}",
   "field.projectile": "Projectile: {field}",
+  "report.hidden": "{count} more values not shown: empty values and minor stats",
   "field.damage_reflection": "Damage reflection",
   "field.displayed_attack": "Displayed attack",
   "field.displayed_melee_armour": "Displayed melee armour",

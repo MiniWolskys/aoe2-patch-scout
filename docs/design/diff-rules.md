@@ -137,6 +137,24 @@ For each unit ID and allowlisted field of the raw unit records:
 
 **Civ-specific changes go first.** A change limited to some civs usually means a civ bonus changed, so within a category those lines come before "all civs" lines.
 
+## One entry per entity
+
+The change set is field-level: one change per field and value group. The app and the exports draw **entries** instead: all the changes of one entity that share a category, a page and a scope. A unit whose HP changed for every civ and whose attack changed for the Franks gives two entries, so the civ information stays exact.
+
+```
+• Knight · (all civilizations)
+    - Hit points · 100 → 110
+    - Movement speed · 1.35 → 1.4
+```
+
+- **One change:** the entry reads as one line, as before.
+- **A new unit** (in Unit stats, every field goes from nothing to a value): the entry is marked Added and lists only its **main stats**, without empty or default values (`0`, `-1`). The main stats are hit points, line of sight, speed, attacks, armours, displayed attack and armours, maximum range, reload time, cost and train time. The entry ends with the number of values it leaves out.
+- **A removed unit:** one line, with the number of values left out.
+- **Other categories** keep every change they have, e.g. a building that only gained offered items.
+- **Any entry:** a field that only appears or disappears with a default value (`added 0`) is counted, not listed. A placeholder unit that the patch fills in otherwise shows dozens of them.
+- **Counts:** the civ list counts entries.
+- **In the change set JSON,** an entry lists its changes by position in `changes`, so no change is written twice.
+
 ## Effects (O-5)
 
 Every changed effect command is shown in up to three layers, most readable first:
