@@ -188,5 +188,7 @@ def test_the_snapshot_keeps_the_xs_scripts(install: Path, folder: DataFolder) ->
     assert snapshot is not None
     constants = snapshot.scripts["constants"]
     assert isinstance(constants, dict)
-    assert ["cAddAttribute", 4] in constants["Effect Constants"]
+    effects = constants["Effect Constants"]
+    assert isinstance(effects, list)
+    assert ["cAddAttribute", 4] in effects
     assert snapshot.scripts["effects"] == game_tree.EFFECTS_XS

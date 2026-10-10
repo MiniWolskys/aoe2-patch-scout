@@ -894,7 +894,7 @@ def _sub_fields(
         return [(key, Message("field.cost", {"resource": _resource_name(key)})) for key in ordered]
     if allow.kind == "train_locations":
         return [
-            (key, Message(f"field.{allow.key}", {"location": _unit_name(run, key)}))
+            (key, Message(f"field.{allow.key}", {"location": _location_name(run, key)}))
             for key in ordered
         ]
     return [
@@ -903,16 +903,13 @@ def _sub_fields(
     ]
 
 
-def _unit_name(run: _Run, unit_id: JsonValue) -> str:
-    """A unit or building's game name, the new build first; `#<id>` when it has none."""
-    if isinstance(unit_id, int) and not isinstance(unit_id, bool):
-        for units, names in ((run.new_units, run.new_names), (run.old_units, run.old_names)):
-            record = units.any_record(unit_id)
-            if record is not None:
-                name = names.one_line(record.get("language_dll_name"))
-                if name:
-                    return name
-    return unknown_id(unit_id)
+def _location_name(run: _Run, location: JsonValue) -> str:
+    """A train or research location: its building's name, else `#<id>`."""
+    if isinstance(location, int) and not isinstance(location, bool):
+        name = _unit_name(run, location)
+        if name:
+            return name
+    return unknown_id(location)
 
 
 def _tech_name(run: _Run, tech_id: int) -> str:
@@ -1144,7 +1141,7 @@ def _command_changes(
     new_commands = _commands(after)
     effect_name = _text(after.get("name")) or _text(before.get("name")) or ""
     lookup = Lookup(
-        unit=lambda unit_id: _unit_name(run, unit_id),
+        unit=lambda unit_id: _unit_name(run, unit_id) or unknown_id(unit_id),
         tech=lambda tech_id: _tech_name(run, tech_id),
         vocabulary=run.vocabulary,
     )

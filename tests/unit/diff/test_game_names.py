@@ -151,3 +151,18 @@ def test_a_tech_that_requires_nothing_lists_no_techs() -> None:
     changes = [c for c in compare(old, new).changes if c.entity.name == "Crossbowman"]
     required = [c for c in changes if c.field is not None and c.field.key == "field.required_techs"]
     assert [(c.old, c.new) for c in required] == [("Feudal Age", "")]
+
+
+def test_a_unit_without_a_name_is_still_marked_unnamed() -> None:
+    old = _build(shock=6, pierce=0, train_time=21, required=[FEUDAL])
+    new = _build(shock=6, pierce=0, train_time=21, required=[FEUDAL])
+    for snapshot, hit_points in ((old, 30), (new, 35)):
+        assert snapshot.stats is not None
+        units = snapshot.stats["units"]
+        assert isinstance(units, dict) and isinstance(units["4"], dict)
+        base = units["4"]["base"]
+        assert isinstance(base, dict)
+        base["language_dll_name"] = 0
+        base["hit_points"] = hit_points
+    [change] = [c for c in compare(old, new).changes if c.entity.id == "4"]
+    assert (change.entity.name, change.entity.named) == ("#4", False)

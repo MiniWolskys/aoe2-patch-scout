@@ -49,7 +49,9 @@ def test_constants_are_grouped_by_section_title_in_file_order() -> None:
 def test_a_comment_that_is_not_between_rules_is_not_a_title() -> None:
     parsed = scripts.parse_constants(CONSTANTS)
     assert "Reserved Class 66" not in parsed
-    assert ["cCombatAbility", 63] in parsed["Tech Effect Constants"]
+    section = parsed["Tech Effect Constants"]
+    assert isinstance(section, list)
+    assert ["cCombatAbility", 63] in section
 
 
 def test_values_keep_their_type_and_non_extern_lines_are_ignored() -> None:
@@ -69,7 +71,9 @@ def test_the_files_tier_reads_both_xs_files(tmp_path: Path) -> None:
     tier = files_tier.read(reader, {"tables": {"en": {}}})
     constants = tier.scripts["constants"]
     assert isinstance(constants, dict)
-    assert ["cDamageClassShockInfantry", 29] in constants["Damage Classes"]
+    damage = constants["Damage Classes"]
+    assert isinstance(damage, list)
+    assert ["cDamageClassShockInfantry", 29] in damage
     assert tier.scripts["effects"] == game_tree.EFFECTS_XS
     assert "resources/_common/xs/Constants.xs" in reader.sources()
     assert "resources/_common/xs/Effects.xs" in reader.sources()
