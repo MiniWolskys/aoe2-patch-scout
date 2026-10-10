@@ -52,7 +52,7 @@ Shown in this order. Categories marked *low* are collapsed by default.
    - Changed bonus **effects** as sentences (see Effects).
    - `civ_dat.resources` changes, such as starting resources.
 4. **Unit stats:** allowlisted fields of the raw unit records, collapsed per civ.
-5. **Techs:** cost, research time, required techs, research location, effect ID; the effect's commands as sentences. An effect ID change is reported once, with the effect's commands.
+5. **Techs:** cost, research time, required techs, research location, effect ID; the effect's commands as sentences. An effect ID change is reported once, with the effect's commands. A tech that gains an effect it didn't have lists every command as new, and one that loses its effect lists every command as gone (Cranequins on 101.103.54800.0 went from no effect to +1 range and +2 vs Infantry, and only the ID said so).
 6. **Other effects:** effect command changes not covered by 3 or 5, and **scripted effects**: each numbered function of `Effects.xs` whose code changed, appeared or disappeared is one line named by its title ("Effect of Atheism for Huns · Script changed"). The game's code is never copied into the report. Snapshots captured before scripts were kept compare nothing here.
 7. **Text** *(low)*: name and help text changes for entities not already reported above. Help text changes are attached to the entity's entry when it has one. **A tech tree node's new name** is not low priority: it is a `renamed` change in Civ availability, with the old and new names ("Longship · Name · Longboat → Longship"; missed on 101.103.54800.0).
 8. **Icons** *(low)*: `icon_redrawn`, `icon_remapped`.

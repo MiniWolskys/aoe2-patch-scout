@@ -185,3 +185,21 @@ def test_an_effect_named_like_a_civ_bonus_reads_as_one() -> None:
     changes = [c for c in compare(*builds).changes if c.category == "other_effects"]
 
     assert changes and {c.entity.name for c in changes} == {"Civ bonus: Pastures"}
+
+
+def test_a_tech_that_gains_an_effect_says_what_the_effect_does() -> None:
+    """Cranequins on 101.103.54800.0: its effect went -1 → 1452 and nothing said what it did."""
+    before = _tech("Cranequins", -1, 1)
+    after = _tech("Cranequins", -1, 1)
+    assert isinstance(before, dict) and isinstance(after, dict)
+    after["effect_id"] = 1452
+    old, new = _build(6, {"900": before}), _build(6, {"900": after})
+    assert new.stats is not None and isinstance(new.stats["effects"], dict)
+    command: JsonObject = {"type": 1, "a": 0, "b": 1, "c": -1, "d": 50.0}
+    new.stats["effects"]["1452"] = {"name": "Cranequins", "commands": [command]}
+
+    changes = [c for c in compare(old, new).changes if c.entity.name == "Cranequins"]
+
+    assert any(
+        c.detail is not None and c.detail.key.startswith("detail.effect_command") for c in changes
+    )
