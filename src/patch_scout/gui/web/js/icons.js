@@ -42,6 +42,9 @@ export function element(icon) {
   }
   const image = document.createElement("img");
   image.className = "game-icon";
+  if (/** @type {{kind?: string}} */ (icon).kind === "silhouette") {
+    image.classList.add("game-icon--silhouette");
+  }
   image.src = source;
   image.alt = "";
   return image;

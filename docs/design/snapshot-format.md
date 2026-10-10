@@ -104,6 +104,7 @@ One object per `civilizations.json` entry, **in file order** (Gaia first):
   "emblem_image_path": "/resources/civ_emblems/britons.png",
   "unique_unit_image_paths": [ "/resources/uniticons/041_50730.png" ],
   "emblem_icon": { ...icon ref... },
+  "crest_icon": { ...icon ref... },    // from tech_tree_image_path: the coloured shield
   "unique_unit_icons": [ { ...icon ref... } ],
   "extra": { }                       // unknown keys, verbatim
 }

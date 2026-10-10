@@ -219,6 +219,9 @@ def attach(
         if not isinstance(civ, dict):
             continue
         civ["emblem_icon"] = pipeline.wpfg_icon("emblems", civ.get("emblem_image_path"))
+        # The coloured shield of the game's tech tree screen; readable at list size, unlike the
+        # near-black emblem silhouette (ui.md).
+        civ["crest_icon"] = pipeline.wpfg_icon("emblems", civ.get("tech_tree_image_path"))
         paths = civ.get("unique_unit_image_paths")
         civ["unique_unit_icons"] = [
             pipeline.wpfg_icon("unique_units", path)

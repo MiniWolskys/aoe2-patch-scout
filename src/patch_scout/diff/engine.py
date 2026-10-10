@@ -203,7 +203,29 @@ def compare(
         notices=tuple(run.notices),
         civs=civs,
         entries=entries,
+        stat_icons=_stat_icons(run),
     )
+
+
+def _civ_icon(civ: JsonObject) -> JsonObject | None:
+    """A civ's crest; else its emblem, marked as a dark silhouette the page has to lighten."""
+    crest = civ.get("crest_icon")
+    if isinstance(crest, dict) and isinstance(crest.get("hash"), str):
+        return crest
+    emblem = civ.get("emblem_icon")
+    if isinstance(emblem, dict) and isinstance(emblem.get("hash"), str):
+        return emblem | {"kind": "silhouette"}
+    return None
+
+
+def _stat_icons(run: _Run) -> JsonObject:
+    """The stat icons by key, the new build's first."""
+    icons: JsonObject = {}
+    for snapshot in (run.new, run.old):
+        for key, icon in snapshot.stat_icons.items():
+            if isinstance(icon, dict) and isinstance(icon.get("hash"), str):
+                icons.setdefault(key, icon)
+    return icons
 
 
 # --- notices ---------------------------------------------------------------------------------
@@ -248,7 +270,7 @@ def _civilizations(run: _Run) -> list[CivRef]:
     for internal_name, civ in new_civs.items():
         name = run.new_names.one_line(civ.get("name_string_id")) or internal_name
         era = civ.get("era")
-        icon = civ.get("emblem_icon")
+        icon = _civ_icon(civ)
         added = internal_name not in old_civs
         refs.append(
             CivRef(
@@ -692,8 +714,7 @@ def _bonuses(run: _Run) -> None:
     for internal_name in sorted(set(old_civs) & set(new_civs)):
         before, after = old_civs[internal_name], new_civs[internal_name]
         name = run.new_names.one_line(after.get("name_string_id")) or internal_name
-        icon = after.get("emblem_icon")
-        entity = Entity("civ", internal_name, name, icon=icon if isinstance(icon, dict) else None)
+        entity = Entity("civ", internal_name, name, icon=_civ_icon(after))
         _bonus_text(run, internal_name, entity, before, after)
         if run.compare_stats:
             _civ_effects(run, internal_name, entity, before, after)

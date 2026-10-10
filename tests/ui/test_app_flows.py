@@ -508,14 +508,54 @@ def test_a_comparison_of_identical_versions_says_nothing_changed(open_shell: Ope
     expect(page.locator("#comparison-changes")).to_contain_text("No changes to show")
 
 
-def test_a_change_with_a_stat_icon_marks_the_field(open_shell: OpenShell) -> None:
+# A 1x1 PNG, enough for an <img> to load.
+PIXEL = (
+    "data:image/png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+)
+
+
+def test_a_change_with_a_stat_icon_shows_the_icon(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    data["changeSet"] = change_set(changes=[change()], stat_icons={"hp": {"hash": "h" * 64}})
+    data["icons"] = {"h" * 64: PIXEL}
+    page = open_shell(data=data)
+
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    expect(page.locator('img.change-row__stat[data-stat="hp"]')).to_have_count(1)
+
+
+def test_labels_line_up_whether_or_not_their_stat_has_an_icon(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    plain = change(field={"key": "field.search_radius", "args": {}}, stat_icon=None)
+    data["changeSet"] = change_set(
+        changes=[change(), plain],
+        entries=[entry(change(), plain)],
+        stat_icons={"hp": {"hash": "h" * 64}},
+    )
+    data["icons"] = {"h" * 64: PIXEL}
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    page.locator("#comparison-filters").click()
+    page.locator("#filter-details").check()
+
+    expect(page.locator(".change-row__field")).to_have_count(2)
+    slots = page.locator(".change-row__stat")
+    expect(slots).to_have_count(2)
+    boxes = [slots.nth(index).bounding_box() for index in range(2)]
+    assert boxes[0] is not None and boxes[1] is not None
+    assert boxes[0]["width"] == boxes[1]["width"] == 18
+
+
+def test_a_stat_without_an_icon_leaves_no_gap(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
     data["changeSet"] = change_set(changes=[change()])
     page = open_shell(data=data)
 
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
 
-    expect(page.locator('.change-row__stat[data-stat="hp"]')).to_have_count(1)
+    expect(page.locator(".change-row__stat")).to_have_count(0)
 
 
 def test_the_comparison_fits_the_minimum_window(page: Page, open_shell: OpenShell) -> None:

@@ -152,6 +152,7 @@ def test_attaching_fills_in_every_icon_reference(tmp_path: Path) -> None:
     civs: list[JsonValue] = [
         {
             "emblem_image_path": "/resources/uniticons/017_50730.png",
+            "tech_tree_image_path": "/resources/uniticons/017_50730.png",
             "unique_unit_image_paths": ["/x.png"],
         }
     ]
@@ -161,6 +162,7 @@ def test_attaching_fills_in_every_icon_reference(tmp_path: Path) -> None:
     civ = civs[0]
     assert isinstance(civ, dict)
     assert ref(civ["emblem_icon"])["category"] == "emblems"
+    assert ref(civ["crest_icon"])["category"] == "emblems"
     unique = civ["unique_unit_icons"]
     assert isinstance(unique, list) and ref(unique[0])["missing_reason"] == "file not found"
     nodes = trees["Red"]

@@ -117,10 +117,10 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 ### Comparison
 
 - **Header:** the old and new pickers (legend dot, OLD/NEW label, version name, build, pre-release badge), swap, and **Export report** (P-13).
-- **Notice bar:** it shows when stats weren't compared, a layout was substituted, or there are unusually many changes. The text is truncated on one line, and a link opens Diagnostics.
+- **Notice bar:** it shows when stats weren't compared, a layout was substituted, there are unusually many changes, or changes are hidden by the filters. Each notice gets its own line and wraps rather than being truncated.
 - **Civ list** (236px, D-33):
   - **Overall** comes first, with its change count;
-  - then each civ with changes, with its emblem and count;
+  - then each civ with changes, with its crest (the coloured shield of the game's tech tree screen) and count. Snapshots captured before crests were stored show the emblem, lightened, since it is a near-black silhouette;
   - a civ added in the new build shows a **NEW** tag instead of a count;
   - the Chronicles civs are kept apart from the base civs (D-38); how is open question 9.
 - **Page title:** the civ, or "Overall". "Overall" has the subtitle "Changes to every civilization, with exceptions noted". A legend on the right names the old and new versions.
