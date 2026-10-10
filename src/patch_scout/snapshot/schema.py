@@ -36,6 +36,7 @@ class Snapshot:
     eras: list[JsonValue] = field(default_factory=list)
     strings: JsonObject = field(default_factory=dict)
     stat_icons: JsonObject = field(default_factory=dict)
+    scripts: JsonObject = field(default_factory=dict)
     stats: JsonObject | None = None
     schema_version: int = SCHEMA_VERSION
 

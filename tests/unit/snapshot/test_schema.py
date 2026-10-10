@@ -50,3 +50,9 @@ def test_from_json_refuses_unknown_sections() -> None:
 def test_from_json_refuses_missing_sections() -> None:
     with pytest.raises(SnapshotFormatError, match="flags, sources"):
         Snapshot.from_json({"meta": {}})
+
+
+def test_a_snapshot_written_before_the_scripts_section_still_loads() -> None:
+    data = make_snapshot().to_json()
+    del data["scripts"]
+    assert Snapshot.from_json(data).scripts == {}

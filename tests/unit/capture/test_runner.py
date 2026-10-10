@@ -181,3 +181,14 @@ def test_the_library_entry_can_be_read_back(install: Path, folder: DataFolder) -
     assert result.snapshot is not None
     entry = Library(folder).get(result.snapshot.capture_id)
     assert entry is not None and entry.prerelease is True and entry.origin == "captured"
+
+
+def test_the_snapshot_keeps_the_xs_scripts(install: Path, folder: DataFolder) -> None:
+    snapshot = runner.run(request_for(install), folder).snapshot
+    assert snapshot is not None
+    constants = snapshot.scripts["constants"]
+    assert isinstance(constants, dict)
+    effects = constants["Effect Constants"]
+    assert isinstance(effects, list)
+    assert ["cAddAttribute", 4] in effects
+    assert snapshot.scripts["effects"] == game_tree.EFFECTS_XS

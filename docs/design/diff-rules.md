@@ -90,7 +90,7 @@ For each civ, the diff reports only the units that civ can actually get. Reachab
 2. **Linked forms.** From every reachable unit, follow these links, and repeat until no unit is added:
    - `Building.transform_unit`: the other form of a transforming unit, e.g. Trebuchet ↔ Trebuchet (Packed);
    - `Unit.blood_unit_id`, only when the target's `language_dll_name` resolves to a string, e.g. Konnik → Konnik (Dismounted).
-3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it, labelled `Projectile: <field>` (e.g. `Arbalester · Projectile: Attack vs #3 · 6 → 7`), with the civs where that unit fires it.
+3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it, labelled `Projectile: <field>` (e.g. `Arbalester · Projectile: Attack vs Pierce · 6 → 7`), with the civs where that unit fires it.
 4. **Not followed:**
    - `Unit.dead_unit_id` (corpses, rubble);
    - `DeadFish.tracking_unit`;
@@ -176,7 +176,34 @@ Every changed effect command is shown in up to three layers, most readable first
    - Templates live in the i18n catalog.
 3. **The raw command.** Always available in an expanded view, and the only form for command types without a template, e.g. (illustrative) `effect 527 "C-Bonus, Cavalry +20% HP" · command 3 · type 5 · a=-1 b=12 c=0 · d=1.2 → 1.15`.
 
-**Mapping tables** (command type numbers, attribute IDs, unit class IDs → names) are built from genieutils-py and Advanced Genie Editor, never from memory. **They are still empty** (see O-5): AGE keeps the names inside its executable, so every command currently falls back to layer 3, and armour classes and attributes show as `#<id>`. A command type without a template is not an error; it falls back to layer 3. The effect's own name from the `.dat` is shown when present (how descriptive those names are is checked in M0).
+**Names come from the game's own `Constants.xs`** ([game-files.md §11](../reference/game-files.md#11-xs-scripts-resources_commonxs)), stored in each snapshot's `scripts` section, never from memory. The new build's table is used first, then the old one's. Labels are derived from the identifiers (`cDamageClassShockInfantry` → "Shock Infantry"). An ID the file doesn't name shows as `#<id>`.
+
+**Templates (layer 2)** are keyed by the command type's **name** in `Constants.xs`, not by its number. A snapshot whose constants don't name a type gets no sentence for it.
+
+| Type (XS name) | Label | Value |
+|---|---|---|
+| `SetAttribute` | `{target}: {attribute}` | `=5` |
+| `AddAttribute` | `{target}: {attribute}` | `+1` |
+| `MulAttribute` | `{target}: {attribute}` | `×1.2` |
+| `ModResource` (mode set / add) | `{resource}` | `=100` / `-50` |
+| `MulResource` | `{resource}` | `×1.1` |
+| `EnableObject` (mode enable / disable) | `Enables {unit}` / `Disables {unit}` | none |
+| `UpgradeUnit` | `Upgrades {unit} to {unit}` | none |
+| `DisableTech` | `Disables {tech}` | none |
+
+- **Target:** the unit in `a`, else the class in `b` ("Cavalry class"). A command with neither stays raw.
+- **Attack and armour** (attributes 9 and 8) unpack `d` as class × 256 + amount, e.g. "Archer: Attack vs Pierce · +1". A negative `d`, or a multiplied attack or armour, stays raw: its packing isn't verified.
+- **An attribute the constants don't name** stays raw, and so do attributes whose value probably packs data in a way not yet verified: `ResourceCost`, `AddArmorType`, `AddAttackType`, `RemoveArmorType` and `RemoveAttackType`. Attack and armour are recognised by their XS names (`Attack`, `Armor`), not by number.
+- **Two commands that differ only in a slot the sentence doesn't show** stay raw, so a change never reads "×1.5 → ×1.5".
+- **Other types** (`SpawnUnit`, `ModifyTech`, `SetPlayerData`, the unit-attribute variants 10–12, the tech cost and time types 100, 101, 103) have no template yet: their slot meanings aren't verified from game files.
+
+**How a changed command reads:**
+- **Same target and attribute on both sides:** one line with both values, e.g. "Archer: Attack vs Pierce · +1 → +2".
+- **Otherwise:** the old sentence with only an old value, and the new one with only a new value.
+- **A sentence without a value** says it in words: "New: Enables Crossbowman", "No longer: Enables Crossbowman".
+- **The raw command** stays in the change's detail: "Bodkin Arrow, command 7: type 4 a=4 b=-1 c=9 d=769".
+
+A command without a sentence is not an error; it falls back to layer 3. The effect's own name from the `.dat` is shown when present (how descriptive those names are is checked in M0).
 
 **Commands are compared as a sequence.** The two lists are aligned first (Python's `difflib`), so a command inserted or removed is one change, not a shift of every command after it. Within a replaced stretch, commands are paired by position. Each added, removed or changed command gets its own entry, with its position in the new effect (or the old one, when removed). *Before 2026-09-27 they were compared position by position; one inserted command in Butalmapu gave over 100 changes.*
 
@@ -203,7 +230,9 @@ Showing how a civ's bonuses affect a unit may come later as a separate feature (
 - **Comparison** is exact on stored values. Floats come from the file's float32 values, so the same bits always give the same Python float.
 - **Display:**
   - Show the shortest decimal form that tells old and new apart: `2.0 → 1.9`, not `2 → 2`.
-  - Resources are shown by name: type 0 is food, 1 wood, 2 stone and 3 gold, checked against costs the game shows in its own interface (game-files.md §4). Armour classes have no verified name table yet, so they show as `#<id>`.
+  - Resources are shown by name: type 0 is food, 1 wood, 2 stone and 3 gold, checked against costs the game shows in its own interface (game-files.md §4).
+  - Armour and attack classes are named from the snapshots' `Constants.xs`, e.g. "Attack vs Shock Infantry" (see Effects). Train and research locations show the building's name.
+  - **Required techs** show tech names, without the empty `-1` slots. A tech whose required count is 0 lists none: its slots then hold placeholders such as tech 0, "New Research". A change that only touches such slots is not reported.
   - Unknown IDs are shown as `#<id>`.
 - **Names:**
   - A unit, tech tree node or building is named from the game's strings, the new build first.

@@ -177,18 +177,22 @@ Details: [diff-rules.md](design/diff-rules.md#reachability-d-37).
 ### P-17 Effective (bonus-applied) stats: Decided, not in v1
 Superseded by D-20. Kept on the roadmap under "Later".
 
-### O-5 Showing bonus and effect changes: Decided (layer 2 not built)
+### O-5 Showing bonus and effect changes: Decided
 For every changed effect:
 1. the game's own text diff, when the bonus or help text changed;
 2. a **generated sentence** when a template exists for the command type;
 3. otherwise, the **raw effect command**.
 
-**Status, 2026-09-16:** layers 1 and 3 are built. **Layer 2 is not**, and the template table is
-empty. Command types, attribute IDs and unit class IDs are not in genieutils-py and not in any
-data file the game ships: Advanced Genie Editor compiles the names into its executable. Writing
-them from memory is exactly what AGENTS.md rule 7 forbids, and a wrong sentence is wrong output
-(D-04). Every changed command therefore shows as layer 3, next to the effect's own name and the
-game's bonus text diff. Filling the table needs the maintainer to read the names out of AGE.
+**Status, 2026-09-16:** layers 1 and 3 were built; layer 2 was blocked because the names of
+command types, attributes and classes seemed to exist only inside Advanced Genie Editor, and
+writing them from memory is what AGENTS.md rule 7 forbids.
+
+**Status, 2026-10-10:** layer 2 is built for the most common command types. The game ships the
+names itself, in `resources\_common\xs\Constants.xs` (XS scripting constants), cross-checked
+against the `.dat` ([game-files.md §11](reference/game-files.md#11-xs-scripts-resources_commonxs)).
+Captures store them per build (snapshot `scripts` section), templates are keyed by the XS name of
+the command type, and anything the file doesn't name, or whose slots aren't verified, stays raw
+([diff-rules.md](design/diff-rules.md#effects-o-5)). AGE is no longer needed for this.
 
 
 ### P-04 Full English string tables in every snapshot: Decided

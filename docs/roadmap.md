@@ -116,8 +116,15 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - Golden tests (change-set JSON + plain text).
 
 **Exit criteria (acceptance)**
-- [ ] **Not done:** diff two consecutive **public** builds and check the plain-text output against the official patch notes. Only one build is installed, so the engine has so far been checked against synthetic pairs and against one real build compared with a deliberately altered copy of itself.
-- [ ] **Not done:** effect sentences (O-5 layer 2). Every changed effect command falls back to the raw command, because the command type, attribute and unit class names live inside the Advanced Genie Editor executable and were not going to be written from memory (AGENTS.md rule 7).
+- [x] Diff two consecutive **public** builds and check the plain-text output against the official patch notes. Done on 2026-10-10 for 101.103.48987.0 → 101.103.54800.0 (Update 185872).
+  - **Every balance change in the notes was found**, apart from one: the notes give Carrack melee armour 6 → 5, but the shipped `.dat` still holds 6. That is a notes/data mismatch, not a miss.
+  - **Not decoded:** what new techs do (shown as an effect ID), and unit renames.
+  - **Noise:** about half the entries matter to no player. Examples: a resource repeated on every civ page, availability restated by raw effects and building lists, placeholder techs, a blast level without a blast width. This drives the player-view work below.
+- [x] Effect sentences (O-5 layer 2), from the game's own `Constants.xs`. Built for the common command types; other types stay raw.
+- [ ] **Player view:**
+  - noise rules: fold or merge the measured noise patterns, never delete;
+  - Headline / Detail / Technical levels in the app and exports;
+  - a regression corpus from the two public builds.
 
 ## M4: Compare UI and exports
 
@@ -129,6 +136,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 **Exit criteria**
 - [x] Capture, compare and export text or HTML work end to end in the app.
 - [ ] **Not done:** the PNG image export, and export/import of snapshot archives and the baseline pack (P-21).
+- [ ] **Requested 2026-10-10:** the Chronicles civs (and Return of Rome, once supported) in their own tab, instead of at the bottom of the civ list. Timing open.
 
 ## M5: Packaging and v1.0
 
