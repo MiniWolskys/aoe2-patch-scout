@@ -155,6 +155,7 @@ The change set is field-level: one change per field and value group. The app and
 - **A new unit** (in Unit stats, every field goes from nothing to a value): the entry is marked Added and lists only its **main stats**, without empty or default values (`0`, `-1`). The main stats are hit points, line of sight, speed, attacks, armours, displayed attack and armours, maximum range, reload time, cost and train time. The entry ends with the number of values it leaves out.
 - **A removed unit:** one line, with the number of values left out.
 - **Other categories** keep every change they have, e.g. a building that only gained offered items.
+- **Any entry:** a line that reads exactly like one already listed is listed once. The game has several records for some buildings, one per look, all named alike (four Docks on 101.103.54800.0); the change set keeps every change.
 - **Any entry:** a field that only appears or disappears with a default value (`added 0`) is counted, not listed. A placeholder unit that the patch fills in otherwise shows dozens of them. A sentence with no value, such as "New: Enables Champi Runner", is never a default: its label says it all. *Before 2026-10-10 such sentences were counted, which hid the Chronicles civs' full tech tree fix on 101.103.54800.0.*
 - **Counts:** the civ list counts entries.
 - **In the change set JSON,** an entry lists its changes by position in `changes`, so no change is written twice.

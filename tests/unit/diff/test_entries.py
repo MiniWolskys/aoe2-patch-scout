@@ -144,3 +144,21 @@ def test_a_sentence_that_says_it_all_in_its_label_is_listed() -> None:
 
     assert entry.changes == (required, sentence)
     assert entry.hidden == 0
+
+
+def test_a_line_repeated_for_building_variants_is_listed_once() -> None:
+    """Gurjaras on 101.103.54800.0: "Dock: Garrison Capacity · removed +5" read four times.
+
+    The game has several Dock records, one per look; the sentence names them all "Dock".
+    """
+    tech = Entity("tech", "855", "Civ bonus: Docks garrison")
+    field = Message("effect.attribute", {"target": "Dock", "attribute": "Garrison Capacity"})
+    docks = [
+        Change("techs", "modified", tech, ALL, field=field, old="+5", new="", raw=f"command {i}")
+        for i in range(4)
+    ]
+
+    [entry] = group(docks)
+
+    assert entry.changes == (docks[0],)
+    assert entry.hidden == 0
