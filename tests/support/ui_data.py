@@ -217,3 +217,108 @@ def calls(page: Page, name: str) -> list[list[Any]]:
     """Every call the page made to one API method, with its arguments."""
     recorded = page.evaluate("() => window.__calls")
     return [entry["args"] for entry in recorded if entry["name"] == name]
+
+
+def tree_node(key: str, name: str, column: int, row: int, **overrides: Any) -> dict[str, Any]:
+    """One tile of a tech tree, shaped the way `tree.build` writes it."""
+    use_type, _, _ = key.partition(":")
+    node: dict[str, Any] = {
+        "key": key,
+        "kind": use_type.lower(),
+        "node_type": "Unit" if use_type == "Unit" else use_type,
+        "name": name,
+        "old_name": None,
+        "available": True,
+        "mark": None,
+        "icon": None,
+        "group": 0,
+        "column": column,
+        "row": row,
+        "tooltip": {
+            "lines": [
+                [
+                    {
+                        "kind": "text",
+                        "text": name,
+                        "bold": True,
+                        "italic": False,
+                        "grey": False,
+                        "stat": None,
+                        "resource": None,
+                        "amount": None,
+                    }
+                ]
+            ],
+            "stats": {},
+            "cost": {"old": [], "new": []},
+        },
+        "changes": [],
+    }
+    return node | overrides
+
+
+def _run(kind: str, **fields: Any) -> dict[str, Any]:
+    run: dict[str, Any] = {
+        "kind": kind,
+        "text": "",
+        "bold": False,
+        "italic": False,
+        "grey": False,
+        "stat": None,
+        "resource": None,
+        "amount": None,
+    }
+    return run | fields
+
+
+def tech_tree(**overrides: Any) -> dict[str, Any]:
+    """Two buildings: an Archery Range with a changed, a gained and a lost node, and a Barracks."""
+    archer_tooltip = {
+        "lines": [
+            [
+                _run("text", text="Create "),
+                _run("text", text="Archer", bold=True),
+                _run("text", text=" ("),
+                _run("cost"),
+                _run("text", text=")"),
+            ],
+            [_run("text", text="All-purpose Foot Archer.")],
+            [
+                _run("stat", stat="hp"),
+                _run("text", text=" "),
+                _run("stat", stat="attack"),
+                _run("text", text=" "),
+                _run("stat", stat="range"),
+            ],
+        ],
+        "stats": {
+            "hp": {"old": "30", "new": "35"},
+            "attack": {"old": "4", "new": "4"},
+            "range": {"old": None, "new": None},
+        },
+        "cost": {
+            "old": [{"resource": "wood", "amount": 25}, {"resource": "gold", "amount": 45}],
+            "new": [{"resource": "wood", "amount": 25}, {"resource": "gold", "amount": 40}],
+        },
+    }
+    hp = change(entity={"kind": "unit", "id": "4", "name": "Archer", "where": None, "icon": None})
+    data: dict[str, Any] = {
+        "civ": "Franks",
+        "new_civ": False,
+        "removed_civ": False,
+        "columns": 3,
+        "groups": 2,
+        "rows": 8,
+        "nodes": [
+            tree_node("Building:87", "Archery Range", 0, 2, node_type="BuildingTech"),
+            tree_node(
+                "Unit:4", "Archer", 0, 3, mark="changed", tooltip=archer_tooltip, changes=[hp]
+            ),
+            tree_node("Unit:24", "Crossbowman", 0, 5, mark="gained", node_type="UnitUpgrade"),
+            tree_node("Tech:437", "Thumb Ring", 1, 5, mark="lost", node_type="Research"),
+            tree_node("Building:12", "Barracks", 2, 0, group=1, node_type="BuildingTech"),
+            tree_node("Unit:74", "Militia", 2, 1, group=1, available=False),
+        ],
+        "links": [["Unit:24", "Unit:4"]],
+    }
+    return data | overrides

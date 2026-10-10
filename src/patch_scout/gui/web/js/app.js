@@ -6,10 +6,11 @@ import { initCapture } from "./capture.js";
 import * as comparison from "./comparison.js";
 import * as details from "./details.js";
 import * as dialogs from "./dialogs.js";
-import { byId, input, onClick, show } from "./dom.js";
+import { byId, clear, el, input, onClick, show } from "./dom.js";
 import { applyTranslations, createTranslator } from "./i18n.js";
 import * as icons from "./icons.js";
 import { initDiagnostics, initExport, initPicker, initSettings } from "./panels.js";
+import * as techTree from "./tree.js";
 import { initVersionList, render as renderVersions } from "./version-list.js";
 
 const VIEWS = ["first-launch", "capture-view", "details-view", "comparing-view", "comparison-view"];
@@ -31,11 +32,13 @@ async function start() {
    *   versions: import("./api.js").Version[],
    *   openId: string | null,
    *   comparison: {oldId: string, newId: string, changeSet: Record<string, any>,
-   *     civ: string | null} | null,
+   *     civ: string | null, view: "changes" | "tree", treeCiv: string | null,
+   *     trees: Map<string, Record<string, any>>} | null,
    *   capture: import("./api.js").CaptureStatus | null,
    *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, details: boolean,
    *     technical: boolean, search: string},
    *   view: string,
+   *   treeFit: boolean,
    * }} */
   const state = {
     versions: startup.versions,
@@ -51,6 +54,7 @@ async function start() {
       search: "",
     },
     view: "first-launch",
+    treeFit: false,
   };
 
   function showView(name) {
@@ -171,6 +175,9 @@ async function start() {
       newId: changeSet.new.capture_id,
       changeSet,
       civ: null,
+      view: "changes",
+      treeCiv: null,
+      trees: new Map(),
     };
     state.openId = null;
     drawComparison();
@@ -179,25 +186,147 @@ async function start() {
   }
 
   function drawComparison() {
-    if (state.comparison === null) {
+    const current = state.comparison;
+    if (current === null) {
       return;
     }
+    const inTree = current.view === "tree";
     comparison.render({
       t,
-      changeSet: state.comparison.changeSet,
-      civ: state.comparison.civ,
+      changeSet: current.changeSet,
+      // The tree and the changes share one civ list (D-39): the tree shows the civ chosen last.
+      civ: inTree ? current.treeCiv : current.civ,
+      treeMode: inTree,
       filters: state.filters,
-      onCiv: (internalName) => {
-        if (state.comparison !== null) {
-          state.comparison.civ = internalName;
-          drawComparison();
-        }
-      },
+      onCiv: selectCiv,
       onPick: (side) => {
         const current = side === "old" ? state.comparison?.oldId : state.comparison?.newId;
         if (current !== undefined) {
           picker.open(current);
         }
+      },
+    });
+    show(byId("comparison-page"), !inTree);
+    show(byId("tree-view"), inTree);
+    show(byId("comparison-export"), !inTree);
+    const toggle = byId("comparison-tree");
+    toggle.textContent = t(inTree ? "tree.back" : "tree.open");
+    toggle.setAttribute("aria-pressed", String(inTree));
+    if (inTree) {
+      void drawTree();
+    }
+  }
+
+  /**
+   * Choose a civ in the list. In the tree, Overall and the Main game tab mean its first civ.
+   * @param {string | null} internalName
+   */
+  function selectCiv(internalName) {
+    const current = state.comparison;
+    if (current === null) {
+      return;
+    }
+    if (current.view === "tree") {
+      const civ = internalName ?? firstCiv(current.changeSet, false);
+      current.treeCiv = civ;
+      current.civ = civ;
+    } else {
+      current.civ = internalName;
+      if (internalName !== null) {
+        current.treeCiv = internalName;
+      }
+    }
+    drawComparison();
+  }
+
+  /**
+   * The first civ of the Main game or the Chronicles tab.
+   * @param {Record<string, any>} changeSet
+   * @param {boolean} chronicles
+   * @returns {string | null}
+   */
+  function firstCiv(changeSet, chronicles) {
+    const civs = changeSet.civs ?? [];
+    const found = civs.find(
+      (/** @type {Record<string, any>} */ civ) => (civ.era === "antiquity") === chronicles,
+    );
+    return found?.internal_name ?? civs[0]?.internal_name ?? null;
+  }
+
+  function toggleTree() {
+    const current = state.comparison;
+    if (current === null) {
+      return;
+    }
+    if (current.view === "tree") {
+      current.view = "changes";
+    } else {
+      // From Overall, the civ chosen last, as the game does; else the first civ.
+      current.treeCiv = current.civ ?? current.treeCiv ?? firstCiv(current.changeSet, false);
+      current.view = "tree";
+    }
+    drawComparison();
+  }
+
+  let treeRequest = 0;
+
+  async function drawTree() {
+    const current = state.comparison;
+    if (current === null) {
+      return;
+    }
+    const civ = current.treeCiv;
+    const filters = state.filters;
+    const key = [civ, filters.details, filters.technical, filters.low].join("|");
+    const container = byId("tree-view");
+    const request = ++treeRequest;
+    let tree = current.trees.get(key);
+    if (tree === undefined) {
+      clear(container);
+      container.append(el("p", { class: "help", text: t("tree.loading") }));
+      let answer = null;
+      try {
+        answer =
+          civ === null
+            ? null
+            : await api.get_tech_tree(
+                current.oldId,
+                current.newId,
+                civ,
+                filters.details,
+                filters.technical,
+                filters.low,
+              );
+        if (answer !== null) {
+          await icons.preload(api, techTree.iconHashes(answer));
+        }
+      } catch (error) {
+        console.error("the tech tree failed", error);
+        answer = null;
+      }
+      if (request !== treeRequest || state.comparison !== current) {
+        return; // another civ or comparison was asked for meanwhile
+      }
+      if (answer === null) {
+        dialogs.toast(t("tree.failed"));
+        current.view = "changes";
+        drawComparison();
+        return;
+      }
+      tree = answer;
+      current.trees.set(key, tree);
+    }
+    const civs = current.changeSet.civs ?? [];
+    const named = civs.find((/** @type {Record<string, any>} */ c) => c.internal_name === civ);
+    techTree.render({
+      t,
+      container,
+      tree,
+      civName: named?.name ?? civ ?? "",
+      fit: state.treeFit,
+      onFit: () => {
+        state.treeFit = !state.treeFit;
+        void drawTree();
       },
     });
   }
@@ -319,6 +448,7 @@ async function start() {
   onClick("settings-button", () => void settings.open());
   onClick("diagnostics-button", () => void diagnostics.open(state.openId));
   onClick("comparison-export", () => void exporter.open());
+  onClick("comparison-tree", toggleTree);
   onClick("comparison-swap", () => {
     if (state.comparison !== null) {
       void openComparison(state.comparison.newId, state.comparison.oldId);
