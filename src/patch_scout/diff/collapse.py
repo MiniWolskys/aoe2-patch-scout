@@ -47,11 +47,21 @@ def collapse(
         key = repr(pair)
         buckets.setdefault(key, []).append(civ)
         values[key] = pair
+    sizes = sorted((len(civs) for civs in buckets.values()), reverse=True)
+    # The one largest group may read "all except": the other groups name their civs on their own
+    # lines (Champion on 101.103.54800.0, 8 → 9 except the Chronicles civs, which went 6 → 9).
+    largest = sizes[0] if len(sizes) == 1 or sizes[0] > sizes[1] else None
     groups = [
         Group(
             old=values[key][0],
             new=values[key][1],
-            scope=_scope(in_scope, civs, every, single=len(buckets) == 1),
+            scope=_scope(
+                in_scope,
+                civs,
+                every,
+                single=len(buckets) == 1,
+                largest=len(civs) == largest,
+            ),
             size=len(civs),
         )
         for key, civs in buckets.items()
@@ -61,7 +71,12 @@ def collapse(
 
 
 def _scope(
-    in_scope: Sequence[str], civs: Sequence[str], every: Sequence[str], *, single: bool
+    in_scope: Sequence[str],
+    civs: Sequence[str],
+    every: Sequence[str],
+    *,
+    single: bool,
+    largest: bool,
 ) -> Scope:
     """Choose between "all civs", "all civs that have it", their "except" forms, and naming."""
     everywhere = set(in_scope) >= set(every)
@@ -74,7 +89,7 @@ def _scope(
         return Scope("some", tuple(civs))
     missing = [name for name in in_scope if name not in set(civs)]
     # The "except" forms only when they really are shorter to read (diff-rules.md, Thresholds).
-    if single and missing and len(missing) < len(civs):
+    if largest and missing and len(missing) < len(civs):
         if everywhere:
             return Scope("all_except", tuple(missing))
         if len(in_scope) > MAX_NAMED_CIVS:

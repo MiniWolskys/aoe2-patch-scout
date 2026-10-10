@@ -17,6 +17,7 @@ from support import pairs
 from patch_scout.diff import compare
 from patch_scout.diff.entries import group
 from patch_scout.diff.model import Change, ChangeSet, CivRef, Entity, Message, Scope, Side
+from patch_scout.diff.values import words
 from patch_scout.i18n.catalog import Catalog, load_catalog
 from patch_scout.report import Filters, render_html, render_text
 from patch_scout.report.html import ICON_PIXELS, MICROSOFT_NOTICE, shrink_icon
@@ -27,6 +28,7 @@ GOLDEN = Path(__file__).resolve().parents[2] / "golden"
 # The two fields that differ between runs (snapshot-format.md); pinned so the golden files can be
 # compared at all.
 FIXED_TIME = "2026-09-16T00:00:00Z"
+BREAK = r"\n"  # the game's line break in string files
 
 
 @pytest.fixture(scope="module")
@@ -306,3 +308,24 @@ def test_a_civ_export_keeps_its_shared_changes(catalog: Catalog) -> None:
 def test_the_html_export_also_shows_a_shared_change_once(catalog: Catalog) -> None:
     document = render_html(_shared_set(), catalog)
     assert document.count("Longship") == 1
+
+
+def test_a_civ_bonus_text_is_exported_one_line_per_bonus(catalog: Catalog) -> None:
+    """Vietnamese on 101.103.54800.0: the bonus text read as one block."""
+    vietnamese = Entity("civ", "Vietnamese", "Vietnamese")
+    old = "Archer civilization" + BREAK + "• Conscription free" + BREAK + "• Archers +20% HP"
+    new = "Archer civilization" + BREAK + "• Archers +20% HP"
+    change = Change(
+        "bonuses",
+        "text_changed",
+        vietnamese,
+        Scope("global"),
+        Message("field.civ_bonus_text"),
+        words=words(old, new),
+    )
+    text = render_text(_entry_set(change), catalog)
+    assert "Archer civilization\n" in text
+    assert "[-• Conscription free-]\n" in text
+    assert "• Archers +20% HP\n" in text
+    html = render_html(_entry_set(change), catalog)
+    assert "\n<del>• Conscription free</del>" in html

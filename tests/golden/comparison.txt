@@ -7,13 +7,10 @@ New: PUP build · 2026-09-16 · pre-release
 
 OVERALL
   Unit stats
+    • Archer · Hit points · 30 → 35 · (all civilizations except Bluelanders)
     • Archery Range · Hit points · 1000 → 1100 · (all civilizations)
   Technologies
     • Fletching · Cost in food · 100 → 120
-
-SEVERAL CIVILIZATIONS
-  Unit stats
-    • Archer · Hit points · 30 → 35 · (Redlanders, Ancients)
 
 REDLANDERS
   Civilization and team bonuses

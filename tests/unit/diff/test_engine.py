@@ -144,7 +144,8 @@ def test_a_redrawn_icon_is_reported_as_low_priority(change_set: ChangeSet) -> No
 
 def test_the_civ_list_counts_the_changes_on_each_page(change_set: ChangeSet) -> None:
     counts = {civ.internal_name: civ.count for civ in change_set.civs}
-    assert set(counts) == {"Redlanders", "Bluelanders", "Ancients"}
+    # Archer HP 30 → 35 for Redlanders and Ancients reads "all except Bluelanders", on Overall.
+    assert set(counts) == {"Redlanders", "Bluelanders"}
     assert all(count > 0 for count in counts.values())
 
 

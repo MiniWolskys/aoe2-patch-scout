@@ -17,7 +17,12 @@ from patch_scout.snapshot import JsonValue, Snapshot
 KNIGHT, RAM, SCORPION, CROSSBOW = 38, 35, 279, 2700
 CATALOG = load_catalog("en")
 CONSTANTS: JsonValue = {
-    "Effect Constants": [["cSetAttribute", 0], ["cAddAttribute", 4], ["cModResource", 1]],
+    "Effect Constants": [
+        ["cSetAttribute", 0],
+        ["cAddAttribute", 4],
+        ["cModResource", 1],
+        ["cDisableTech", 102],
+    ],
     "Tech Effect Constants": [["cHitpoints", 0], ["cBlastWidth", 22]],
     "Damage Classes": [["cDamageClassPierce", 3], ["cDamageClassMelee", 4]],
     "Attributes": [["cAttributeFood", 0], ["cAttributeVarangianGold", 297]],
@@ -248,6 +253,16 @@ def test_a_raw_tech_tree_command_is_technical() -> None:
     change_set = _compare(new={"tree_commands": [_command(255)]})
     tree = [c for c in change_set.changes if c.category == "bonuses"]
     assert tree and {c.level for c in tree} == {"technical"}
+
+
+def test_a_tech_tree_sentence_is_a_detail() -> None:
+    """Availability already says a civ lost the tech (Treadmill Crane on 101.103.54800.0)."""
+    change_set = _compare(new={"tree_commands": [_command(102, d=100)]})
+    tree = [c for c in change_set.changes if c.category == "bonuses"]
+    assert [CATALOG.message(c.field.key, c.field.args) for c in tree if c.field] == [
+        "New: Disables Vendel Legacy"
+    ] * len(tree)
+    assert tree and {c.level for c in tree} == {"detail"}
 
 
 def test_a_value_that_only_lost_a_rounding_error_is_technical() -> None:

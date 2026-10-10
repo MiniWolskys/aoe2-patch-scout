@@ -5,6 +5,9 @@ import { byId, clear, el, formatDate, show } from "./dom.js";
 import { message } from "./i18n.js";
 import * as icons from "./icons.js";
 
+// A new value longer than this is a list (a new civ's tech tree), shown across the wide layout.
+const LONG_VALUE = 40;
+
 // The order categories are shown in (diff-rules.md); the change set uses the same names.
 const CATEGORIES = [
   "civilizations",
@@ -332,7 +335,19 @@ function changeRow(view, entry) {
         }),
       );
     }
-    lines.append(fieldCell(view, change), values(change), note);
+    const field = fieldCell(view, change);
+    const shown = values(change);
+    if (isBlock(change)) {
+      // A text in lines (a civ bonus list) or a long list (a new civ's tech tree) takes the
+      // values and note columns; its note goes under the field, so it isn't squeezed into one
+      // narrow column.
+      shown.classList.add("change-values--block");
+      field.classList.add("change-row__field--stacked");
+      field.append(note);
+      lines.append(field, shown);
+      return;
+    }
+    lines.append(field, shown, note);
   });
   if (entry.hidden > 0) {
     lines.append(
@@ -383,16 +398,27 @@ function values(change) {
   if (words.length > 0) {
     const diff = el("div", { class: "change-values__words" });
     for (const word of words) {
-      if (word.kind === "removed") {
-        diff.append(el("del", { text: word.text }));
-      } else if (word.kind === "added") {
-        diff.append(el("ins", { text: word.text }));
-      } else {
+      if (word.kind !== "removed" && word.kind !== "added") {
         diff.append(document.createTextNode(word.text));
+        continue;
       }
+      // Marked line by line: a line break is never struck through or highlighted.
+      word.text.split("\n").forEach((piece, index) => {
+        if (index > 0) {
+          diff.append(document.createTextNode("\n"));
+        }
+        if (piece !== "") {
+          diff.append(el(word.kind === "removed" ? "del" : "ins", { text: piece }));
+        }
+      });
     }
     box.classList.add("change-values--words");
     box.append(diff);
+    return box;
+  }
+  if (isLongList(change)) {
+    box.classList.add("change-values--words");
+    box.append(el("span", { class: "value-new value-new--list", text: change.new }));
     return box;
   }
   box.append(el("span", { class: "value-old", text: change.old ?? "" }));
@@ -401,6 +427,28 @@ function values(change) {
   );
   box.append(el("span", { class: "value-new", text: change.new ?? "" }));
   return box;
+}
+
+/**
+ * A new value long enough to be a list rather than a stat, e.g. what a new civ's Barracks offers.
+ * @param {Record<string, any>} change
+ * @returns {boolean}
+ */
+export function isLongList(change) {
+  return !change.old && typeof change.new === "string" && change.new.length > LONG_VALUE;
+}
+
+/**
+ * Whether a change's values need the wide layout: a text in lines, or a long list.
+ * @param {Record<string, any>} change
+ * @returns {boolean}
+ */
+function isBlock(change) {
+  const words = change.words ?? [];
+  return (
+    isLongList(change) ||
+    words.some((/** @type {{text: string}} */ word) => word.text.includes("\n"))
+  );
 }
 
 /**

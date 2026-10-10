@@ -182,88 +182,6 @@
     },
     {
       "category": "unit_stats",
-      "civ": "Redlanders",
-      "detail": null,
-      "entity": {
-        "icon": {
-          "category": "units",
-          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
-          "height": 4,
-          "missing_reason": null,
-          "picture_index": 17,
-          "source": "widgetui/textures/ingame/units/017_50730.DDS",
-          "width": 4
-        },
-        "id": "4",
-        "kind": "unit",
-        "name": "Archer",
-        "named": true,
-        "where": null
-      },
-      "field": {
-        "args": {},
-        "key": "field.hit_points"
-      },
-      "kind": "modified",
-      "level": "headline",
-      "low_priority": false,
-      "new": "35",
-      "old": "30",
-      "raw": null,
-      "scope": {
-        "civs": [
-          "Redlanders",
-          "Ancients"
-        ],
-        "count": 0,
-        "kind": "some"
-      },
-      "stat_icon": "hp",
-      "words": []
-    },
-    {
-      "category": "unit_stats",
-      "civ": "Ancients",
-      "detail": null,
-      "entity": {
-        "icon": {
-          "category": "units",
-          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
-          "height": 4,
-          "missing_reason": null,
-          "picture_index": 17,
-          "source": "widgetui/textures/ingame/units/017_50730.DDS",
-          "width": 4
-        },
-        "id": "4",
-        "kind": "unit",
-        "name": "Archer",
-        "named": true,
-        "where": null
-      },
-      "field": {
-        "args": {},
-        "key": "field.hit_points"
-      },
-      "kind": "modified",
-      "level": "headline",
-      "low_priority": false,
-      "new": "35",
-      "old": "30",
-      "raw": null,
-      "scope": {
-        "civs": [
-          "Redlanders",
-          "Ancients"
-        ],
-        "count": 0,
-        "kind": "some"
-      },
-      "stat_icon": "hp",
-      "words": []
-    },
-    {
-      "category": "unit_stats",
       "civ": "Bluelanders",
       "detail": null,
       "entity": {
@@ -298,6 +216,46 @@
         ],
         "count": 0,
         "kind": "some"
+      },
+      "stat_icon": "hp",
+      "words": []
+    },
+    {
+      "category": "unit_stats",
+      "civ": null,
+      "detail": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "named": true,
+        "where": null
+      },
+      "field": {
+        "args": {},
+        "key": "field.hit_points"
+      },
+      "kind": "modified",
+      "level": "headline",
+      "low_priority": false,
+      "new": "35",
+      "old": "30",
+      "raw": null,
+      "scope": {
+        "civs": [
+          "Bluelanders"
+        ],
+        "count": 0,
+        "kind": "all_except"
       },
       "stat_icon": "hp",
       "words": []
@@ -576,7 +534,7 @@
   "civs": [
     {
       "added": false,
-      "count": 2,
+      "count": 1,
       "era": "base",
       "icon": null,
       "internal_name": "Redlanders",
@@ -589,19 +547,11 @@
       "icon": null,
       "internal_name": "Bluelanders",
       "name": "Bluelanders"
-    },
-    {
-      "added": false,
-      "count": 1,
-      "era": "antiquity",
-      "icon": null,
-      "internal_name": "Ancients",
-      "name": "Ancients"
     }
   ],
   "counts": {
-    "overall": 7,
-    "total": 14
+    "overall": 8,
+    "total": 13
   },
   "entries": [
     {
@@ -724,74 +674,6 @@
       "changes": [
         5
       ],
-      "civ": "Redlanders",
-      "entity": {
-        "icon": {
-          "category": "units",
-          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
-          "height": 4,
-          "missing_reason": null,
-          "picture_index": 17,
-          "source": "widgetui/textures/ingame/units/017_50730.DDS",
-          "width": 4
-        },
-        "id": "4",
-        "kind": "unit",
-        "name": "Archer",
-        "named": true,
-        "where": null
-      },
-      "hidden": 0,
-      "kind": "modified",
-      "low_priority": false,
-      "scope": {
-        "civs": [
-          "Redlanders",
-          "Ancients"
-        ],
-        "count": 0,
-        "kind": "some"
-      }
-    },
-    {
-      "category": "unit_stats",
-      "changes": [
-        6
-      ],
-      "civ": "Ancients",
-      "entity": {
-        "icon": {
-          "category": "units",
-          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
-          "height": 4,
-          "missing_reason": null,
-          "picture_index": 17,
-          "source": "widgetui/textures/ingame/units/017_50730.DDS",
-          "width": 4
-        },
-        "id": "4",
-        "kind": "unit",
-        "name": "Archer",
-        "named": true,
-        "where": null
-      },
-      "hidden": 0,
-      "kind": "modified",
-      "low_priority": false,
-      "scope": {
-        "civs": [
-          "Redlanders",
-          "Ancients"
-        ],
-        "count": 0,
-        "kind": "some"
-      }
-    },
-    {
-      "category": "unit_stats",
-      "changes": [
-        7
-      ],
       "civ": "Bluelanders",
       "entity": {
         "icon": {
@@ -823,7 +705,40 @@
     {
       "category": "unit_stats",
       "changes": [
-        8
+        6
+      ],
+      "civ": null,
+      "entity": {
+        "icon": {
+          "category": "units",
+          "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",
+          "height": 4,
+          "missing_reason": null,
+          "picture_index": 17,
+          "source": "widgetui/textures/ingame/units/017_50730.DDS",
+          "width": 4
+        },
+        "id": "4",
+        "kind": "unit",
+        "name": "Archer",
+        "named": true,
+        "where": null
+      },
+      "hidden": 0,
+      "kind": "modified",
+      "low_priority": false,
+      "scope": {
+        "civs": [
+          "Bluelanders"
+        ],
+        "count": 0,
+        "kind": "all_except"
+      }
+    },
+    {
+      "category": "unit_stats",
+      "changes": [
+        7
       ],
       "civ": null,
       "entity": {
@@ -854,7 +769,7 @@
     {
       "category": "techs",
       "changes": [
-        9
+        8
       ],
       "civ": null,
       "entity": {
@@ -885,7 +800,7 @@
     {
       "category": "text",
       "changes": [
-        10
+        9
       ],
       "civ": null,
       "entity": {
@@ -916,7 +831,7 @@
     {
       "category": "text",
       "changes": [
-        11
+        10
       ],
       "civ": null,
       "entity": {
@@ -939,7 +854,7 @@
     {
       "category": "icons",
       "changes": [
-        12
+        11
       ],
       "civ": null,
       "entity": {
@@ -970,7 +885,7 @@
     {
       "category": "icons",
       "changes": [
-        13
+        12
       ],
       "civ": null,
       "entity": {
@@ -1001,7 +916,7 @@
     {
       "category": "icons",
       "changes": [
-        14
+        13
       ],
       "civ": null,
       "entity": {

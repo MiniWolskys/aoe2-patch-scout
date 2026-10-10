@@ -131,7 +131,7 @@ For each unit ID and allowlisted field of the raw unit records:
 | One value pair, more than 8 civs in scope (not all), all changed | `Onager — attack 50 → 55 (all 45 civilizations that have it)` |
 | One value pair, more than 8 civs in scope (not all), most changed | `(all 45 civilizations that have it, except Goths)` |
 | One value pair, few civs changed | `Knight — HP 120 → 130 (Franks)` |
-| Several value pairs | One line per group, largest group first |
+| Several value pairs | One line per group, largest group first. The largest group, when no other is as large, may use the "except" forms; the civs of the other groups are among its exceptions and are named on their own lines: `Champion — attack vs Shock infantry 8 → 9 (all civilizations except Achaemenids, …)` and `6 → 9 (Achaemenids, …)` |
 
 **Thresholds:**
 - The app names at most 8 civs in a list ("… and 3 more"), with the full list on hover. **Exports name every civ**: they are read out or pasted, so nothing may be cut.
@@ -172,7 +172,7 @@ Shared units and nodes aren't compared for it (see Per-civ collapsing, Scope). A
 
 Every changed effect command is shown in up to three layers, most readable first:
 
-1. **The game's own text.** If the civ's bonus text, or the tech's help text, changed: a word-level diff of it.
+1. **The game's own text.** If the civ's bonus text, or the tech's help text, changed: a word-level diff of it. Texts read as players see them: the game's line-break marker is a line break and its bold markers are dropped. A text with several lines (a civ bonus list) is compared line by line: an added or removed bonus is a whole line, and a line that only changed a little marks the words that changed. The exports keep the lines: plain text marks each removed or added line on its own line.
 2. **A generated sentence.** For command types that have a template: a sentence built from the command, with unit, class, resource, tech and attribute names resolved.
    - Examples (illustrative): `Cavalry — hit points ×1.20 → ×1.15`, `Enables unit: Elite Konnik`, `Loom — food cost −50`.
    - Templates live in the i18n catalog.
@@ -228,6 +228,7 @@ The rules come from measuring 101.103.48987.0 → 101.103.54800.0 against its of
 | A building switching between `ResearchRequired` and `ResearchedCompleted` | detail | Available either way |
 | Tech repeatable flag, required tech count, tech type; an effect ID change | detail | Bookkeeping; an effect's commands are reported on their own lines |
 | A raw command in a civ's tech tree effect | technical | The availability lines already say it |
+| A sentence in a civ's tech tree effect that enables or disables a unit or tech | detail | The availability lines already say it (Treadmill Crane on 101.103.54800.0: "Not available (Bengalis, …)" and "Bengalis · New: Disables Treadmill Crane") |
 | A value that only changed by rounding (less than 0.1 %, e.g. 0.99999 → 1) | technical | No effect |
 | A text change in spacing only | technical | No effect |
 
@@ -262,7 +263,7 @@ Showing how a civ's bonuses affect a unit may come later as a separate feature (
   - Show the shortest decimal form that tells old and new apart: `2.0 → 1.9`, not `2 → 2`.
   - Resources are shown by name: type 0 is food, 1 wood, 2 stone and 3 gold, checked against costs the game shows in its own interface (game-files.md §4).
   - Armour and attack classes are named from the snapshots' `Constants.xs`, e.g. "Attack vs Shock Infantry" (see Effects). Train and research locations show the building's name.
-  - **Required techs** show tech names, without the empty `-1` slots. A tech whose required count is 0 lists none: its slots then hold placeholders such as tech 0, "New Research". A change that only touches such slots is not reported.
+  - **Required techs** show tech names separated by semicolons (names can hold commas, e.g. "C-Bonus, Free Chemistry"), without the empty `-1` slots. A tech whose required count is 0 lists none: its slots then hold placeholders such as tech 0, "New Research". A change that only touches such slots is not reported.
   - Unknown IDs are shown as `#<id>`.
 - **Names:**
   - A unit, tech tree node or building is named from the game's strings, the new build first.

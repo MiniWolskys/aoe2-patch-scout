@@ -16,6 +16,13 @@ from patch_scout.snapshot import JsonValue
 # The game's floats come from 32-bit values, so six decimals is always enough to be faithful.
 MAX_DECIMALS: Final = 6
 _WORDS: Final = re.compile(r"\s+|[^\s]+")
+# The game's markup in string files (game-files.md §5): a two-character line break, and bold.
+_LINE_BREAK: Final = r"\n"
+_BOLD: Final = re.compile(r"</?b>", re.IGNORECASE)
+# Above this share of shared words, a line was edited; at or below, it was replaced. Half is too
+# low: "• Archery Range units and Fire Lancers +20% HP" → "• Foot Archers and Skirmishers +20% HP"
+# (Vietnamese on 101.103.54800.0) read as interleaved words.
+_SIMILAR: Final = 0.5
 
 
 def display(value: JsonValue) -> str:
@@ -81,7 +88,69 @@ def unknown_id(identifier: JsonValue) -> str:
     return f"#{identifier}"
 
 
+def readable(text: str) -> str:
+    r"""A game text as players read it: `\n` markers as line breaks, without `<b>` markers."""
+    return _BOLD.sub("", text.replace(_LINE_BREAK, "\n"))
+
+
 def words(old: str, new: str) -> tuple[WordDiff, ...]:
+    """A diff of two game texts, line by line, then word by word inside a line that changed.
+
+    Civ bonus texts are lists, one bonus per line: a bonus added between two others is one added
+    line, not words scattered across the text (Saxons and Vietnamese on 101.103.54800.0).
+    """
+    old, new = readable(old), readable(new)
+    if "\n" not in old and "\n" not in new:
+        return _word_runs(old, new)
+    old_lines, new_lines = old.split("\n"), new.split("\n")
+    matcher = difflib.SequenceMatcher(a=old_lines, b=new_lines, autojunk=False)
+    lines: list[tuple[WordDiff, ...]] = []
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            lines += [(WordDiff("same", text),) for text in old_lines[i1:i2]]
+            continue
+        before, after = old_lines[i1:i2], new_lines[j1:j2]
+        paired = min(len(before), len(after)) if tag == "replace" else 0
+        for old_line, new_line in zip(before[:paired], after[:paired], strict=True):
+            if _similar(old_line, new_line):
+                lines.append(_word_runs(old_line, new_line))
+            else:
+                lines += [(WordDiff("removed", old_line),), (WordDiff("added", new_line),)]
+        lines += [(WordDiff("removed", text),) for text in before[paired:]]
+        lines += [(WordDiff("added", text),) for text in after[paired:]]
+    # A line break belongs to the sides that have a line before and after it, so each side reads
+    # back exactly as its own text.
+    runs: list[WordDiff] = []
+    started = {"old": False, "new": False}
+    for line in lines:
+        sides = {
+            "old": any(run.kind != "added" for run in line),
+            "new": any(run.kind != "removed" for run in line),
+        }
+        needs = {side for side, present in sides.items() if present and started[side]}
+        if needs:
+            _append(runs, _BREAK_KIND[frozenset(needs)], ["\n"])
+        for side, present in sides.items():
+            started[side] = started[side] or present
+        for run in line:
+            _append(runs, run.kind, [run.text])
+    return tuple(runs)
+
+
+_BREAK_KIND: Final = {
+    frozenset({"old", "new"}): "same",
+    frozenset({"old"}): "removed",
+    frozenset({"new"}): "added",
+}
+
+
+def _similar(old: str, new: str) -> bool:
+    """Whether two lines are the same line edited, rather than one replaced by another."""
+    before, after = old.split(), new.split()
+    return difflib.SequenceMatcher(a=before, b=after, autojunk=False).ratio() > _SIMILAR
+
+
+def _word_runs(old: str, new: str) -> tuple[WordDiff, ...]:
     """A word-level diff of two texts, keeping the whitespace between words."""
     old_tokens = _tokens(old)
     new_tokens = _tokens(new)

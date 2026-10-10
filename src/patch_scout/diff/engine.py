@@ -1008,7 +1008,8 @@ def _tech_list(run: _Run, value: JsonValue, count: JsonValue) -> str:
     if count == 0:
         return ""
     ids = [item for item in (value if isinstance(value, list) else []) if isinstance(item, int)]
-    return ", ".join(_tech_name(run, item) for item in ids if item >= 0)
+    # Tech names can hold commas ("C-Bonus, Free Chemistry"), so the list uses semicolons.
+    return "; ".join(_tech_name(run, item) for item in ids if item >= 0)
 
 
 def _entries(record: JsonObject | None, allow: Field) -> list[JsonObject]:
@@ -1245,7 +1246,8 @@ def _command_changes(
             continue
         raw = " → ".join(text for text in (old_text, new_text) if text)
         detail = Message(
-            "detail.effect_command_raw", {"effect": effect_name, "command": position, "raw": raw}
+            "detail.effect_command_raw",
+            {"effect": effect_name, "command": position, "raw": raw, "source": label.key},
         )
         changes.extend(
             replace(base, field=sentence, old=old, new=new, detail=detail)
