@@ -5,10 +5,13 @@ Game names always come from `strings.tables[<lang>]`, falling back to English (O
 no name is shown as `#<id>`, never guessed (diff-rules.md, "Values and formatting").
 """
 
+import re
 from collections.abc import Mapping
+from functools import cache
 from typing import Final
 
 from patch_scout.diff.values import at_path, unknown_id
+from patch_scout.i18n.catalog import Catalog, load_catalog
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
 
 FALLBACK_LANGUAGE: Final = "en"
@@ -18,12 +21,19 @@ PLACEHOLDER_TECH_NAME: Final = "New Research"
 _LINE_BREAK: Final = "\\n"
 
 
+# The developers' shorthand at the start of a bonus tech's internal name, e.g. "C-Bonus, Pastures"
+# (345 civ bonuses and 1 team bonus on 101.103.54800.0), and the catalog message that says it.
+_BONUS_PREFIX: Final = re.compile(r"^([CT])-Bonus\s*[,:]\s*(?P<name>\S.*)$", re.IGNORECASE)
+_BONUS_MESSAGES: Final = {"C": "name.civ_bonus", "T": "name.team_bonus"}
+
+
 class Names:
     """Looks names up in one snapshot, preferring the new build's text."""
 
     def __init__(self, snapshot: Snapshot, language: str = FALLBACK_LANGUAGE) -> None:
         self._tables = _tables(snapshot)
         self._language = language
+        self._catalog = _catalog(language)
         self._nodes: dict[tuple[str, str, int], JsonObject] = {}
         for internal_name, nodes in snapshot.tech_trees.items():
             for node in nodes if isinstance(nodes, list) else []:
@@ -87,8 +97,24 @@ class Names:
             return resolved
         internal = record.get("name")
         if isinstance(internal, str) and internal.strip() not in ("", PLACEHOLDER_TECH_NAME):
-            return internal.strip()
+            return self.internal_name(internal.strip())
         return None
+
+    def internal_name(self, name: str) -> str:
+        """An internal `.dat` name as players can read it: "C-Bonus, X" reads "Civ bonus: X".
+
+        Only the prefix is spelled out; the rest is the developers' own wording, kept as is.
+        """
+        match = _BONUS_PREFIX.match(name)
+        if match is None:
+            return name
+        key = _BONUS_MESSAGES[match.group(1).upper()]
+        return self._catalog.text(key, name=match.group("name"))
+
+
+@cache
+def _catalog(language: str) -> Catalog:
+    return load_catalog(language)
 
 
 def _tables(snapshot: Snapshot) -> Mapping[str, JsonValue]:

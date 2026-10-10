@@ -267,7 +267,7 @@ Showing how a civ's bonuses affect a unit may come later as a separate feature (
   - Unknown IDs are shown as `#<id>`.
 - **Names:**
   - A unit, tech tree node or building is named from the game's strings, the new build first.
-  - A **tech with no display name** uses its internal `.dat` name. Civ bonuses are such techs, e.g. `C-Bonus, Military cost -20%`. The scenario editor's placeholder, `New Research`, doesn't count as a name (seen on build 101.103.54800.0).
+  - A **tech with no display name** uses its internal `.dat` name. Civ bonuses are such techs, e.g. `C-Bonus, Military cost -20%`. The developers' prefix is spelled out from the catalog, for techs and effects alike: `C-Bonus, X` reads "Civ bonus: X" and `T-Bonus, X` reads "Team bonus: X" (345 and 1 such names on build 101.103.54800.0). The rest of the name is kept as written; it is never reworded or guessed. The scenario editor's placeholder, `New Research`, doesn't count as a name (seen on build 101.103.54800.0).
   - A **tech the `.dat` ties to a civ** (its `civ` slot, on either side; Gaia doesn't count) is that civ's bonus. Its changes go on that civ's page.
   - An entity still left with **no name** is marked `named: false` and shown as `#<id>`. Its changes are **hidden by default**: a notice gives their count, and "Show objects with no name" shows them, in the app and in the exports. They stay in the change set, so nothing is lost.
 - **Lists** (e.g. attack entries):
