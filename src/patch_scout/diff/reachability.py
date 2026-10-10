@@ -71,14 +71,23 @@ class UnitLookup:
 
 
 def seeds(snapshot: Snapshot, internal_name: str) -> set[int]:
-    """The unit and building IDs a civ's tech tree and building offers name (D-37)."""
+    """The unit and building IDs a civ's tech tree and building offers name (D-37).
+
+    Both also name what the civ can't get, marked NotAvailable in its tree: those are left out.
+    The Heavy Mounted Crossbowman on 101.103.54800.0 is in 15 trees but available to 10 civs.
+    """
     found: set[int] = set()
+    unavailable: set[int] = set()
     nodes = snapshot.tech_trees.get(internal_name)
     for node in nodes if isinstance(nodes, list) else []:
         if not isinstance(node, dict):
             continue
         node_id = node.get("node_id")
-        if isinstance(node_id, int) and node.get("use_type") in ("Unit", "Building"):
+        if not isinstance(node_id, int) or node.get("use_type") not in ("Unit", "Building"):
+            continue
+        if node.get("node_status") == "NotAvailable":
+            unavailable.add(node_id)
+        else:
             found.add(node_id)
     offers = snapshot.building_offers.get(internal_name)
     buildings = offers.get("buildings") if isinstance(offers, dict) else None
@@ -92,7 +101,7 @@ def seeds(snapshot: Snapshot, internal_name: str) -> set[int]:
         found.update(
             item for item in (units if isinstance(units, list) else []) if isinstance(item, int)
         )
-    return found
+    return found - (unavailable - _available(nodes))
 
 
 def for_civ(
@@ -178,3 +187,15 @@ def all_civs(
         internal_name: for_civ(old, new, internal_name, indices, lookups)
         for internal_name, indices in civs
     }
+
+
+def _available(nodes: JsonValue) -> set[int]:
+    """Node IDs some node of the tree makes available: a unit can be listed twice."""
+    available: set[int] = set()
+    for node in nodes if isinstance(nodes, list) else []:
+        if not isinstance(node, dict) or node.get("node_status") == "NotAvailable":
+            continue
+        node_id = node.get("node_id")
+        if isinstance(node_id, int):
+            available.add(node_id)
+    return available
