@@ -193,6 +193,8 @@ Every changed effect command is shown in up to three layers, most readable first
 | `EnableObject` (mode enable / disable) | `Enables {unit}` / `Disables {unit}` | none |
 | `UpgradeUnit` | `Upgrades {unit} to {unit}` | none |
 | `DisableTech` | `Disables {tech}` | none |
+| `AddTechCost` (mode set / multiply) | `{tech}: Cost`, or `{tech}: {resource} cost` for one resource | `=0` / `×0.85` |
+| `ModTechTime` (mode set / multiply, every resource) | `{tech}: Research time` | `=0` / `×0.75` |
 | `ModResource` setting `EffectFunctionNumber` | `Runs the scripted effect: {title}` | none |
 
 - **Target:** the unit in `a`, else the class in `b` ("Cavalry class"). A command with neither stays raw.
@@ -200,7 +202,8 @@ Every changed effect command is shown in up to three layers, most readable first
 - **Attack and armour** (attributes 9 and 8) unpack `d` as class × 256 + amount, e.g. "Archer: Attack vs Pierce · +1". A negative `d`, or a multiplied attack or armour, stays raw: its packing isn't verified.
 - **An attribute the constants don't name** stays raw, and so do attributes whose value probably packs data in a way not yet verified: `ResourceCost`, `AddArmorType`, `AddAttackType`, `RemoveArmorType` and `RemoveAttackType`. Attack and armour are recognised by their XS names (`Attack`, `Armor`), not by number.
 - **Two commands that differ only in a slot the sentence doesn't show** stay raw, so a change never reads "×1.5 → ×1.5".
-- **Other types** (`SpawnUnit`, `ModifyTech`, `SetPlayerData`, the unit-attribute variants 10–12, the tech cost and time types 100, 101, 103) have no template yet: their slot meanings aren't verified from game files.
+- **Tech cost and time** (`AddTechCost`, `ModTechTime`): `a` is the tech, `b` the resource (`-1` every one; food, wood, stone or gold for a cost), `c` the mode. Verified on 101.103.54800.0 from bonuses named after what they do: mode 0 sets ("free Careening, Dry Dock" sets their food and gold to 0), mode 2 multiplies (the Italians' "Age up 15% cheaper" is ×0.85). Modes 1 and -1, other `b` values, and a time with a resource stay raw.
+- **Other types** (`SpawnUnit`, `ModifyTech`, `SetPlayerData`, the unit-attribute variants 10–12, `SetTechCost`) have no template yet: their slot meanings aren't verified from game files. Types the constants don't name, such as 15 (120 commands on 101.103.54800.0), stay raw.
 
 **How a changed command reads:**
 - **Same target and attribute on both sides:** one line with both values, e.g. "Archer: Attack vs Pierce · +1 → +2".

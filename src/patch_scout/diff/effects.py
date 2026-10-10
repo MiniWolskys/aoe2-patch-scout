@@ -30,6 +30,13 @@ _UNVERIFIED: Final = frozenset(
 _SET, _ADD = 0, 1
 _DISABLE, _ENABLE = 0, 1
 TIMES: Final = "\N{MULTIPLICATION SIGN}"
+# AddTechCost and ModTechTime: `a` a tech, `b` a resource (-1 every one), `c` the mode. Only the
+# modes that bonuses named after them confirm (101.103.54800.0) get a sentence: 0 sets ("free
+# Careening, Dry Dock" sets food and gold to 0) and 2 multiplies (Italians, "Age up 15% cheaper":
+# x0.85). The others, 1 and -1, stay raw.
+_TECH_SET, _TECH_MUL = 0, 2
+_ALL_RESOURCES: Final = -1
+_COST_RESOURCES: Final = frozenset({0, 1, 2, 3})  # food, wood, stone, gold
 # The player resource that, when set, runs a function of Effects.xs (its Constants.xs name).
 _SCRIPT_RESOURCE: Final = "EffectFunctionNumber"
 # A numbered function's title comment in Effects.xs, e.g. "// 52 - Effect of Kasbah for Berbers".
@@ -87,6 +94,8 @@ def describe(command: JsonValue, lookup: Lookup) -> Sentence | None:
         return Sentence(Message(key, {"unit": lookup.unit(a)}))
     if kind == "UpgradeUnit" and a >= 0 and b >= 0:
         return Sentence(Message("effect.upgrade", {"unit": lookup.unit(a), "to": lookup.unit(b)}))
+    if kind in ("AddTechCost", "ModTechTime") and a >= 0 and c in (_TECH_SET, _TECH_MUL):
+        return _tech_cost_or_time(kind, a, b, c, float(d), lookup)
     if kind == "DisableTech" and float(d).is_integer() and d >= 0:
         return Sentence(Message("effect.disable_tech", {"tech": lookup.tech(int(d))}))
     return None
@@ -128,6 +137,24 @@ def _target(a: int, b: int, lookup: Lookup) -> JsonValue:
         message: JsonObject = Message("effect.class_target", {"class": name}).to_json()
         return message
     return None
+
+
+def _tech_cost_or_time(
+    kind: str, tech: int, resource: int, mode: int, value: float, lookup: Lookup
+) -> Sentence | None:
+    shown = f"={display(value)}" if mode == _TECH_SET else _times(value)
+    name = lookup.tech(tech)
+    if kind == "ModTechTime":
+        if resource != _ALL_RESOURCES:
+            return None  # a resource slot on a time: not explained yet
+        return Sentence(Message("effect.tech_time", {"tech": name}), shown)
+    if resource == _ALL_RESOURCES:
+        return Sentence(Message("effect.tech_cost", {"tech": name}), shown)
+    if resource not in _COST_RESOURCES:
+        return None
+    resource_name = _resource(resource, lookup)
+    message = Message("effect.tech_resource_cost", {"tech": name, "resource": resource_name})
+    return Sentence(message, shown)
 
 
 def _resource(resource: int, lookup: Lookup) -> str:
