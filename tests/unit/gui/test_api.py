@@ -161,6 +161,18 @@ def test_a_version_can_be_deleted(api: Api, install: Path) -> None:
     assert api.delete_version(capture_id)["versions"] == []
 
 
+def test_deleting_a_version_deletes_its_raw_backups(
+    api: Api, install: Path, folder: DataFolder
+) -> None:
+    capture_id = capture(api, install)
+    assert (folder.backups / f"{capture_id}.json").is_file()
+
+    api.delete_version(capture_id)
+
+    assert not (folder.backups / f"{capture_id}.json").exists()
+    assert not [path for path in (folder.backups / "objects").rglob("*") if path.is_file()]
+
+
 def test_two_versions_compare(api: Api, install: Path, tmp_path: Path) -> None:
     first = capture(api, install, "Live")
     other = game_tree.write(

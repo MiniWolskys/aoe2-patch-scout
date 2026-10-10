@@ -169,7 +169,7 @@ class Api:
             return _entry_json(entry)
 
     def delete_version(self, capture_id: str) -> JsonObject:
-        """Delete a snapshot and its library entry."""
+        """Delete a snapshot, its library entry, and the raw backups no other version uses."""
         with _Guard("delete_version"):
             try:
                 self._snapshots.delete(capture_id)
@@ -178,6 +178,10 @@ class Api:
                 return {"deleted": False, "error": str(exc), "versions": self._versions()}
             self._library.remove(capture_id)
             self._loaded.pop(capture_id, None)
+            try:
+                BackupStore(self._folder).forget(capture_id)
+            except OSError as exc:  # the version is gone; leftover backups only cost disk space
+                logger.warning("backups of %s couldn't all be deleted: %s", capture_id, exc)
             return {"deleted": True, "versions": self._versions()}
 
     # --- capture -----------------------------------------------------------------------------
