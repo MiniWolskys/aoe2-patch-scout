@@ -144,6 +144,38 @@ The screens were designed in three rounds of mockups with sample data. The mocku
   A text change replaces the values and note columns with a word diff: removed words struck through in red, added words in green. A text with lines, such as a civ bonus list, keeps them.
 - **Filters:** "Show minor changes" and "Show technical changes" show changes below the headline level (D-46), next to "Show objects with no name", the low-priority categories, unreachable units and search.
 
+### Tech tree (D-39)
+
+One civ's tech tree, in the comparison, laid out like the game's and aoe2techtree.net's. The app's own colours replace the game's textures.
+
+- **Opening it:** a **Tech tree** button in the comparison header swaps the change list for the tree; it then reads **Back to changes**. The Export button is hidden while the tree shows: there is no tree export, and a screen capture is enough.
+- **One civ list for both:** the civ list and the Main game / Chronicles tabs stay. Choosing a civ in either view chooses it in both.
+  - From a civ page, the tree shows that civ. From Overall, it shows the civ chosen last, as the game does; with none chosen yet, the first civ of the tab.
+  - The tree has no Overall row.
+  - Back to changes shows the page of the civ chosen last, or Overall if no civ was chosen in the tree.
+- **Layout** (computed in `tree/layout.py`):
+  - four ages as bands, each with a building row and a row for units and techs;
+  - one group of columns per building, in the game's order (a building comes right after the building it needs: Barracks, Archery Range, Stable);
+  - towers, walls, the Mill's Farm and Market, and the Fish Trap stay with the building or unit they grow from;
+  - lines go down from a node to the upgrade that comes from it, or sideways when both are in the same age (the Armenians' Man-at-Arms and Long Swordsman).
+
+  The tree scrolls sideways; **Fit to width** scales it to the window.
+- **Tiles:** icon and name, coloured by kind (unit, tech, building, unique). What the civ can't get is dimmed and crossed, as in the game.
+- **Marks** (legend in the header), following the comparison's filters:
+  - **gained:** green outline;
+  - **lost:** red outline and struck name, drawn as it was in the older version;
+  - **changed** and **renamed:** an accent outline and a dot.
+
+  A new civ has no gained or lost marks, and says it has no earlier tree. A civ missing from the newer version shows its old tree, every node lost.
+- **Hover panel** (also on keyboard focus; Escape hides it): the game's own tooltip, from the node's help string. From top to bottom:
+  1. the title with the cost and resource icons;
+  2. the description, with its grey "Upgrades" part;
+  3. the stat row with icons;
+  4. the node's changes, in the comparison's row format;
+  5. "Values before civilization bonuses and technologies".
+
+  A changed value reads old → new in red and green; a value the data doesn't have reads `?`. The panel stays inside the window.
+
 ### Diagnostics and Settings
 
 - **Diagnostics** opens its own window ([architecture.md](architecture.md#gui-v1-d-15)). It lists the recent warnings and errors and the log file's path; "Copy diagnostics" includes them.

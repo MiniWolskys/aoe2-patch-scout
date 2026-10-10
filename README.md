@@ -18,7 +18,8 @@ Content creators often get early builds (pre-release, PUP) before any patch note
   - unit stat changes (HP, attack, armour, range, speed, cost, train time…), marked *all civs* or *specific civs*;
   - tech cost, research time and effect changes;
   - text and icon changes.
-- **Export** as plain text (for video descriptions) or a single HTML page, with only the changes you chose to show. An image export for videos is planned.
+- **Tech tree:** see a civ's tree laid out like the game's, with what it gained, lost and had changed marked on it. Hover a unit or tech for the game's own tooltip, with changed values old → new.
+- **Export** as plain text (for video descriptions), a single HTML page, or images for videos, with only the changes you chose to show.
 - **Organise your snapshots:** rename them, and mark the ones from pre-release builds.
 - **A snapshot of the current live build is published with every release,** so you can compare even if you installed after the patch dropped.
 - **Windows app,** no Python installation needed.
