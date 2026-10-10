@@ -332,6 +332,29 @@ class Api:
             Path(path).write_text(content, encoding="utf-8")
             return {"saved": True, "path": path}
 
+    def save_images(self, images: Sequence[str], name: str, path: str | None = None) -> JsonObject:
+        """Write the image export: PNG data URLs drawn by the page; asks where unless `path`.
+
+        Several parts of one page are numbered: `<name>-1.png`, `<name>-2.png`...
+        """
+        with _Guard("save_images"):
+            decoded = [_png(image) for image in images]
+            chosen = path or self._ask_where_to_save(_file_name(name) + ".png", ".png")
+            if chosen is None or not decoded:
+                return {"saved": False}
+            target = Path(chosen)
+            paths = (
+                [target]
+                if len(decoded) == 1
+                else [
+                    target.with_name(f"{target.stem}-{index}{target.suffix or '.png'}")
+                    for index in range(1, len(decoded) + 1)
+                ]
+            )
+            for file, data in zip(paths, decoded, strict=True):
+                file.write_bytes(data)
+            return {"saved": True, "path": str(paths[0])}
+
     # --- archives (P-21) -----------------------------------------------------------------------
 
     def export_version(self, capture_id: str, path: str | None = None) -> JsonObject:
@@ -661,3 +684,18 @@ def _file_name(label: str) -> str:
     """A label made safe as a Windows file name."""
     cleaned = "".join("_" if char in r'<>:"/\|?*' or ord(char) < 32 else char for char in label)
     return cleaned.strip(" .") or "version"
+
+
+MAX_IMAGE_BYTES: Final = 20_000_000
+_PNG_URL: Final = "data:image/png;base64,"
+PNG_SIGNATURE: Final = bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+
+
+def _png(data_url: str) -> bytes:
+    """The bytes of a PNG data URL drawn by the page, refusing anything else."""
+    if not data_url.startswith(_PNG_URL) or len(data_url) > MAX_IMAGE_BYTES * 4 // 3 + 64:
+        raise ValueError("not a PNG image from the page")
+    data = base64.b64decode(data_url[len(_PNG_URL) :], validate=True)
+    if not data.startswith(PNG_SIGNATURE):
+        raise ValueError("not a PNG image from the page")
+    return data

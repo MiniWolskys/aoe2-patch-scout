@@ -50,6 +50,15 @@ export function element(icon) {
   return image;
 }
 
+/**
+ * The data URI of a fetched icon, or undefined when it wasn't fetched.
+ * @param {string} hash
+ * @returns {string | undefined}
+ */
+export function source(hash) {
+  return cache.get(hash);
+}
+
 /** Forget every cached icon; used when the data folder changes. */
 export function reset() {
   cache.clear();

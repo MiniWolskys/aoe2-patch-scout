@@ -3,6 +3,7 @@
 
 import * as dialogs from "./dialogs.js";
 import { byId, clear, el, input, show } from "./dom.js";
+import * as image from "./image.js";
 
 /**
  * Wire the export panel.
@@ -10,7 +11,8 @@ import { byId, clear, el, input, show } from "./dom.js";
  *   api: import("./api.js").Api,
  *   t: (key: string, values?: Record<string, unknown>) => string,
  *   current: () => {oldId: string, newId: string, low: boolean, unnamed: boolean,
- *     details: boolean, technical: boolean, civs: string[] | null, prerelease: boolean} | null,
+ *     details: boolean, technical: boolean, civs: string[] | null, prerelease: boolean,
+ *     page: Parameters<typeof image.draw>[0]["page"], versions: string} | null,
  * }} deps
  * @returns {{open: () => Promise<void>}}
  */
@@ -37,6 +39,24 @@ export function initExport(deps) {
   }
 
   byId("export-close").addEventListener("click", () => dialogs.close("export-scrim"));
+  // The page on screen as PNG images for a video (P-13); a long page comes out in parts.
+  byId("export-image").addEventListener("click", async () => {
+    const state = deps.current();
+    if (state === null) {
+      return;
+    }
+    byId("export-status").textContent = deps.t("export.image_drawing");
+    const images = await image.draw({
+      page: state.page,
+      versions: state.versions,
+      notice: deps.t("about.microsoft"),
+      t: deps.t,
+    });
+    const saved = await deps.api.save_images(images, state.page.title);
+    byId("export-status").textContent = saved.saved
+      ? deps.t("export.image_saved", { count: images.length, path: String(saved.path ?? "") })
+      : deps.t("export.not_saved");
+  });
   byId("export-copy").addEventListener("click", async () => {
     const text = byId("export-preview").textContent ?? "";
     try {

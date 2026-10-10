@@ -42,11 +42,21 @@ export function render(view) {
     noticeText.append(el("span", { text: t(notice.message.key, notice.message.args) }));
   }
 
-  // One entry per entity, page and scope (diff-rules.md); the civ counts count entries too.
-  // An entry lists its changes by position in `changes`, so none is sent twice.
-  const all = changeSet.changes ?? [];
-  // A change below the levels the reader chose is left out; an entry with none left goes too.
-  const entries = (changeSet.entries ?? [])
+  const entries = visibleEntries(view);
+  renderCivList(view, entries);
+  renderPage(view, entries);
+}
+
+/**
+ * The entries the filters keep, each with its changes. One entry per entity, page and scope
+ * (diff-rules.md); it lists its changes by position in `changes`, so none is sent twice. A change
+ * below the levels the reader chose is left out, and an entry with none left goes too.
+ * @param {Parameters<typeof render>[0]} view
+ * @returns {Array<Record<string, any>>}
+ */
+function visibleEntries(view) {
+  const all = view.changeSet.changes ?? [];
+  return (view.changeSet.entries ?? [])
     .map((entry) => ({
       ...entry,
       changes: (entry.changes ?? [])
@@ -54,8 +64,32 @@ export function render(view) {
         .filter((change) => shows(change, view.filters)),
     }))
     .filter((entry) => entry.changes.length > 0 && keeps(entry, view.filters));
-  renderCivList(view, entries);
-  renderPage(view, entries);
+}
+
+/**
+ * The page on screen as data, for the image export: its title and its entries by category.
+ * @param {Parameters<typeof render>[0]} view
+ * @returns {{title: string, categories: Array<{title: string, entries: Array<Record<string, any>>}>}}
+ */
+export function currentPage(view) {
+  const mine = visibleEntries(view).filter((entry) => (entry.civ ?? null) === view.civ);
+  return {
+    title: pageTitle(view),
+    categories: CATEGORIES.map((category) => ({
+      title: view.t(`category.${category}`),
+      entries: mine.filter((entry) => entry.category === category),
+    })).filter((group) => group.entries.length > 0),
+  };
+}
+
+/**
+ * @param {Parameters<typeof render>[0]} view
+ * @returns {string}
+ */
+function pageTitle(view) {
+  return view.civ === null
+    ? view.t("comparison.overall")
+    : ((view.changeSet.civs ?? []).find((civ) => civ.internal_name === view.civ)?.name ?? view.civ);
 }
 
 /**
@@ -185,12 +219,7 @@ function civRow(view, civ) {
 function renderPage(view, changes) {
   const page = byId("comparison-changes");
   clear(page);
-  const civName =
-    view.civ === null
-      ? view.t("comparison.overall")
-      : ((view.changeSet.civs ?? []).find((civ) => civ.internal_name === view.civ)?.name ??
-        view.civ);
-  byId("comparison-title").textContent = civName;
+  byId("comparison-title").textContent = pageTitle(view);
   byId("comparison-subtitle").textContent =
     view.civ === null ? view.t("comparison.overall_subtitle") : "";
 
@@ -333,9 +362,10 @@ function values(change) {
  * The civ-list phrase after a change (D-07).
  * @param {(key: string, values?: Record<string, unknown>) => string} t
  * @param {{kind: string, civs: string[], count?: number} | undefined} scope
+ * @param {number} [limit] how many civs to name before "and N more"; exports name them all
  * @returns {string}
  */
-export function scopeText(t, scope) {
+export function scopeText(t, scope, limit = 8) {
   if (scope === undefined || scope.kind === "global") {
     return "";
   }
@@ -347,11 +377,11 @@ export function scopeText(t, scope) {
   }
   const civs = scope.civs ?? [];
   const named =
-    civs.length <= 8
+    civs.length <= limit
       ? civs.join(", ")
       : t("scope.and_more", {
-          civs: civs.slice(0, 8).join(", "),
-          count: civs.length - 8,
+          civs: civs.slice(0, limit).join(", "),
+          count: civs.length - limit,
         });
   if (scope.kind === "all_except") {
     return t("scope.all_except", { civs: named });

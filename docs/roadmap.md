@@ -1,6 +1,6 @@
 # Roadmap
 
-**Status on 2026-09-16:** M0 done. M1, M2 and M3 are done. M4 is done apart from the image export and snapshot archives, and M5 has a working build but no release yet. The checks that need a PUP branch or a Microsoft Store install are still deferred.
+**Status on 2026-10-10:** M0 to M4 are done. M5 has a working build, the release files and steps, but no release yet: the first one is made by hand by the maintainer. The checks that need a PUP branch or a Microsoft Store install are still deferred.
 
 The app captures a real install, gates the `.dat`, compares two versions and exports the result as text or HTML. What is left before v1.0 is listed under each milestone below.
 
@@ -136,7 +136,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 **Exit criteria**
 - [x] Capture, compare and export text or HTML work end to end in the app.
 - [x] Export and import of version archives, and the baseline pack import (P-21), 2026-10-10.
-- [ ] **Not done:** the PNG image export.
+- [x] The PNG image export, 2026-10-10: the page on screen drawn at 1920 × 1080 for a video, in parts when it is long.
 - [ ] **Requested 2026-10-10:** the Chronicles civs (and Return of Rome, once supported) in their own tab, instead of at the bottom of the civ list. Timing open.
 
 ## M5: Packaging and v1.0
