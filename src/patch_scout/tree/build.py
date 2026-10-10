@@ -48,8 +48,13 @@ class _Side:
         nodes: dict[str, JsonObject] = {}
         for node in tree if isinstance(tree, list) else []:
             key = _key(node)
-            if key is not None and isinstance(node, dict):
-                nodes.setdefault(key, node)
+            if key is None or not isinstance(node, dict):
+                continue
+            if key in nodes and nodes[key].get("building_id") != node.get("building_id"):
+                # The same unit trained in two buildings (the Petard in the Castle and the
+                # Krepost): a tile under each.
+                key = f"{key}@{node.get('building_id')}"
+            nodes.setdefault(key, node)
         names, units = Names(snapshot, language), UnitLookup(snapshot)
         return cls(snapshot, names, units, _index(snapshot, civ), nodes)
 

@@ -297,3 +297,19 @@ def test_the_civ_bonus_text_comes_as_a_diff_of_its_lines() -> None:
     runs = [(run["kind"], run["text"]) for run in view["bonus"]]
     assert ("removed", "+1") in runs and ("added", "+2") in runs
     assert runs[0] == ("same", "Archer civilization\n• Foot archers ")
+
+
+def test_a_unit_trained_in_two_buildings_is_drawn_in_both() -> None:
+    """The Bulgarians' Petard is in the Castle and the Krepost: one tile under each."""
+    old_tree, new_tree = _build_snapshot(new=False), _build_snapshot(new=True)
+    for snapshot in (old_tree, new_tree):
+        tree = snapshot.tech_trees["Alpha"]
+        assert isinstance(tree, list)
+        tree.append(_node("Building", 82, 3, "ResearchedCompleted", building_id=None))
+        tree.append(_node("Unit", 440, 3, "ResearchedCompleted", building_id=82))
+        tree.append(_node("Building", 1251, 3, "ResearchedCompleted", building_id=None))
+        tree.append(_node("Unit", 440, 3, "ResearchedCompleted", building_id=1251))
+    view: Any = build(old_tree, new_tree, compare(old_tree, new_tree), "Alpha")
+    petards = [node for node in view["nodes"] if node["key"].startswith("Unit:440")]
+    assert len(petards) == 2
+    assert len({(node["column"], node["row"]) for node in petards}) == 2

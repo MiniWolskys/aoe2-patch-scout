@@ -125,7 +125,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 - **Notice bar:** it shows when stats weren't compared, a layout was substituted, there are unusually many changes, or changes are hidden by the filters. Each notice gets its own line and wraps rather than being truncated.
 - **Civ list** (236px, D-33):
   - **Overall** comes first, with its change count;
-  - then each civ with changes, with its crest (the coloured shield of the game's tech tree screen) and count. Snapshots captured before crests were stored show the emblem, lightened, since it is a near-black silhouette;
+  - then each civ with changes, in alphabetical order as in the game (decided by the maintainer on 2026-10-11), with its crest (the coloured shield of the game's tech tree screen) and count. Snapshots captured before crests were stored show the emblem, lightened, since it is a near-black silhouette;
   - a civ added in the new build shows a **NEW** tag instead of a count;
   - the Chronicles civs are in their own tab (D-38): two tabs, **Main game** (Overall and the base civs) and **Chronicles**, show above the list when a Chronicles civ has changes. The Chronicles tab shows its number of changes, or NEW for a new civ; opening it opens its first civ.
 - **Page title:** the civ, or "Overall". "Overall" has the subtitle "Changes to every civilization, with exceptions noted". A legend on the right names the old and new versions.
@@ -153,14 +153,16 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
   - From a civ page, the tree shows that civ. From Overall, it shows the civ chosen last, as the game does; with none chosen yet, the first civ of the tab.
   - The tree has no Overall row, and lists every civ; the change list only those with changes.
   - Back to changes shows the page of the civ chosen last, or Overall if no civ was chosen in the tree.
-- **Layout** (computed in `tree/layout.py`):
-  - four ages as bands, each with a building row and a row for units and techs, and more rows when a line goes on within the age: the Champion sits under the Two-Handed Swordsman, in the same column, as in the game;
-  - one group of columns per building, in the game's order (a building comes right after the building it needs: Barracks, Archery Range, Stable);
-  - towers, walls, the Mill's Farm and Market, and the Fish Trap stay with the building or unit they grow from;
-  - each building is centred over its columns, unless another building shares its row (the Mill and its Farm);
-  - a building's bar reaches the top of each of its columns when that node starts a line (Barracks to Militia, Spearman and Arson; not to the Hand Cannoneer under the Elite Skirmisher);
-  - lines leave a node just below it, run across, and go down to the node that comes from it, as in the game; a line never crosses another tile;
-  - a node whose link names the wrong type of node still goes under it, without a line, as the game does (Squires under Gambesons).
+- **Layout** (computed in `tree/layout.py`), matching the game's tech tree screen (checked against it for the Bulgarians on 101.103.54800.0). The data has no positions; these rules use only the data, so they hold for every civ:
+  - four ages as bands, each with a building row and a row for units and techs, and more rows when a line goes on within the age: the Champion sits under the Two-Handed Swordsman, in the same column;
+  - top-level buildings in the data's order: Barracks, Blacksmith, Dock, University, towers, walls, Castle, the regional building, Monastery, Town Center, House, camps, Mill;
+  - a building that needs another and has units or techs of its own sits beside it: on its left if the data lists it before, on its right if after (Archery Range | Barracks | Stable, Siege Workshop | Blacksmith, Market | Mill | Farm);
+  - a building with no units or techs stays in the column of what it comes from: the towers under the Outpost, the walls under the Gate, the Fish Trap under the Fishing Ship; plain top-level buildings that follow each other share one column (Palisade Wall, Palisade Gate, Gate; House, the second Town Center, Wonder);
+  - units and techs follow the data's order: a line keeps its column, and anything else takes the first column free at its row with nothing below it, so a node never sits above another one;
+  - each building is centred over its own columns; its bar reaches the top of each column that starts a line (Barracks to Militia, Spearman and Arson; not to the Hand Cannoneer under the Elite Skirmisher);
+  - a link resolves to the node drawn with the same building first: IDs are shared between units, techs and buildings, and the link's type in the data is unreliable (Fishing Lines links to 199, which is both the Fish Trap and Fletching);
+  - a unit trained in two buildings (the Petard in the Castle and the Krepost) has a tile in each;
+  - lines leave a node just below it, run across, and go down to the node that comes from it; a line never crosses another tile.
 
   The tree scrolls sideways; **Fit to width** scales it to the window.
 - **Left panel, as in the game:** the civ's crest and name, its bonus text with this patch's changes (removed in red, added in green, line by line), and the key of tile colours.
@@ -191,7 +193,7 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
 1. **Civ bonuses and unit stats (D-20) in the civ-navigated comparison.** Where do a civ's bonus text, effect sentences and the unit stats view go?
 2. **Categories inside a civ's page.** Are entries grouped by category (diff-rules.md) or listed as one list?
 3. ~~**Changes shared by a few civs**~~ **Answered by D-44** (Proposed): under each of those civs, not in Overall.
-4. **Civ list order:** alphabetical (easier to scan) or `civilizations.json` order (the change set's order)?
+4. ~~**Civ list order**~~ **Answered 2026-10-11:** alphabetical by name, as the game lists them. The change set holds them in that order, so the exports follow it too.
 5. **Filters and search:** low-priority categories, unreachable units, all fields. Where do they go?
 6. **PNG export of a selected section:** how is a section selected?
 7. **Collapsed list during a capture:** show progress on the Capture button.
