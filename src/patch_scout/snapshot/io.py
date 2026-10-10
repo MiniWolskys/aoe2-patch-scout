@@ -3,6 +3,7 @@
 
 import gzip
 import json
+import zlib
 from pathlib import Path
 
 from patch_scout.snapshot.migrations import migrate
@@ -29,7 +30,7 @@ def loads(data: bytes) -> Snapshot:
     """Parse snapshot JSON bytes and migrate the result to the current schema (P-15)."""
     try:
         parsed: JsonValue = json.loads(data.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
         raise SnapshotFormatError(f"not a readable snapshot: {exc}") from exc
     return migrate(Snapshot.from_json(parsed))
 
@@ -47,5 +48,9 @@ def write(path: Path, snapshot: Snapshot) -> None:
 
 
 def read(path: Path) -> Snapshot:
-    """Read a snapshot file."""
-    return loads(gzip.decompress(path.read_bytes()))
+    """Read a snapshot file; a damaged one is a `SnapshotFormatError`, never another error."""
+    try:
+        data = gzip.decompress(path.read_bytes())
+    except (OSError, EOFError, zlib.error) as exc:
+        raise SnapshotFormatError(f"{path.name} is not a readable snapshot: {exc}") from exc
+    return loads(data)

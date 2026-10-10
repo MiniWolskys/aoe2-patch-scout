@@ -79,6 +79,12 @@
       </div>
     </aside>
 
+    <!-- Shown instead of everything else when the page can't start (a damaged data folder…) -->
+    <section class="startup-error" id="startup-error" role="alert" hidden>
+      <h1 class="view__title" id="startup-error-title"></h1>
+      <p class="view__meta" id="startup-error-text"></p>
+    </section>
+
     <main class="main" id="main">
       <section class="first-launch" id="first-launch" aria-labelledby="first-launch-title">
         <p class="label" data-i18n="first_launch.label"></p>

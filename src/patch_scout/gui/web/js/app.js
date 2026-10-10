@@ -401,6 +401,28 @@ function reopenable(startup) {
   return startup.last_comparison.every((captureId) => known.has(captureId));
 }
 
-start().catch((error) => {
+start().catch(async (error) => {
   console.error("Patch Scout couldn't start the page", error);
+  await showStartupError(error);
 });
+
+/**
+ * Say why the page couldn't start, rather than leaving the window blank.
+ * @param {unknown} error
+ */
+async function showStartupError(error) {
+  /** @type {(key: string, values?: Record<string, unknown>) => string} */
+  let t = (key) => key;
+  try {
+    const api = await connect();
+    t = createTranslator((await api.get_messages()).messages);
+  } catch (lookup) {
+    console.error("the messages are unavailable too", lookup);
+  }
+  const reason = error instanceof Error ? error.message : String(error);
+  byId("startup-error-title").textContent = t("app.start_failed");
+  byId("startup-error-text").textContent = t("app.start_failed_detail", { reason });
+  show(byId("startup-error"), true);
+  document.body.dataset.failed = "";
+  document.body.dataset.ready = "";
+}

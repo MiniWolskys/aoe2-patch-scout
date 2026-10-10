@@ -131,7 +131,10 @@ class Library:
         for capture_id in store.capture_ids():
             if capture_id in self._entries:
                 continue
-            self._entries[capture_id] = LibraryEntry.for_snapshot(store.load(capture_id))
+            try:
+                self._entries[capture_id] = LibraryEntry.for_snapshot(store.load(capture_id))
+            except PatchScoutError:
+                logger.warning("snapshot %s could not be read; left out of the library", capture_id)
         for capture_id in set(self._entries) - set(store.capture_ids()):
             del self._entries[capture_id]
         self._save()
@@ -145,7 +148,7 @@ class Library:
             return
         try:
             data: JsonValue = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, ValueError):  # ValueError covers bad JSON and undecodable bytes
             logger.exception("the library index couldn't be read; it will be rebuilt")
             return
         self._entries = dict(_read_entries(data))

@@ -2,6 +2,7 @@
 from collections.abc import Callable
 
 from playwright.sync_api import Page, expect
+from support.ui_data import fixture_data
 
 type OpenShell = Callable[..., Page]
 
@@ -89,3 +90,14 @@ def test_the_page_loads_without_console_errors(
     open_shell()
 
     assert console_errors == []
+
+
+def test_a_page_that_cant_start_says_why(open_shell: OpenShell) -> None:
+    data = fixture_data()
+    data["startupError"] = "The data folder can't be written: access denied"
+    page = open_shell(data=data)
+
+    expect(page.locator("#startup-error")).to_be_visible()
+    expect(page.locator("#startup-error-title")).to_have_text("Patch Scout couldn't start.")
+    expect(page.locator("#startup-error-text")).to_contain_text("access denied")
+    expect(page.locator("#main")).to_be_hidden()

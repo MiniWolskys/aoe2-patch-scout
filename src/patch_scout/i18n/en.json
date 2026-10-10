@@ -4,6 +4,8 @@
   "about.microsoft": "Age of Empires II © Microsoft Corporation. Patch Scout was created under Microsoft's \"Game Content Usage Rules\" using assets from Age of Empires II, and it is not endorsed by or affiliated with Microsoft.",
   "about.title": "About Patch Scout",
   "about.version": "Version {version}",
+  "app.start_failed": "Patch Scout couldn't start.",
+  "app.start_failed_detail": "{reason} If this keeps happening, report it with this message.",
   "app.title": "Patch Scout",
   "capture.already_running": "A capture is already running.",
   "capture.browse": "Browse…",

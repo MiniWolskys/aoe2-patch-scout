@@ -55,8 +55,17 @@ FAKE_BRIDGE = """
     return Promise.resolve(typeof value === "function" ? value(...args) : value);
   };
   const api = {
-    get_startup: answer("get_startup", data.startup),
+    get_startup: data.startupError
+      ? (...args) => {
+          record("get_startup", args);
+          return Promise.reject(new Error(data.startupError));
+        }
+      : answer("get_startup", data.startup),
     get_versions: answer("get_versions", () => data.startup.versions),
+    get_messages: answer("get_messages", () => ({
+      language: "en",
+      messages: data.startup.messages,
+    })),
     get_version: answer("get_version", (id) => data.details[id] ?? data.details.__default),
     update_version: answer("update_version", (id, label, prerelease, notes) => ({
       capture_id: id, label: label ?? "", prerelease: prerelease ?? false, notes: notes ?? "",

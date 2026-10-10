@@ -404,3 +404,30 @@ def test_something_that_is_not_a_png_is_refused(api: Api, tmp_path: Path) -> Non
     with pytest.raises(ValueError):
         api.save_images(["data:image/png;base64,aGVsbG8="], "x", str(path))
     assert not path.exists()
+
+
+def test_an_unreadable_icon_is_skipped_not_fatal(api: Api, folder: DataFolder) -> None:
+    from PIL import Image
+
+    from patch_scout.store import IconStore
+
+    store = IconStore(folder)
+    good, bad = "a" * 64, "b" * 64
+    store.put(good, Image.new("RGBA", (2, 2)))
+    store.path_for(bad).mkdir(parents=True)  # reading it raises an OSError
+    found = api.get_icons([good, bad])
+    assert list(found) == [good]
+
+
+def test_the_messages_are_always_available(api: Api) -> None:
+    answer = api.get_messages()
+    assert answer["language"] == "en"
+    messages = answer["messages"]
+    assert isinstance(messages, dict) and "app.start_failed" in messages
+
+
+def test_startup_survives_a_damaged_snapshot(api: Api, folder: DataFolder) -> None:
+    folder.snapshots.mkdir(parents=True, exist_ok=True)
+    (folder.snapshots / "broken.snapshot.json.gz").write_bytes(b"not gzip")
+    startup = api.get_startup()
+    assert startup["versions"] == []

@@ -80,6 +80,7 @@
  * @property {(captureId: string, path?: string | null) => Promise<{saved: boolean, path?: string}>}
  *   export_version
  * @property {() => Promise<string | null>} choose_archive
+ * @property {() => Promise<{language: string, messages: Record<string, string>}>} get_messages
  * @property {(images: string[], name: string) => Promise<{saved: boolean, path?: string}>}
  *   save_images
  * @property {(path?: string | null) => Promise<{imported: boolean, error?: string | null,

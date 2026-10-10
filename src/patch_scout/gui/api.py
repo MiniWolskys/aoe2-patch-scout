@@ -127,6 +127,10 @@ class Api:
                 "capture": self._capture.to_json() if self._capture else None,
             }
 
+    def get_messages(self) -> JsonObject:
+        """The language and its messages: all the page needs to say that it couldn't start."""
+        return {"language": self._language, "messages": dict(self._catalog.messages())}
+
     def get_versions(self) -> list[JsonValue]:
         """The version list, newest game build first."""
         with _Guard("get_versions"):
@@ -276,7 +280,11 @@ class Api:
         with _Guard("get_icons"):
             found: JsonObject = {}
             for digest in list(hashes)[:MAX_ICONS]:
-                data = self._icons.read_png(digest) if isinstance(digest, str) else None
+                try:
+                    data = self._icons.read_png(digest) if isinstance(digest, str) else None
+                except OSError:  # locked by an antivirus, say: that icon only is missing
+                    logger.warning("icon %s could not be read", digest)
+                    continue
                 if data is not None:
                     found[digest] = "data:image/png;base64," + base64.b64encode(data).decode()
             return found
