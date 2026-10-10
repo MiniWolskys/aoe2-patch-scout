@@ -19,7 +19,7 @@ from typing import Any, Final
 from patch_scout import locate
 from patch_scout.capture import runner
 from patch_scout.capture.runner import CaptureRequest, Progress
-from patch_scout.diff import Options, SideInfo, compare, order
+from patch_scout.diff import ChangeSet, Options, SideInfo, compare, order
 from patch_scout.errors import PatchScoutError
 from patch_scout.i18n.catalog import Catalog
 from patch_scout.report import Filters, render_html, render_text
@@ -92,6 +92,7 @@ class Api:
         self._capture: _Capture | None = None
         self._loaded: dict[str, Snapshot] = {}
         self._window: Any = None
+        self._last_comparison: tuple[tuple[object, ...], ChangeSet] | None = None
         self._log: list[str] = []
 
     # --- wiring ------------------------------------------------------------------------------
@@ -258,13 +259,7 @@ class Api:
         with _Guard("compare_versions"):
             first, second = self._snapshot(old_id), self._snapshot(new_id)
             older, newer = order(first, second)
-            change_set = compare(
-                older,
-                newer,
-                options=Options(show_unreachable=show_unreachable, language=self._language),
-                old_info=self._side_info(older.capture_id),
-                new_info=self._side_info(newer.capture_id),
-            )
+            change_set = self._compared(older, newer, show_unreachable=show_unreachable)
             self._settings.remember_comparison(older.capture_id, newer.capture_id)
             return change_set.to_json()
 
@@ -287,10 +282,13 @@ class Api:
         low_priority: bool = False,
         civs: Sequence[str] | None = None,
         unnamed: bool = False,
+        details: bool = False,
+        technical: bool = False,
     ) -> JsonObject:
         """The plain-text export of the current comparison (P-13)."""
         with _Guard("export_text"):
-            change_set, filters = self._for_export(old_id, new_id, low_priority, civs, unnamed)
+            filters = _filters(low_priority, civs, unnamed, details, technical)
+            change_set = self._for_export(old_id, new_id)
             return {"text": render_text(change_set, self._catalog, filters)}
 
     def save_export(
@@ -301,10 +299,13 @@ class Api:
         low_priority: bool = False,
         civs: Sequence[str] | None = None,
         unnamed: bool = False,
+        details: bool = False,
+        technical: bool = False,
     ) -> JsonObject:
         """Write the export where the user chooses; `kind` is `text` or `html`."""
         with _Guard("save_export"):
-            change_set, filters = self._for_export(old_id, new_id, low_priority, civs, unnamed)
+            filters = _filters(low_priority, civs, unnamed, details, technical)
+            change_set = self._for_export(old_id, new_id)
             if kind == "html":
                 content = render_html(
                     change_set,
@@ -444,29 +445,30 @@ class Api:
             return SideInfo()
         return SideInfo(label=entry.label, prerelease=entry.prerelease)
 
-    def _for_export(
-        self,
-        old_id: str,
-        new_id: str,
-        low_priority: bool,
-        civs: Sequence[str] | None,
-        unnamed: bool = False,
-    ) -> tuple[Any, Filters]:
+    def _for_export(self, old_id: str, new_id: str) -> ChangeSet:
         first, second = self._snapshot(old_id), self._snapshot(new_id)
         older, newer = order(first, second)
+        return self._compared(older, newer, show_unreachable=False)
+
+    def _compared(self, older: Snapshot, newer: Snapshot, *, show_unreachable: bool) -> ChangeSet:
+        """Compare two snapshots, reusing the last result: a real comparison takes seconds.
+
+        Labels and pre-release flags are part of the result, so they are part of the key too.
+        """
+        old_info = self._side_info(older.capture_id)
+        new_info = self._side_info(newer.capture_id)
+        key = (older.capture_id, newer.capture_id, show_unreachable, old_info, new_info)
+        if self._last_comparison is not None and self._last_comparison[0] == key:
+            return self._last_comparison[1]
         change_set = compare(
             older,
             newer,
-            options=Options(language=self._language),
-            old_info=self._side_info(older.capture_id),
-            new_info=self._side_info(newer.capture_id),
+            options=Options(show_unreachable=show_unreachable, language=self._language),
+            old_info=old_info,
+            new_info=new_info,
         )
-        filters = Filters(
-            low_priority=low_priority,
-            civs=tuple(civs) if civs else None,
-            unnamed=unnamed,
-        )
-        return change_set, filters
+        self._last_comparison = (key, change_set)
+        return change_set
 
     def _ask_where_to_save(self, name: str, suffix: str) -> str | None:
         if self._window is None:
@@ -573,3 +575,19 @@ def _renderer() -> str:
     except ImportError:  # the API is also used from tests without a GUI
         return "none"
     return str(getattr(webview, "renderer", "unknown"))
+
+
+def _filters(
+    low_priority: bool,
+    civs: Sequence[str] | None,
+    unnamed: bool,
+    details: bool,
+    technical: bool,
+) -> Filters:
+    return Filters(
+        low_priority=low_priority,
+        civs=tuple(civs) if civs else None,
+        unnamed=unnamed,
+        details=details,
+        technical=technical,
+    )

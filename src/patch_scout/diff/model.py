@@ -35,6 +35,10 @@ type Kind = Literal[
     "icon_redrawn",
     "icon_remapped",
 ]
+# How prominent a change is (diff-rules.md, Levels): headlines are shown by default, details and
+# technical changes on request. A level never removes a change from the change set.
+type Level = Literal["headline", "detail", "technical"]
+LEVELS: Final = ("headline", "detail", "technical")
 # "all" and "all_except" count every civ in the comparison; "having" and "having_except" count
 # only the civs that have the entity, when there are too many of them to name.
 type ScopeKind = Literal["global", "all", "all_except", "having", "having_except", "some"]
@@ -125,6 +129,7 @@ class Change:
     raw: str | None = None
     civ: str | None = None
     sort_key: tuple[int, str, str] = (0, "", "")
+    level: Level = "headline"
 
     @property
     def low_priority(self) -> bool:
@@ -147,6 +152,7 @@ class Change:
             "raw": self.raw,
             "civ": self.civ,
             "low_priority": self.low_priority,
+            "level": self.level,
         }
 
 

@@ -137,6 +137,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
   The columns are proportional, never sized by their content, so every row has the same columns.
 
   A text change replaces the values and note columns with a word diff: removed words struck through in red, added words in green.
+- **Filters:** "Show minor changes" and "Show technical changes" show changes below the headline level (D-46), next to "Show objects with no name", the low-priority categories, unreachable units and search.
 
 ### Diagnostics and Settings
 

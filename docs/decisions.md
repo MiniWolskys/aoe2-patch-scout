@@ -329,6 +329,18 @@ Chosen by the maintainer on 2026-09-27, after the first real patch showed dozens
 - **Chosen over** removing them from the change set: the reader could no longer check them.
 - Details: [diff-rules.md](design/diff-rules.md#values-and-formatting).
 
+### D-46 Change levels: headline, detail, technical: Decided
+Agreed with the maintainer on 2026-10-10, after measuring 101.103.48987.0 → 101.103.54800.0
+against the official patch notes: about half the reported entries mattered to no player.
+- **Every change gets a level.** Headlines are shown by default. "Show minor changes" and "Show
+  technical changes" (Filters) bring the others back, in the app and the exports, and a notice
+  counts what is hidden.
+- **A level never removes a change** from the change set, and a rule that could hide a real
+  change is not a level rule: raw commands outside tech tree effects stay headlines.
+- **Chosen over** deleting noise or a single "show everything" switch: readers can still check
+  any line, and the two switches keep the minor stats apart from the plumbing.
+- Details: [diff-rules.md](design/diff-rules.md#levels-d-46).
+
 ### D-42 Window size: Decided
 Chosen by the maintainer on 2026-09-15, in the app shell spec.
 - The window opens at **1440×900**, centred on the primary screen, when that screen has room for it (at least 1440×980, leaving space for the title bar and the taskbar); otherwise it opens maximized.

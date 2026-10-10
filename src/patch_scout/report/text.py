@@ -27,6 +27,23 @@ class Filters:
     low_priority: bool = False
     civs: tuple[str, ...] | None = None
     unnamed: bool = False
+    details: bool = False
+    technical: bool = False
+
+    def shows(self, change: Change) -> bool:
+        """Whether a change's level is shown (diff-rules.md, Levels)."""
+        if change.level == "detail":
+            return self.details
+        if change.level == "technical":
+            return self.technical
+        return True
+
+    def trim(self, entry: Entry) -> Entry | None:
+        """The entry with only the changes whose level is shown; None when none is left."""
+        visible = tuple(change for change in entry.changes if self.shows(change))
+        if not visible:
+            return None
+        return entry if len(visible) == len(entry.changes) else replace(entry, changes=visible)
 
     def keeps(self, change: Change | Entry) -> bool:
         """Whether one change, or one entry, survives the filters."""
@@ -67,7 +84,8 @@ def pages(
     civs on each of their pages (D-44); an export prints it once, in "Several civilizations",
     unless it is limited to some civs, where each civ's section keeps everything it has.
     """
-    kept = [entry for entry in change_set.entries if filters.keeps(entry)]
+    trimmed = (filters.trim(entry) for entry in change_set.entries if filters.keeps(entry))
+    kept = [entry for entry in trimmed if entry is not None]
     once = filters.civs is None
     sections: list[tuple[str, list[Entry]]] = [
         (catalog.text("report.overall"), [entry for entry in kept if entry.civ is None])

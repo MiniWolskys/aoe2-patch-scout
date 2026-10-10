@@ -167,14 +167,17 @@ def test_stats_are_not_compared_when_one_side_has_none(pair: pairs.Pair) -> None
         stats=None,
     )
     result = compare(pair.old, blind)
-    assert [notice.kind for notice in result.notices] == ["stats_not_compared"]
+    kinds = [notice.kind for notice in result.notices if notice.kind != "levels_hidden"]
+    assert kinds == ["stats_not_compared"]
     assert not [change for change in result.changes if change.category == "unit_stats"]
 
 
 def test_a_substituted_layout_raises_a_mild_notice(pair: pairs.Pair) -> None:
     substituted = replace(pair.new, flags=dict(pair.new.flags) | {"format_verified": False})
-    kinds = [notice.kind for notice in compare(pair.old, substituted).notices]
-    assert kinds == ["layout_substituted"]
+    notices = compare(pair.old, substituted).notices
+    assert [notice.kind for notice in notices if notice.kind != "levels_hidden"] == [
+        "layout_substituted"
+    ]
 
 
 def test_a_civ_added_in_the_new_build_is_marked(pair: pairs.Pair) -> None:

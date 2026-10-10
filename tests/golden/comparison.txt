@@ -3,6 +3,8 @@ Patch Scout — what changed
 Old: Live build · 2026-09-16T00:00:00Z
 New: PUP build · 2026-09-16T00:00:00Z · pre-release
 
+! 2 minor or technical changes are hidden. Show them with "Show minor changes" and "Show technical changes" in Filters.
+
 OVERALL
   Unit stats
     • Archery Range · Hit points · 1000 → 1100 · (all civilizations)
@@ -20,9 +22,6 @@ REDLANDERS
 BLUELANDERS
   Availability
     • Archer (Archery Range) · Availability · NotAvailable → ResearchedCompleted · (Bluelanders)
-    • Archery Range · (Bluelanders)
-        - Techs offered · added Fletching
-        - Units offered · added Archer
     • Fletching · Availability · NotAvailable → ResearchedCompleted · (Bluelanders)
   Unit stats
     • Archer · Hit points · 35 → 45 · (Bluelanders)
