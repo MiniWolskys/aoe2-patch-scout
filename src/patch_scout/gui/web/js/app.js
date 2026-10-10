@@ -171,14 +171,23 @@ async function start() {
     if (request !== comparisonRequest) {
       return;
     }
+    // The same pair again (the unreachable filter reopens it): stay on the same civ and view.
+    const before = state.comparison;
+    const same =
+      before !== null &&
+      before.oldId === changeSet.old.capture_id &&
+      before.newId === changeSet.new.capture_id
+        ? before
+        : null;
     state.comparison = {
       oldId: changeSet.old.capture_id,
       newId: changeSet.new.capture_id,
       changeSet,
-      civ: null,
-      view: "changes",
-      treeCiv: null,
-      trees: new Map(),
+      civ: same?.civ ?? null,
+      view: same?.view ?? "changes",
+      treeCiv: same?.treeCiv ?? null,
+      // The tree ignores unreachable units, so the trees already drawn still hold.
+      trees: same?.trees ?? new Map(),
     };
     state.openId = null;
     drawComparison();
@@ -271,6 +280,8 @@ async function start() {
   }
 
   let treeRequest = 0;
+  /** @type {{comparison: unknown, key: string} | null} */
+  let treeShown = null;
 
   async function drawTree() {
     const current = state.comparison;
@@ -318,6 +329,17 @@ async function start() {
       tree = answer;
       current.trees.set(key, tree);
     }
+    // Search and redraws that change nothing the tree shows leave it as it is.
+    const shownKey = `${key}|${state.treeFit}`;
+    if (
+      treeShown !== null &&
+      treeShown.comparison === current &&
+      treeShown.key === shownKey &&
+      container.querySelector(".tree__canvas") !== null
+    ) {
+      return;
+    }
+    treeShown = { comparison: current, key: shownKey };
     const civs = current.changeSet.civs ?? [];
     const named = civs.find((/** @type {Record<string, any>} */ c) => c.internal_name === civ);
     techTree.render({

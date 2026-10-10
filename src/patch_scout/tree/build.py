@@ -30,7 +30,6 @@ _STAT_PATHS: Final = {
     "garrison": "garrison_capacity",
 }
 _RESOURCES: Final = {0: "food", 1: "wood", 2: "stone", 3: "gold"}
-_LEVELS: Final = {"headline": 0, "detail": 1, "technical": 2}
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,11 +82,12 @@ def build(
         if key not in drawn and _available(node):
             drawn[key] = (node, before)  # dropped by the newer tree: drawn as it was
     placed = layout([_layout_node(key, node) for key, (node, _) in drawn.items()])
-    shown = _LEVELS["technical"] if technical else _LEVELS["detail"] if details else 0
+    # The same filters as the change list: each level has its own switch.
+    levels = (
+        {"headline"} | ({"detail"} if details else set()) | ({"technical"} if technical else set())
+    )
     changes = [
-        c
-        for c in change_set.changes
-        if _LEVELS.get(c.level, 0) <= shown and (low_priority or not c.low_priority)
+        c for c in change_set.changes if c.level in levels and (low_priority or not c.low_priority)
     ]
     nodes: list[JsonValue] = []
     for key, (node, side) in drawn.items():
@@ -159,7 +159,8 @@ def _concerns(change: Change, node: JsonObject, civ: str) -> bool:
     if change.civ is not None:
         return change.civ == civ
     scope = change.scope
-    if scope.kind in ("all", "having"):
+    # Global: a generic tech such as Loom, which no civ owns, read under Overall.
+    if scope.kind in ("all", "having", "global"):
         return True
     if scope.kind in ("all_except", "having_except"):
         return civ not in scope.civs

@@ -266,3 +266,14 @@ def test_a_node_the_civ_cannot_get_is_never_marked_changed() -> None:
     view: Any = build(old_tree, new_tree, _hand_set(change), "Alpha")
     assert _nodes(view)["Unit:74"]["mark"] is None
     assert _nodes(view)["Unit:74"]["changes"] == []
+
+
+def test_technical_changes_alone_do_not_bring_minor_ones() -> None:
+    """The two filters are independent, as in the change list."""
+    change_set = _hand_set(_archer_change(Scope("all"), level="detail"))
+    assert _view(change_set, technical=True)["Unit:4"]["mark"] is None
+
+
+def test_a_change_with_no_civ_scope_marks_every_civ_that_has_the_node() -> None:
+    """A generic tech such as Loom has no civ: its changes read under Overall, scope global."""
+    assert _view(_hand_set(_archer_change(Scope())))["Unit:4"]["mark"] == "changed"

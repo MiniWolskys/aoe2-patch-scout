@@ -211,3 +211,35 @@ def test_a_renamed_node_says_its_old_name(open_shell: OpenShell) -> None:
     page.locator(".tree-node", has_text="Crossbowman").hover()
 
     expect(page.locator("#tree-panel")).to_contain_text("Formerly Longboat")
+
+
+def test_the_unreachable_filter_keeps_the_tree_and_its_civ(open_shell: OpenShell) -> None:
+    page = _compared(open_shell)
+    _civ(page, "Franks")
+    page.locator("#comparison-tree").click()
+    expect(page.locator(".tree-node").first).to_be_visible()
+
+    page.locator("#comparison-filters").click()
+    page.locator("#filter-unreachable").check()
+
+    expect(page.locator("#tree-view")).to_be_visible()
+    expect(page.locator(".tree-node").first).to_be_visible()
+    assert calls(page, "get_tech_tree")[-1][2] == "Franks"
+
+
+def test_searching_while_the_tree_shows_does_not_redraw_it(open_shell: OpenShell) -> None:
+    page = _open_tree(open_shell)
+    page.locator(".tree-node").first.evaluate("node => { node.dataset.kept = 'yes' }")
+
+    page.locator("#comparison-filters").click()
+    page.locator("#filter-search").fill("arch")
+
+    expect(page.locator(".tree-node").first).to_have_attribute("data-kept", "yes")
+
+
+def test_a_node_the_civ_cannot_get_says_so(open_shell: OpenShell) -> None:
+    page = _open_tree(open_shell)
+
+    expect(page.locator(".tree-node.is-unavailable")).to_have_attribute(
+        "aria-label", "Militia, Not available"
+    )

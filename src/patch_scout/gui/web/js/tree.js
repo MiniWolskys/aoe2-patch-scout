@@ -138,12 +138,18 @@ function tile(view, node, at) {
     class: `tree-node tree-node--${unique ? "unique" : node.kind}`,
     attrs: { type: "button" },
   });
+  // What the tile says without its colours: unavailable, and its mark.
+  const label = [node.name];
   if (!node.available) {
     button.classList.add("is-unavailable");
+    label.push(view.t("status.NotAvailable"));
   }
   if (MARKS.includes(node.mark)) {
     button.classList.add(`mark-${node.mark}`);
-    button.setAttribute("aria-label", `${node.name}, ${view.t(`tree.legend.${node.mark}`)}`);
+    label.push(view.t(`tree.legend.${node.mark}`));
+  }
+  if (label.length > 1) {
+    button.setAttribute("aria-label", label.join(", "));
   }
   button.style.left = `${at.x}px`;
   button.style.top = `${at.y}px`;
