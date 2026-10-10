@@ -15,6 +15,7 @@ const POLL_MS = 250;
  *   t: (key: string, values?: Record<string, unknown>) => string,
  *   onStatus: (status: import("./api.js").CaptureStatus | null) => void,
  *   onFinished: (result: Record<string, unknown>) => void,
+ *   onStarted?: () => void,
  * }} deps
  * @returns {{openDialog: () => Promise<void>, showProgress: (status:
  *   import("./api.js").CaptureStatus) => void, watch: () => void}}
@@ -186,6 +187,7 @@ export function initCapture(deps) {
     }
     dialogs.close("capture-scrim");
     watch();
+    deps.onStarted?.();
   });
   byId("capture-cancel").addEventListener("click", () => {
     void deps.api.cancel_capture();
