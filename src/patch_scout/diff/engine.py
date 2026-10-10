@@ -17,7 +17,7 @@ from patch_scout.diff import collapse as collapse_module
 from patch_scout.diff import entries as entries_module
 from patch_scout.diff import levels
 from patch_scout.diff.allowlist import RESOURCE_KEYS, TECH_FIELDS, UNIT_FIELDS, Field
-from patch_scout.diff.effects import Lookup, describe, script_titles
+from patch_scout.diff.effects import Lookup, describe, script_functions, script_titles
 from patch_scout.diff.model import (
     Change,
     ChangeSet,
@@ -164,6 +164,7 @@ def compare(
         _techs(run)
         _other_effects(run)
     _strings(run)
+    _scripts(run)
     _volume(run)
 
     context = levels.Context(run.vocabulary, blast_width=_blast_width_check(run))
@@ -512,14 +513,19 @@ def _node_text(
             if isinstance(old_text, str) and isinstance(new_text, str) and old_text != new_text:
                 changed[name] = (old_text, new_text)
         for group in collapse_module.collapse(common, changed, every=run.every):
+            # A new name is news (Longboat became Longship on 101.103.54800.0): it is reported
+            # with the node; a new help text stays in the low-priority text category.
+            renamed = aspect == "name_string_id"
             run.spread(
                 Change(
-                    category="text",
-                    kind="text_changed",
+                    category="civ_availability" if renamed else "text",
+                    kind="renamed" if renamed else "text_changed",
                     entity=entity,
                     scope=group.scope,
                     field=Message(label),
-                    words=words(str(group.old), str(group.new)),
+                    old=str(group.old) if renamed else None,
+                    new=str(group.new) if renamed else None,
+                    words=() if renamed else words(str(group.old), str(group.new)),
                     sort_key=sort,
                 ),
                 group.scope,
@@ -1331,6 +1337,37 @@ def _command_pair(old: JsonValue, new: JsonValue) -> tuple[str, str]:
         " ".join(old_parts) if old_fields else "",
         " ".join(new_parts) if new_fields else "",
     )
+
+
+def _scripts(run: _Run) -> None:
+    """Effects.xs functions whose code changed, appeared or disappeared, named by their title.
+
+    The game's code is never copied into the report: a reader learns which scripted effect
+    changed (the Ordo Cavalry heal fix of 101.103.54800.0 lives there), not how.
+    """
+    old_text, new_text = run.old.scripts.get("effects"), run.new.scripts.get("effects")
+    if not isinstance(old_text, str) or not isinstance(new_text, str) or old_text == new_text:
+        return
+    before, after = script_functions(old_text), script_functions(new_text)
+    for number in sorted(set(before) | set(after)):
+        old_function, new_function = before.get(number), after.get(number)
+        if old_function == new_function:
+            continue
+        title = (new_function or old_function or ("", ""))[0]
+        kind: Kind = (
+            "added" if old_function is None else "removed" if new_function is None else "modified"
+        )
+        run.add(
+            Change(
+                category="other_effects",
+                kind=kind,
+                entity=Entity(
+                    "script", str(number), title or unknown_id(number), named=bool(title)
+                ),
+                field=Message("field.script_changed") if kind == "modified" else None,
+                sort_key=(_GLOBAL, "", f"{number:04d}"),
+            )
+        )
 
 
 # --- category 7: text --------------------------------------------------------------------------
