@@ -1008,7 +1008,8 @@ def _tech_list(run: _Run, value: JsonValue, count: JsonValue) -> str:
     if count == 0:
         return ""
     ids = [item for item in (value if isinstance(value, list) else []) if isinstance(item, int)]
-    return ", ".join(_tech_name(run, item) for item in ids if item >= 0)
+    # Tech names can hold commas ("C-Bonus, Free Chemistry"), so the list uses semicolons.
+    return "; ".join(_tech_name(run, item) for item in ids if item >= 0)
 
 
 def _entries(record: JsonObject | None, allow: Field) -> list[JsonObject]:

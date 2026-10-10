@@ -172,7 +172,7 @@ Shared units and nodes aren't compared for it (see Per-civ collapsing, Scope). A
 
 Every changed effect command is shown in up to three layers, most readable first:
 
-1. **The game's own text.** If the civ's bonus text, or the tech's help text, changed: a word-level diff of it.
+1. **The game's own text.** If the civ's bonus text, or the tech's help text, changed: a word-level diff of it. Texts read as players see them: the game's line-break marker is a line break and its bold markers are dropped. A text with several lines (a civ bonus list) is compared line by line: an added or removed bonus is a whole line, and a line that only changed a little marks the words that changed. The exports keep the lines: plain text marks each removed or added line on its own line.
 2. **A generated sentence.** For command types that have a template: a sentence built from the command, with unit, class, resource, tech and attribute names resolved.
    - Examples (illustrative): `Cavalry — hit points ×1.20 → ×1.15`, `Enables unit: Elite Konnik`, `Loom — food cost −50`.
    - Templates live in the i18n catalog.
@@ -263,7 +263,7 @@ Showing how a civ's bonuses affect a unit may come later as a separate feature (
   - Show the shortest decimal form that tells old and new apart: `2.0 → 1.9`, not `2 → 2`.
   - Resources are shown by name: type 0 is food, 1 wood, 2 stone and 3 gold, checked against costs the game shows in its own interface (game-files.md §4).
   - Armour and attack classes are named from the snapshots' `Constants.xs`, e.g. "Attack vs Shock Infantry" (see Effects). Train and research locations show the building's name.
-  - **Required techs** show tech names, without the empty `-1` slots. A tech whose required count is 0 lists none: its slots then hold placeholders such as tech 0, "New Research". A change that only touches such slots is not reported.
+  - **Required techs** show tech names separated by semicolons (names can hold commas, e.g. "C-Bonus, Free Chemistry"), without the empty `-1` slots. A tech whose required count is 0 lists none: its slots then hold placeholders such as tech 0, "New Research". A change that only touches such slots is not reported.
   - Unknown IDs are shown as `#<id>`.
 - **Names:**
   - A unit, tech tree node or building is named from the game's strings, the new build first.

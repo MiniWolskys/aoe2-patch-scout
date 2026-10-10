@@ -715,7 +715,8 @@ body[data-failed] > :not(.startup-error, script) {
 .change-values--words {
   display: block;
   font-size: var(--fs-sm);
-  white-space: normal;
+  /* Civ bonus texts are lists: keep their line breaks. */
+  white-space: pre-line;
 }
 
 /* Dialogs */

@@ -383,13 +383,19 @@ function values(change) {
   if (words.length > 0) {
     const diff = el("div", { class: "change-values__words" });
     for (const word of words) {
-      if (word.kind === "removed") {
-        diff.append(el("del", { text: word.text }));
-      } else if (word.kind === "added") {
-        diff.append(el("ins", { text: word.text }));
-      } else {
+      if (word.kind !== "removed" && word.kind !== "added") {
         diff.append(document.createTextNode(word.text));
+        continue;
       }
+      // Marked line by line: a line break is never struck through or highlighted.
+      word.text.split("\n").forEach((piece, index) => {
+        if (index > 0) {
+          diff.append(document.createTextNode("\n"));
+        }
+        if (piece !== "") {
+          diff.append(el(word.kind === "removed" ? "del" : "ins", { text: piece }));
+        }
+      });
     }
     box.classList.add("change-values--words");
     box.append(diff);

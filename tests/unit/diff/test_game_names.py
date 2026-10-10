@@ -177,3 +177,10 @@ def test_a_change_only_in_placeholder_slots_is_not_reported() -> None:
         assert isinstance(techs, dict) and isinstance(techs["200"], dict)
         techs["200"]["required_tech_count"] = 0
     assert [c for c in compare(old, new).changes if c.entity.name == "Crossbowman"] == []
+
+
+def test_required_techs_are_separated_so_names_with_commas_stay_whole() -> None:
+    """Bombard Cannon on 101.103.54800.0 requires "C-Bonus, Free Chemistry"."""
+    changes = _compare(required=[FEUDAL, CASTLE]).changes
+    [change] = [c for c in changes if c.entity.name == "Crossbowman"]
+    assert change.new == "Feudal Age; Castle Age"

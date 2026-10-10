@@ -62,7 +62,7 @@ tr.more td { padding-top: 2px; }
 td.icon { width: 40px; }
 td.entity { font-weight: 500; }
 td.field { color: #aa9e8a; width: 30%; }
-td.values { width: 24%; overflow-wrap: anywhere; }
+td.values { width: 24%; overflow-wrap: anywhere; white-space: pre-line; }
 td.scope { color: #aa9e8a; font-size: 13.5px; }
 .game-icon { display: block; width: 40px; height: 40px; border-radius: 2px;
   outline: 1px solid #51432f; outline-offset: 1px; background-color: #0e0c0a;
@@ -225,12 +225,13 @@ def _values(change: Change, *, only_new: bool = False) -> str:
 
 
 def _word(kind: str, text: str) -> str:
-    escaped = html.escape(text)
-    if kind == "removed":
-        return f"<del>{escaped}</del>"
-    if kind == "added":
-        return f"<ins>{escaped}</ins>"
-    return escaped
+    if kind == "same":
+        return html.escape(text)
+    # Marked line by line: a line break is never struck through or highlighted.
+    tag = "del" if kind == "removed" else "ins"
+    return "\n".join(
+        f"<{tag}>{html.escape(piece)}</{tag}>" if piece else "" for piece in text.split("\n")
+    )
 
 
 class _IconClasses:

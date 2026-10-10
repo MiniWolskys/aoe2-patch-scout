@@ -276,8 +276,9 @@ function layoutWords(ctx, words, width) {
         continue;
       }
       if (token.includes("\n")) {
+        // A blank line between two parts of a civ bonus list stays blank.
         x = 0;
-        line += 1;
+        line += token.split("\n").length - 1;
         continue;
       }
       const tokenWidth = ctx.measureText(token).width;

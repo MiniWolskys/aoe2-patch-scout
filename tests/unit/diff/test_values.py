@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Formatting and word diffs (diff-rules.md, "Values and formatting")."""
 
+from patch_scout.diff.model import WordDiff
 from patch_scout.diff.values import (
     at_path,
     display,
@@ -86,3 +87,46 @@ def test_a_dotted_path_that_leads_nowhere_gives_nothing() -> None:
 def test_walking_a_record_lists_its_leaves() -> None:
     leaves = dict(walk({"b": 1, "a": {"c": [2]}}))
     assert leaves == {"a.c": [2], "b": 1}
+
+
+def _sides(runs: tuple[WordDiff, ...]) -> tuple[str, str]:
+    old = "".join(run.text for run in runs if run.kind in ("same", "removed"))
+    new = "".join(run.text for run in runs if run.kind in ("same", "added"))
+    return old, new
+
+
+def test_the_game_line_breaks_become_lines() -> None:
+    r"""Civ bonus texts are one string with `\n` markers; they read as a list (Vietnamese)."""
+    runs = words(r"Archer civilization\n• Conscription free", r"Archer civilization\n• Free")
+    assert _sides(runs) == (
+        "Archer civilization\n• Conscription free",
+        "Archer civilization\n• Free",
+    )
+
+
+def test_the_game_bold_markers_are_dropped() -> None:
+    runs = words(r"<b>Unique Units:<b>\nRattan Archer", r"<b>Unique Units:</b>\nKonnik")
+    assert _sides(runs) == ("Unique Units:\nRattan Archer", "Unique Units:\nKonnik")
+
+
+def test_a_line_added_between_two_others_is_one_added_line() -> None:
+    runs = words(r"• a\n• c", r"• a\n• b\n• c")
+    assert _sides(runs) == ("• a\n• c", "• a\n• b\n• c")
+    assert [run.text.strip() for run in runs if run.kind != "same"] == ["• b"]
+    assert [run.kind for run in runs if run.kind != "same"] == ["added"]
+
+
+def test_a_line_that_changed_a_little_marks_only_the_words() -> None:
+    runs = words(r"• Archers +20% HP\n• x", r"• Archers +30% HP\n• x")
+    assert [(run.kind, run.text) for run in runs if run.kind != "same"] == [
+        ("removed", "+20%"),
+        ("added", "+30%"),
+    ]
+
+
+def test_a_line_replaced_by_a_different_one_reads_as_removed_then_added() -> None:
+    runs = words(r"• Cavalry +20% HP\n• x", r"• Monks heal faster\n• x")
+    assert [(run.kind, run.text) for run in runs if run.kind != "same"] == [
+        ("removed", "• Cavalry +20% HP"),
+        ("added", "• Monks heal faster"),
+    ]

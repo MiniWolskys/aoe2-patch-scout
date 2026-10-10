@@ -190,11 +190,16 @@ def _category_lines(entries: Sequence[Entry], catalog: Catalog) -> list[str]:
 def _entry_lines(entry: Entry, catalog: Catalog) -> list[str]:
     """One entry: a single line for a single change, else a header and one line per field."""
     if len(entry.changes) == 1 and not entry.hidden:
-        return [f"{INDENT * 2}{BULLET} {line(entry.changes[0], catalog)}"]
+        return [f"{INDENT * 2}{BULLET} " + _indented(line(entry.changes[0], catalog), INDENT * 4)]
     head = [_entity(entry, catalog), scope_text(entry.scope, catalog)]
     lines = [f"{INDENT * 2}{BULLET} " + " · ".join(part for part in head if part)]
     for change in entry.changes:
         values = change.new or "" if entry.kind == "added" else _values(change, catalog)
+        if "\n" in values:
+            # A text in lines (a civ bonus list) starts under its field, one line per line.
+            block = field_text(change, catalog) + "\n" + values
+            lines.append(f"{INDENT * 4}{DASH} " + _indented(block, INDENT * 6))
+            continue
         parts = [field_text(change, catalog), values]
         lines.append(f"{INDENT * 4}{DASH} " + " · ".join(part for part in parts if part))
     if entry.hidden:
@@ -211,9 +216,12 @@ def line(change: Change, catalog: Catalog) -> str:
     """One change on one line."""
     parts = [_entity(change, catalog), field_text(change, catalog)]
     values = _values(change, catalog)
+    scope = scope_text(change.scope, catalog)
+    if "\n" in values:
+        # A text in lines (a civ bonus list) starts on the next line.
+        return " · ".join(part for part in (*parts, scope) if part) + "\n" + values
     if values:
         parts.append(values)
-    scope = scope_text(change.scope, catalog)
     if scope:
         parts.append(scope)
     return " · ".join(part for part in parts if part)
@@ -243,11 +251,17 @@ def _values(change: Change, catalog: Catalog) -> str:
 
 
 def _word(kind: str, text: str) -> str:
-    if kind == "removed":
-        return f"[-{text}-]"
-    if kind == "added":
-        return f"[+{text}+]"
-    return text
+    if kind == "same":
+        return text
+    # Marked line by line, so a removed or added line reads whole: "[+• Monks heal faster+]".
+    mark = ("[-", "-]") if kind == "removed" else ("[+", "+]")
+    return "\n".join(f"{mark[0]}{piece}{mark[1]}" if piece else "" for piece in text.split("\n"))
+
+
+def _indented(text: str, indent: str) -> str:
+    """Continuation lines of a multi-line value, indented under their bullet."""
+    first, *rest = text.split("\n")
+    return "\n".join([first, *(f"{indent}{piece}" if piece else "" for piece in rest)])
 
 
 def scope_text(scope: Scope, catalog: Catalog) -> str:
