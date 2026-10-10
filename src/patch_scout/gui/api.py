@@ -507,7 +507,7 @@ class Api:
             environment: JsonObject = {
                 "app_version": self._app_version,
                 "genieutils_version": _package_version("genieutils-py"),
-                "pillow_version": _package_version("pillow"),
+                "pillow_version": _package_version("pillow", module="PIL"),
                 "python": sys.version.split()[0],
                 "renderer": _renderer(),
                 "windows": platform.platform(),
@@ -726,13 +726,25 @@ def _build_key(build: str | None) -> tuple[int, ...]:
     return tuple(int(part) if part.isdigit() else -1 for part in (build or "").split("."))
 
 
-def _package_version(name: str) -> str | None:
+def _package_version(name: str, module: str | None = None) -> str | None:
+    """A package's version, from its metadata, else from the module's own `__version__`.
+
+    The packaged build doesn't carry every package's metadata: Pillow's is missing there.
+    """
+    import importlib
     import importlib.metadata
 
     try:
         return importlib.metadata.version(name)
     except importlib.metadata.PackageNotFoundError:
+        pass
+    if module is None:
         return None
+    try:
+        version = getattr(importlib.import_module(module), "__version__", None)
+    except ImportError:
+        return None
+    return version if isinstance(version, str) else None
 
 
 def _renderer() -> str:

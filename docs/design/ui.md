@@ -185,6 +185,9 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
 ### Diagnostics and Settings
 
 - **Diagnostics** opens its own window ([architecture.md](architecture.md#gui-v1-d-15)). It lists the recent warnings and errors and the log file's path; "Copy diagnostics" includes them.
+  - The environment reads in words ("App version", "Pillow version"); a value the app can't find reads "unknown".
+  - The capture log, the recent problems and the snapshot inspector are boxes at least 120 px tall, which can be enlarged by dragging their corner. An empty capture log says no capture has run since the app started.
+  - Their text can be selected and copied with Ctrl+C. The app has no right-click menu outside debug mode, so each box also has a **Copy** button that copies its whole content.
 - **Log file:** `<data folder>\logs\patch-scout.log`, rotating at 1 MB with three old files kept. The packaged app has no console, so this is where its errors go.
 - **Settings** covers the data folder, raw backups and recent game folders (P-10, P-19).
 

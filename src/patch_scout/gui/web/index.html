@@ -359,11 +359,20 @@
           <dl class="fields" id="diagnostics-environment"></dl>
           <h3 class="label" data-i18n="diagnostics.gates"></h3>
           <div id="diagnostics-gates"></div>
-          <h3 class="label" data-i18n="diagnostics.log"></h3>
-          <pre class="preview" id="diagnostics-log"></pre>
-          <h3 class="label" data-i18n="diagnostics.problems"></h3>
-          <pre class="preview" id="diagnostics-problems"></pre>
-          <h3 class="label" data-i18n="diagnostics.inspector"></h3>
+          <div class="diagnostics__head">
+            <h3 class="label" data-i18n="diagnostics.log"></h3>
+            <button type="button" class="button button--ghost button--small" id="diagnostics-log-copy" data-i18n="diagnostics.copy_box"></button>
+          </div>
+          <pre class="preview preview--box" id="diagnostics-log"></pre>
+          <div class="diagnostics__head">
+            <h3 class="label" data-i18n="diagnostics.problems"></h3>
+            <button type="button" class="button button--ghost button--small" id="diagnostics-problems-copy" data-i18n="diagnostics.copy_box"></button>
+          </div>
+          <pre class="preview preview--box" id="diagnostics-problems"></pre>
+          <div class="diagnostics__head">
+            <h3 class="label" data-i18n="diagnostics.inspector"></h3>
+            <button type="button" class="button button--ghost button--small" id="diagnostics-section-copy" data-i18n="diagnostics.copy_box"></button>
+          </div>
           <div class="field-row">
             <select class="input" id="diagnostics-version"></select>
             <select class="input" id="diagnostics-section"></select>
