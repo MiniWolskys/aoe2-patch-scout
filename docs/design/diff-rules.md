@@ -43,12 +43,14 @@ Shown in this order. Categories marked *low* are collapsed by default.
 
 1. **Civilizations:** civs added or removed; era changes.
 2. **Civ availability:** per-civ tech tree changes (units, techs, buildings gained or lost, node status changes); building offer changes.
+   - The game's tech trees and offer lists also list what a civ **can't** get (`NotAvailable`). A node that appears or disappears as `NotAvailable` is not gained or lost, and an offered item whose node is `NotAvailable` for that civ is left out of the offer comparison. *Seen on build 101.103.54800.0: Cranequins is in 15 civs' trees but available to 6, and in the Italians' Archery Range offers.*
+   - Offered items are matched by ID and shown by name: the civ's tech tree label, else the offer list's own name.
 3. **Civ and team bonuses:**
    - The civ's bonus **text** diff (the game's own words).
    - Changed bonus **effects** as sentences (see Effects).
    - `civ_dat.resources` changes, such as starting resources.
 4. **Unit stats:** allowlisted fields of the raw unit records, collapsed per civ.
-5. **Techs:** cost, research time, required techs, research location, effect ID; the effect's commands as sentences.
+5. **Techs:** cost, research time, required techs, research location, effect ID; the effect's commands as sentences. An effect ID change is reported once, with the effect's commands.
 6. **Other effects:** effect command changes not covered by 3 or 5.
 7. **Text** *(low)*: name and help text changes for entities not already reported above. Help text changes are attached to the entity's entry when it has one.
 8. **Icons** *(low)*: `icon_redrawn`, `icon_remapped`.
@@ -88,7 +90,7 @@ For each civ, the diff reports only the units that civ can actually get. Reachab
 2. **Linked forms.** From every reachable unit, follow these links, and repeat until no unit is added:
    - `Building.transform_unit`: the other form of a transforming unit, e.g. Trebuchet ↔ Trebuchet (Packed);
    - `Unit.blood_unit_id`, only when the target's `language_dll_name` resolves to a string, e.g. Konnik → Konnik (Dismounted).
-3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it.
+3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it, labelled `Projectile: <field>` (e.g. `Arbalester · Projectile: Attack vs #3 · 6 → 7`), with the civs where that unit fires it.
 4. **Not followed:**
    - `Unit.dead_unit_id` (corpses, rubble);
    - `DeadFish.tracking_unit`;
@@ -111,23 +113,58 @@ Collapsing is applied to **every per-civ change**, not only unit stats: a tech t
 For each unit ID and allowlisted field of the raw unit records:
 
 1. **Scope.** Consider the civs where the unit exists in either snapshot and is **reachable** (see [Reachability](#reachability-d-37)). Unreachable civ copies are ignored unless "show unreachable" is on.
+   - **Civs only one build has** (a civ added or removed) are left out when the entity exists in both builds: they have no value to compare on one side. Otherwise every shared unit would read "added" for a new civ, and split each real change into two groups. A brand-new entity keeps them. The same rule applies to tech tree nodes.
 2. **Values.** Compute each civ's old and new value.
 3. **Changed civs.** Collect every civ where old ≠ new.
 4. **Grouping.** Group the changed civs by the (old, new) value pair.
 5. **Wording** (English catalog shown; the GUI may render groups as badges):
 
+"All civilizations" is measured against **every civ in the comparison** (the civs with a tech tree in either build), never against the in-scope civs alone. Otherwise an entity only the Franks have would read "(all civilizations)".
+
 | Situation | Output |
 |---|---|
-| Changed in every in-scope civ, one value pair | `Knight — HP 100 → 110 (all civs)` |
-| One value pair, most civs but not all | `Knight — HP 100 → 110 (all civs except Franks, Persians)` |
-| One value pair, few civs | `Knight — HP 120 → 130 (Franks)` |
+| One value pair, every civ in the comparison is in scope and changed | `Knight — HP 100 → 110 (all civilizations)` |
+| One value pair, every civ in scope, most changed | `Knight — HP 100 → 110 (all civilizations except Franks, Persians)` |
+| One value pair, at most 8 civs in scope, all changed | `Throwing Axeman — LOS 5 → 7 (Franks)` |
+| One value pair, more than 8 civs in scope (not all), all changed | `Onager — attack 50 → 55 (all 45 civilizations that have it)` |
+| One value pair, more than 8 civs in scope (not all), most changed | `(all 45 civilizations that have it, except Goths)` |
+| One value pair, few civs changed | `Knight — HP 120 → 130 (Franks)` |
 | Several value pairs | One line per group, largest group first |
 
 **Thresholds:**
 - Name at most 8 civs in a list.
-- Use the "all civs except" form when listing the exceptions is shorter than listing the changed civs.
+- Use the "except" forms when listing the exceptions is shorter than listing the changed civs.
+
+**Where it shows (D-44):** a change that names its civs is on each of those civs' pages; every other form, including "all N civilizations that have it", is on Overall.
 
 **Civ-specific changes go first.** A change limited to some civs usually means a civ bonus changed, so within a category those lines come before "all civs" lines.
+
+## One entry per entity
+
+The change set is field-level: one change per field and value group. The app and the exports draw **entries** instead: all the changes of one entity that share a category, a page and a scope. A unit whose HP changed for every civ and whose attack changed for the Franks gives two entries, so the civ information stays exact.
+
+```
+• Knight · (all civilizations)
+    - Hit points · 100 → 110
+    - Movement speed · 1.35 → 1.4
+```
+
+- **One change:** the entry reads as one line, as before.
+- **A new unit** (in Unit stats, every field goes from nothing to a value): the entry is marked Added and lists only its **main stats**, without empty or default values (`0`, `-1`). The main stats are hit points, line of sight, speed, attacks, armours, displayed attack and armours, maximum range, reload time, cost and train time. The entry ends with the number of values it leaves out.
+- **A removed unit:** one line, with the number of values left out.
+- **Other categories** keep every change they have, e.g. a building that only gained offered items.
+- **Any entry:** a field that only appears or disappears with a default value (`added 0`) is counted, not listed. A placeholder unit that the patch fills in otherwise shows dozens of them.
+- **Counts:** the civ list counts entries.
+- **In the change set JSON,** an entry lists its changes by position in `changes`, so no change is written twice.
+
+## New civilizations
+
+A civ added in the new build has no old values, so comparing it field by field would report everything as "added". Instead its page shows a summary:
+- **Added** (the civ itself) and its **bonus text**, all shown as new text;
+- its **tech tree** as one entry: one line per building with what is available there (every node that isn't `NotAvailable`), plus one line for its buildings. Building offers are not compared;
+- entities that are new everywhere (its unique units and techs) as usual, since they are brand new for every civ.
+
+Shared units and nodes aren't compared for it (see Per-civ collapsing, Scope). A civ removed in the new build reads as one "Removed" line.
 
 ## Effects (O-5)
 
@@ -141,7 +178,7 @@ Every changed effect command is shown in up to three layers, most readable first
 
 **Mapping tables** (command type numbers, attribute IDs, unit class IDs → names) are built from genieutils-py and Advanced Genie Editor, never from memory. **They are still empty** (see O-5): AGE keeps the names inside its executable, so every command currently falls back to layer 3, and armour classes and attributes show as `#<id>`. A command type without a template is not an error; it falls back to layer 3. The effect's own name from the `.dat` is shown when present (how descriptive those names are is checked in M0).
 
-**Commands are compared as ordered lists.** Each added, removed or changed command gets its own entry.
+**Commands are compared as a sequence.** The two lists are aligned first (Python's `difflib`), so a command inserted or removed is one change, not a shift of every command after it. Within a replaced stretch, commands are paired by position. Each added, removed or changed command gets its own entry, with its position in the new effect (or the old one, when removed). *Before 2026-09-27 they were compared position by position; one inserted command in Butalmapu gave over 100 changes.*
 
 ## Civ bonuses are not applied to units (P-17)
 
@@ -168,6 +205,11 @@ Showing how a civ's bonuses affect a unit may come later as a separate feature (
   - Show the shortest decimal form that tells old and new apart: `2.0 → 1.9`, not `2 → 2`.
   - Resources are shown by name: type 0 is food, 1 wood, 2 stone and 3 gold, checked against costs the game shows in its own interface (game-files.md §4). Armour classes have no verified name table yet, so they show as `#<id>`.
   - Unknown IDs are shown as `#<id>`.
+- **Names:**
+  - A unit, tech tree node or building is named from the game's strings, the new build first.
+  - A **tech with no display name** uses its internal `.dat` name. Civ bonuses are such techs, e.g. `C-Bonus, Military cost -20%`. The scenario editor's placeholder, `New Research`, doesn't count as a name (seen on build 101.103.54800.0).
+  - A **tech the `.dat` ties to a civ** (its `civ` slot, on either side; Gaia doesn't count) is that civ's bonus. Its changes go on that civ's page.
+  - An entity still left with **no name** is marked `named: false` and shown as `#<id>`. Its changes are **hidden by default**: a notice gives their count, and "Show objects with no name" shows them, in the app and in the exports. They stay in the change set, so nothing is lost.
 - **Lists** (e.g. attack entries):
   - Keyed by class when the entries have one: added, removed and changed classes are reported separately.
   - Otherwise compared by position.
@@ -193,9 +235,11 @@ The **comparison** in the app is the main output: icons, navigation by civilizat
 | Export | Use | Notes |
 |---|---|---|
 | **Plain text** | Video descriptions, chat, forums | Unicode bullets and indentation, no markup. Copy to clipboard or save as `.txt`. Filters let users fit length limits. |
-| **HTML** | Sharing, archiving, showing on stream | One self-contained file: icons as data URIs, inline CSS. |
+| **HTML** | Sharing, archiving, showing on stream | One self-contained file: inline CSS, and icons as data URIs, each embedded once and shrunk to 80 px (twice the displayed size). |
 | **Image (PNG)** | Putting a section on screen in a video | The current view or a selected section, rendered by the frontend. |
 
 There is no Markdown export.
 
-Every export starts with a header (snapshot labels, game builds, capture dates, pre-release marks, tool version) and any notices: stats not compared, layout substituted, unusually many changes. The HTML export ends with the Microsoft notice ([legal.md](../legal.md)).
+**Sections of the text and HTML exports:** Overall, then **Several civilizations**, then each civ. The app shows a change shared by a few civs on each of their pages (D-44). An export prints it once, in Several civilizations, so a patch that gives three civs the same change doesn't print it three times. An export limited to some civs keeps each shared change in each civ's section instead.
+
+Every export starts with a header (snapshot labels, game builds, capture dates, pre-release marks, tool version) and any notices: stats not compared, layout substituted, unusually many changes, changes to objects with no name hidden. The HTML export ends with the Microsoft notice ([legal.md](../legal.md)).

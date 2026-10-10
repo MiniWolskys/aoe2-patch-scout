@@ -6,18 +6,22 @@ the order of the changes. Everything user-visible is a catalog key, so the chang
 language-neutral (P-20).
 """
 
+import difflib
+import json
 import logging
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from typing import Final
 
 from patch_scout.diff import collapse as collapse_module
+from patch_scout.diff import entries as entries_module
 from patch_scout.diff.allowlist import RESOURCE_KEYS, TECH_FIELDS, UNIT_FIELDS, Field
 from patch_scout.diff.model import (
     Change,
     ChangeSet,
     CivRef,
     Entity,
+    Kind,
     Message,
     Notice,
     Scope,
@@ -69,6 +73,9 @@ class _Run:
     # keeps its own map. Civs themselves are matched by internal name (P-07).
     old_index: dict[str, int] = field(default_factory=dict)
     new_index: dict[str, int] = field(default_factory=dict)
+    # Every civ in the comparison: the civs both builds have, with a tech tree. "All
+    # civilizations" means all of these (diff-rules.md, Per-civ collapsing).
+    every: list[str] = field(default_factory=list)
     reachable: dict[str, Reachable] = field(default_factory=dict)
     changes: list[Change] = field(default_factory=list)
     notices: list[Notice] = field(default_factory=list)
@@ -135,6 +142,11 @@ def compare(
 
     run.old_index = _civ_indices(old)
     run.new_index = _civ_indices(new)
+    run.every = [
+        name
+        for name in run.civ_names
+        if _has_tree(run, name) and name in run.old_index and name in run.new_index
+    ]
     _notices(run)
     civ_refs = _civilizations(run)
     _availability(run)
@@ -147,10 +159,17 @@ def compare(
     _volume(run)
 
     changes = tuple(sorted_changes(run.changes))
+    entries = entries_module.group(changes)
+    unnamed = sum(1 for entry in entries if not entry.entity.named)
+    if unnamed:
+        # Hidden by the default filters, so the reader must know they exist (diff-rules.md).
+        run.notices.append(
+            Notice("unnamed_hidden", Message("notice.unnamed_hidden", {"count": unnamed}))
+        )
     counts: dict[str, int] = {}
-    for change in changes:
-        if change.civ is not None:
-            counts[change.civ] = counts.get(change.civ, 0) + 1
+    for entry in entries:
+        if entry.civ is not None:
+            counts[entry.civ] = counts.get(entry.civ, 0) + 1
     civs = tuple(
         CivRef(
             internal_name=ref.internal_name,
@@ -164,7 +183,12 @@ def compare(
         if ref.added or counts.get(ref.internal_name, 0)
     )
     return ChangeSet(
-        old=sides[0], new=sides[1], changes=changes, notices=tuple(run.notices), civs=civs
+        old=sides[0],
+        new=sides[1],
+        changes=changes,
+        notices=tuple(run.notices),
+        civs=civs,
+        entries=entries,
     )
 
 
@@ -234,6 +258,7 @@ def _civilizations(run: _Run) -> list[CivRef]:
                     sort_key=(_CIV_FIRST, "", ""),
                 )
             )
+            _new_civ_summary(run, internal_name, entity, civ)
             continue
         before = old_civs[internal_name]
         if before.get("era") != civ.get("era"):
@@ -267,6 +292,62 @@ def _civilizations(run: _Run) -> list[CivRef]:
     return refs
 
 
+def _new_civ_summary(run: _Run, internal_name: str, entity: Entity, civ: JsonObject) -> None:
+    """A new civ has nothing to compare with: show its bonus text and its tech tree instead.
+
+    The tech tree reads as one entry, one line per building, rather than every node and building
+    offer "Added" (diff-rules.md, New civilizations).
+    """
+    scope = Scope("some", (internal_name,))
+    bonus = run.new_names.text(civ.get("bonus_string_id"))
+    _remember_string(run, civ.get("bonus_string_id"))
+    if bonus:
+        run.add(
+            Change(
+                category="bonuses",
+                kind="text_changed",
+                entity=entity,
+                scope=scope,
+                field=Message("field.civ_bonus_text"),
+                words=words("", bonus),
+                civ=internal_name,
+                sort_key=(_CIV_FIRST, "", ""),
+            )
+        )
+    nodes = run.new.tech_trees.get(internal_name)
+    lines: dict[JsonValue, list[str]] = {}
+    for node in nodes if isinstance(nodes, list) else []:
+        if not isinstance(node, dict) or node.get("node_status") == "NotAvailable":
+            continue
+        label = run.new_names.one_line(node.get("name_string_id"))
+        if not label:
+            continue
+        # Buildings get a line of their own; units and techs go under where they are made.
+        where = "buildings" if node.get("use_type") == "Building" else node.get("building_id")
+        lines.setdefault(where, []).append(label)
+    for position, (where, labels) in enumerate(lines.items()):
+        building = _building_name(run, internal_name, where) if where != "buildings" else None
+        if where != "buildings" and building is None:
+            building = unknown_id(where)
+        field = (
+            Message("field.tech_tree_buildings")
+            if building is None
+            else Message("field.tech_tree_at", {"building": building})
+        )
+        run.add(
+            Change(
+                category="civ_availability",
+                kind="added",
+                entity=entity,
+                scope=scope,
+                field=field,
+                new=", ".join(labels),
+                civ=internal_name,
+                sort_key=(_CIV_FIRST, "", f"{position:04d}"),
+            )
+        )
+
+
 # --- category 2: availability ----------------------------------------------------------------
 
 # What a tech tree node can change about itself, as (aspect key, catalog key).
@@ -290,7 +371,8 @@ def _availability(run: _Run) -> None:
         keys |= set(old_nodes) | set(new_nodes)
     for key in sorted(keys):
         _node_changes(run, key, civs, maps)
-    for internal_name in civs:
+    # A civ only one build has has no offers to compare; a new civ's tree is summarised instead.
+    for internal_name in run.every:
         _offers(run, internal_name)
 
 
@@ -302,26 +384,37 @@ def _node_changes(
 ) -> None:
     use_type, node_id = key
     in_scope = [name for name in civs if key in maps[name][0] or key in maps[name][1]]
+    in_scope = _comparable(
+        run, in_scope, [(maps[name][0].get(key), maps[name][1].get(key)) for name in in_scope]
+    )
     if not in_scope:
         return
+    # The new build's node when there is one; generators, so neither side is read eagerly.
     sample = next(
-        (maps[name][1][key] for name in in_scope if key in maps[name][1]),
-        next(maps[name][0][key] for name in in_scope if key in maps[name][0]),
+        nodes[key] for side in (1, 0) for name in in_scope if key in (nodes := maps[name][side])
     )
     names = run.new_names if any(key in maps[name][1] for name in in_scope) else run.old_names
+    label = names.one_line(sample.get("name_string_id"))
     entity = Entity(
         kind=use_type.lower(),
         id=str(node_id),
-        name=names.one_line(sample.get("name_string_id")) or unknown_id(node_id),
+        name=label or unknown_id(node_id),
         where=_where(run, in_scope[0], use_type, node_id, sample.get("building_id")),
         icon=_icon_of(sample),
+        named=bool(label),
     )
     sort = (_CIV_FIRST, "", "")
-    gained = [name for name in in_scope if key not in maps[name][0] and key in maps[name][1]]
-    lost = [name for name in in_scope if key in maps[name][0] and key not in maps[name][1]]
+    # A node that appears or disappears as NotAvailable was never the civ's to gain or lose: the
+    # game lists nodes a civ can't get too (diff-rules.md, Civ availability).
+    gained = [
+        name for name in in_scope if key not in maps[name][0] and _available(maps[name][1].get(key))
+    ]
+    lost = [
+        name for name in in_scope if _available(maps[name][0].get(key)) and key not in maps[name][1]
+    ]
     for civ_list, kind in ((gained, "added"), (lost, "removed")):
         if civ_list:
-            scope = _scope_for(in_scope, civ_list)
+            scope = _scope_for(run, in_scope, civ_list)
             run.spread(
                 Change("civ_availability", kind, entity, scope, sort_key=sort),  # type: ignore[arg-type]
                 scope,
@@ -336,7 +429,7 @@ def _node_changes(
             if maps[name][0][key].get(aspect) != maps[name][1][key].get(aspect)
         }
         kind = "availability" if aspect == "node_status" else "modified"
-        for group in collapse_module.collapse(common, changed):
+        for group in collapse_module.collapse(common, changed, every=run.every):
             old_text, new_text = pair(group.old, group.new)
             run.spread(
                 Change(
@@ -378,7 +471,7 @@ def _node_text(
             new_text = getattr(run.new_names, resolver)(new_id)
             if isinstance(old_text, str) and isinstance(new_text, str) and old_text != new_text:
                 changed[name] = (old_text, new_text)
-        for group in collapse_module.collapse(common, changed):
+        for group in collapse_module.collapse(common, changed, every=run.every):
             run.spread(
                 Change(
                     category="text",
@@ -415,7 +508,7 @@ def _node_icons(
             remapped[name] = (old_icon.get("picture_index"), new_icon.get("picture_index"))
         elif old_icon.get("hash") != new_icon.get("hash"):
             redrawn[name] = ("", "")
-    for group in collapse_module.collapse(common, remapped):
+    for group in collapse_module.collapse(common, remapped, every=run.every):
         old_text, new_text = pair(group.old, group.new)
         run.spread(
             Change(
@@ -430,7 +523,7 @@ def _node_icons(
             ),
             group.scope,
         )
-    for group in collapse_module.collapse(common, redrawn):
+    for group in collapse_module.collapse(common, redrawn, every=run.every):
         run.spread(
             Change(
                 "icons",
@@ -453,12 +546,12 @@ def _offers(run: _Run, internal_name: str) -> None:
         source = after if after is not None else before
         if source is None:
             continue
-        name = (
-            run.new_names.node_name(internal_name, "Building", building_id)
-            or _text(source.get("name"))
-            or unknown_id(building_id)
+        name = run.new_names.node_name(internal_name, "Building", building_id) or _text(
+            source.get("name")
         )
-        entity = Entity("building", str(building_id), name)
+        entity = Entity(
+            "building", str(building_id), name or unknown_id(building_id), named=bool(name)
+        )
         scope = Scope("some", (internal_name,))
         sort = (_CIV_FIRST, "", "")
         if before is None or after is None:
@@ -474,8 +567,18 @@ def _offers(run: _Run, internal_name: str) -> None:
                 )
             )
             continue
-        for list_key, label in (("units", "field.offered_units"), ("techs", "field.offered_techs")):
-            gained, lost = _list_difference(before.get(list_key), after.get(list_key))
+        for list_key, label, use_types in (
+            ("units", "field.offered_units", ("Unit", "Building")),
+            ("techs", "field.offered_techs", ("Tech",)),
+        ):
+            old_items = _offered(
+                run.old, run.old_names, internal_name, before.get(list_key), use_types
+            )
+            new_items = _offered(
+                run.new, run.new_names, internal_name, after.get(list_key), use_types
+            )
+            lost = [name for item_id, name in old_items.items() if item_id not in new_items]
+            gained = [name for item_id, name in new_items.items() if item_id not in old_items]
             if not gained and not lost:
                 continue
             run.add(
@@ -485,16 +588,74 @@ def _offers(run: _Run, internal_name: str) -> None:
                     entity=entity,
                     scope=scope,
                     field=Message(label),
-                    old=", ".join(unknown_id(item) for item in lost),
-                    new=", ".join(unknown_id(item) for item in gained),
+                    old=", ".join(lost),
+                    new=", ".join(gained),
                     civ=internal_name,
                     sort_key=sort,
                 )
             )
 
 
+def _offered(
+    snapshot: Snapshot,
+    names: Names,
+    internal_name: str,
+    items: JsonValue,
+    use_types: Sequence[str],
+) -> dict[int, str]:
+    """What a building offers a civ, by ID, with display names.
+
+    The game's offer lists include things the civ's own tech tree marks NotAvailable (e.g.
+    Cranequins at the Italians' Archery Range on build 101.103.54800.0); those are left out,
+    since the civ can't get them (diff-rules.md, Civ availability).
+    """
+    nodes = snapshot.tech_trees.get(internal_name)
+    # Unit and tech IDs overlap (tech 83 is the Bearded Axe, unit 83 the Villager): match by type.
+    tree = {
+        node.get("node_id"): node
+        for node in (nodes if isinstance(nodes, list) else [])
+        if isinstance(node, dict) and node.get("use_type") in use_types
+    }
+    found: dict[int, str] = {}
+    for item in items if isinstance(items, list) else []:
+        item_id = item.get("ID") if isinstance(item, dict) else item
+        if not isinstance(item_id, int):
+            continue
+        node = tree.get(item_id)
+        if node is not None and not _available(node):
+            continue
+        label = names.one_line(node.get("name_string_id")) if node is not None else None
+        fallback = item.get("Name") if isinstance(item, dict) else None
+        found[item_id] = label or (fallback if isinstance(fallback, str) else unknown_id(item_id))
+    return found
+
+
+def _available(node: JsonObject | None) -> bool:
+    """Whether a tech tree node exists and the civ can get it."""
+    return node is not None and node.get("node_status") != "NotAvailable"
+
+
 def _has_tree(run: _Run, internal_name: str) -> bool:
     return internal_name in run.old.tech_trees or internal_name in run.new.tech_trees
+
+
+def _comparable(
+    run: _Run,
+    in_scope: Sequence[str],
+    sides: Iterable[tuple[JsonObject | None, JsonObject | None]],
+) -> list[str]:
+    """Leave out civs only one build has, for an entity both builds have (diff-rules.md).
+
+    A civ added in the new build has no old value: comparing it would report every shared unit
+    and node as "added" for it. A brand-new entity keeps them, since it is new for everyone.
+    """
+    pairs = list(sides)
+    if any(before is not None for before, _ in pairs) and any(
+        after is not None for _, after in pairs
+    ):
+        every = set(run.every)
+        return [name for name in in_scope if name in every]
+    return list(in_scope)
 
 
 def _icon_of(node: JsonObject) -> JsonObject | None:
@@ -502,9 +663,9 @@ def _icon_of(node: JsonObject) -> JsonObject | None:
     return icon if isinstance(icon, dict) else None
 
 
-def _scope_for(in_scope: Sequence[str], civs: Sequence[str]) -> Scope:
+def _scope_for(run: _Run, in_scope: Sequence[str], civs: Sequence[str]) -> Scope:
     """The scope for a change that either happened or did not, with no value pair."""
-    groups = collapse_module.collapse(in_scope, dict.fromkeys(civs, (None, None)))
+    groups = collapse_module.collapse(in_scope, dict.fromkeys(civs, (None, None)), every=run.every)
     return groups[0].scope if groups else Scope("some", tuple(civs))
 
 
@@ -617,7 +778,9 @@ def _unit_stats(run: _Run) -> None:
 def _unit_change(
     run: _Run, unit_id: int, civs: Sequence[tuple[str, tuple[int | None, int | None]]]
 ) -> None:
-    in_scope: list[str] = []
+    direct: list[str] = []
+    # A projectile is not a unit in the report: its changes go on each unit that fires it (D-37).
+    fired: dict[int, list[str]] = {}
     records: dict[str, tuple[JsonObject | None, JsonObject | None]] = {}
     for internal_name, (old_slot, new_slot) in civs:
         before = run.old_units.record(unit_id, old_slot) if old_slot is not None else None
@@ -626,18 +789,42 @@ def _unit_change(
             continue
         reach = run.reachable.get(internal_name)
         shooters = reach.fired_by.get(unit_id, ()) if reach else ()
-        reachable = bool(reach and (reach.includes(unit_id) or shooters))
-        if not reachable and not run.options.show_unreachable:
+        if reach is not None and reach.includes(unit_id):
+            direct.append(internal_name)
+        elif shooters:
+            for shooter in shooters:
+                fired.setdefault(shooter, []).append(internal_name)
+        elif run.options.show_unreachable:
+            direct.append(internal_name)
+        else:
             continue
-        in_scope.append(internal_name)
         records[internal_name] = (before, after)
-    if not in_scope:
-        return
-    name = run.new_names.record_name(run.new_units.any_record(unit_id), unit_id)
-    entity = Entity("unit", str(unit_id), name, icon=_unit_icon(run, unit_id))
     _remember_string(run, at_path(run.new_units.any_record(unit_id), "language_dll_name"))
-    for allow in UNIT_FIELDS:
-        _field_change(run, entity, allow, in_scope, records, unit_id)
+    targets = [(unit_id, direct, False)]
+    targets += [(shooter, civ_list, True) for shooter, civ_list in sorted(fired.items())]
+    for entity_id, civ_list, projectile in targets:
+        in_scope = _comparable(run, civ_list, [records[name] for name in civ_list])
+        if not in_scope:
+            continue
+        name = _unit_name(run, entity_id)
+        entity = Entity(
+            "unit",
+            str(entity_id),
+            name or unknown_id(entity_id),
+            icon=_unit_icon(run, entity_id),
+            named=name is not None,
+        )
+        for allow in UNIT_FIELDS:
+            _field_change(run, entity, allow, in_scope, records, projectile=projectile)
+
+
+def _unit_name(run: _Run, unit_id: int) -> str | None:
+    """A unit's display name from either build, the new one first; None when it has none."""
+    for names, units in ((run.new_names, run.new_units), (run.old_names, run.old_units)):
+        name = names.one_line(at_path(units.any_record(unit_id), "language_dll_name"))
+        if name:
+            return name
+    return None
 
 
 def _field_change(
@@ -646,9 +833,14 @@ def _field_change(
     allow: Field,
     in_scope: Sequence[str],
     records: Mapping[str, tuple[JsonObject | None, JsonObject | None]],
-    unit_id: int,
+    *,
+    projectile: bool = False,
 ) -> None:
-    for sub_key, sub_label in _sub_fields(allow, records):
+    """One allowlisted field of a unit; `projectile` when the records are its projectile's."""
+    for sub_key, sub_label in _sub_fields(allow, {name: records[name] for name in in_scope}):
+        label = (
+            Message("field.projectile", {"field": sub_label.to_json()}) if projectile else sub_label
+        )
         changed: dict[str, tuple[JsonValue, JsonValue]] = {}
         for internal_name in in_scope:
             before, after = records[internal_name]
@@ -658,7 +850,7 @@ def _field_change(
             if old_value != new_value:
                 run.changed_values += 1
                 changed[internal_name] = (old_value, new_value)
-        for group in collapse_module.collapse(in_scope, changed):
+        for group in collapse_module.collapse(in_scope, changed, every=run.every):
             old_text, new_text = pair(group.old, group.new)
             run.spread(
                 Change(
@@ -666,7 +858,7 @@ def _field_change(
                     kind="modified",
                     entity=entity,
                     scope=group.scope,
-                    field=sub_label,
+                    field=label,
                     stat_icon=allow.stat_icon,
                     old=old_text,
                     new=new_text,
@@ -743,33 +935,46 @@ def _techs(run: _Run) -> None:
         source = after if after is not None else before
         if source is None:
             continue
-        names = run.new_names if after is not None else run.old_names
-        name = names.record_name(source, _numeric_key(key))
-        entity = Entity("tech", key, name, icon=_node_icon(run, "Tech", _numeric_key(key)))
+        name = run.new_names.tech_name(after, _numeric_key(key)) or run.old_names.tech_name(
+            before, _numeric_key(key)
+        )
+        entity = Entity(
+            "tech",
+            key,
+            name or unknown_id(key),
+            icon=_node_icon(run, "Tech", _numeric_key(key)),
+            named=name is not None,
+        )
         _remember_string(run, source.get("language_dll_name"))
-        sort = (_GLOBAL, "", "")
+        # A tech the .dat ties to a civ is that civ's bonus: it goes on the civ's page.
+        owners = _tech_civs(run, before, after)
+        scope = Scope("some", owners) if owners else Scope()
+        sort = (_CIV_FIRST, "", "") if owners else (_GLOBAL, "", "")
         if before is None or after is None:
-            run.add(
-                Change("techs", "added" if before is None else "removed", entity, sort_key=sort)
-            )
+            kind: Kind = "added" if before is None else "removed"
+            run.spread(Change("techs", kind, entity, scope, sort_key=sort), scope)
             continue
         for allow in TECH_FIELDS:
+            if allow.key == "effect_id":
+                continue  # reported with the effect's commands, just below
             for sub_key, label in _sub_fields(allow, {"": (before, after)}):
                 old_value = _field_value(before, allow, sub_key)
                 new_value = _field_value(after, allow, sub_key)
                 if old_value == new_value:
                     continue
                 old_text, new_text = pair(old_value, new_value)
-                run.add(
+                run.spread(
                     Change(
                         category="techs",
                         kind="modified",
                         entity=entity,
+                        scope=scope,
                         field=label,
                         old=old_text,
                         new=new_text,
                         sort_key=sort,
-                    )
+                    ),
+                    scope,
                 )
         for change in _effect_changes(
             run,
@@ -780,7 +985,21 @@ def _techs(run: _Run) -> None:
             label=Message("field.tech_effect"),
             sort=sort,
         ):
-            run.add(change)
+            run.spread(replace(change, scope=scope), scope)
+
+
+def _tech_civs(run: _Run, before: JsonObject | None, after: JsonObject | None) -> tuple[str, ...]:
+    """The civs a tech is tied to in the .dat (its `civ` slot), on either side; Gaia is none."""
+    owners: list[str] = []
+    for record, index in ((before, run.old_index), (after, run.new_index)):
+        slot = record.get("civ") if record is not None else None
+        if not isinstance(slot, int) or slot <= 0:
+            continue
+        name = next((name for name, value in index.items() if value == slot), None)
+        if name is not None and name not in owners:
+            owners.append(name)
+    order = {name: position for position, name in enumerate(run.civ_names)}
+    return tuple(sorted(owners, key=lambda name: order.get(name, len(order))))
 
 
 # --- category 6: other effects -----------------------------------------------------------------
@@ -796,8 +1015,8 @@ def _other_effects(run: _Run) -> None:
         before, after = old_effects.get(key), new_effects.get(key)
         if before is None or after is None or before == after:
             continue
-        name = _text(after.get("name")) or unknown_id(key)
-        entity = Entity("effect", key, name)
+        name = _text(after.get("name"))
+        entity = Entity("effect", key, name or unknown_id(key), named=bool(name))
         for change in _command_changes(
             entity, before, after, "other_effects", Message("field.effect_command")
         ):
@@ -865,7 +1084,11 @@ def _command_changes(
     label: Message,
     sort: tuple[int, str, str] = (_GLOBAL, "", ""),
 ) -> list[Change]:
-    """Effect commands are compared as ordered lists; each difference gets its own entry.
+    """Effect commands are compared as a sequence; each difference gets its own entry.
+
+    A command inserted or removed is one change, not a shift of every command after it: the
+    lists are aligned first (difflib), and only the replaced stretches are paired up position by
+    position (diff-rules.md, Effects).
 
     No sentence is generated: the command type, attribute and class tables come from Advanced
     Genie Editor and are not yet verified, so the raw command is shown instead (O-5, layer 3).
@@ -874,11 +1097,7 @@ def _command_changes(
     new_commands = _commands(after)
     effect_name = _text(after.get("name")) or _text(before.get("name"))
     changes: list[Change] = []
-    for position in range(max(len(old_commands), len(new_commands))):
-        old_command = old_commands[position] if position < len(old_commands) else None
-        new_command = new_commands[position] if position < len(new_commands) else None
-        if old_command == new_command:
-            continue
+    for old_command, new_command, position in _aligned(old_commands, new_commands):
         old_text, new_text = _command_pair(old_command, new_command)
         changes.append(
             Change(
@@ -897,6 +1116,29 @@ def _command_changes(
             )
         )
     return changes
+
+
+def _aligned(
+    old: Sequence[JsonValue], new: Sequence[JsonValue]
+) -> list[tuple[JsonValue, JsonValue, int]]:
+    """The differing commands as (old or None, new or None, position), in order.
+
+    The position is the command's index in the new effect, or in the old one when it was
+    removed.
+    """
+    keys_old = [json.dumps(command, sort_keys=True) for command in old]
+    keys_new = [json.dumps(command, sort_keys=True) for command in new]
+    matcher = difflib.SequenceMatcher(a=keys_old, b=keys_new, autojunk=False)
+    found: list[tuple[JsonValue, JsonValue, int]] = []
+    for tag, old_start, old_end, new_start, new_end in matcher.get_opcodes():
+        if tag == "equal":
+            continue
+        for offset in range(max(old_end - old_start, new_end - new_start)):
+            old_index, new_index = old_start + offset, new_start + offset
+            before = old[old_index] if old_index < old_end else None
+            after = new[new_index] if new_index < new_end else None
+            found.append((before, after, new_index if after is not None else old_index))
+    return found
 
 
 def _commands(effect: JsonObject) -> list[JsonValue]:
@@ -1128,16 +1370,6 @@ def _where(
     if use_type == "Building" and building_id == node_id:
         return None
     return _building_name(run, internal_name, building_id)
-
-
-def _list_difference(
-    before: JsonValue, after: JsonValue
-) -> tuple[list[JsonValue], list[JsonValue]]:
-    old_items = before if isinstance(before, list) else []
-    new_items = after if isinstance(after, list) else []
-    gained = [item for item in new_items if item not in old_items]
-    lost = [item for item in old_items if item not in new_items]
-    return gained, lost
 
 
 def _remember_string(run: _Run, string_id: JsonValue) -> None:

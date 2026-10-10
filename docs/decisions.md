@@ -142,6 +142,7 @@ Details: [genieutils-py.md](reference/genieutils-py.md#unknown-version-strings-l
 
 ### D-07 Per-civ collapsing: Decided
 A change is grouped by value across civs: "(all civs)", "(Franks only)"…, based on raw unit values (D-20).
+- **Amended 2026-09-27** (maintainer, after the first real patch): "all civilizations" means every civ in the comparison. An entity only some civs have names them when there are at most 8, and otherwise reads "all N civilizations that have it" ([diff-rules.md](design/diff-rules.md#per-civ-collapsing-d-07)).
 
 ### D-08 Diff fields come from an allowlist: Decided
 
@@ -304,12 +305,25 @@ The window has no navigation rail. A **version list** on the left replaces the s
 Taken while building the comparison (M3/M4); it answers open question 3 in
 [ui.md](design/ui.md#open-questions) and needs the maintainer's confirmation.
 - A change limited to **some** civs appears on **each of those civs' pages**, and not in Overall.
-- A change that applies to **all civs**, to all but a few ("all civs except…"), or to nothing
-  civ-specific, appears in **Overall** only.
+- A change that applies to **all civs**, to all but a few ("all civs except…"), to all the civs
+  that have the entity when there are more than 8 of them ("all 45 civilizations that have it",
+  added 2026-09-27), or to nothing civ-specific, appears in **Overall** only.
 - **Why:** "what changed for my civ" is the question users have, and Overall keeps its stated
   meaning, "changes to every civilization, with exceptions noted".
 - **Cost:** a change shared by three civs is drawn three times. The change set stores it once per
   civ, so the counts in the civ list stay right.
+- **Exports (maintainer, 2026-09-27):** the text and HTML exports print a shared change once, in a
+  "Several civilizations" section, instead of in each civ's section
+  ([diff-rules.md](design/diff-rules.md#presentation-and-exports-p-13)).
+
+### D-45 Objects with no name are hidden by default: Decided
+Chosen by the maintainer on 2026-09-27, after the first real patch showed dozens of `#<id>` rows.
+- **Named first:** techs with no display name use their internal `.dat` name (civ bonuses read
+  e.g. "C-Bonus, Docks garrison"), and projectiles are reported on the units that fire them (D-37).
+- **What's left** with no name is marked in the change set, hidden by default, and counted in a
+  notice. "Show objects with no name" shows it in the app and the exports.
+- **Chosen over** removing them from the change set: the reader could no longer check them.
+- Details: [diff-rules.md](design/diff-rules.md#values-and-formatting).
 
 ### D-42 Window size: Decided
 Chosen by the maintainer on 2026-09-15, in the app shell spec.

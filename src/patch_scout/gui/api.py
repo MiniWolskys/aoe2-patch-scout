@@ -286,10 +286,11 @@ class Api:
         new_id: str,
         low_priority: bool = False,
         civs: Sequence[str] | None = None,
+        unnamed: bool = False,
     ) -> JsonObject:
         """The plain-text export of the current comparison (P-13)."""
         with _Guard("export_text"):
-            change_set, filters = self._for_export(old_id, new_id, low_priority, civs)
+            change_set, filters = self._for_export(old_id, new_id, low_priority, civs, unnamed)
             return {"text": render_text(change_set, self._catalog, filters)}
 
     def save_export(
@@ -299,10 +300,11 @@ class Api:
         kind: str = "text",
         low_priority: bool = False,
         civs: Sequence[str] | None = None,
+        unnamed: bool = False,
     ) -> JsonObject:
         """Write the export where the user chooses; `kind` is `text` or `html`."""
         with _Guard("save_export"):
-            change_set, filters = self._for_export(old_id, new_id, low_priority, civs)
+            change_set, filters = self._for_export(old_id, new_id, low_priority, civs, unnamed)
             if kind == "html":
                 content = render_html(
                     change_set,
@@ -443,7 +445,12 @@ class Api:
         return SideInfo(label=entry.label, prerelease=entry.prerelease)
 
     def _for_export(
-        self, old_id: str, new_id: str, low_priority: bool, civs: Sequence[str] | None
+        self,
+        old_id: str,
+        new_id: str,
+        low_priority: bool,
+        civs: Sequence[str] | None,
+        unnamed: bool = False,
     ) -> tuple[Any, Filters]:
         first, second = self._snapshot(old_id), self._snapshot(new_id)
         older, newer = order(first, second)
@@ -457,6 +464,7 @@ class Api:
         filters = Filters(
             low_priority=low_priority,
             civs=tuple(civs) if civs else None,
+            unnamed=unnamed,
         )
         return change_set, filters
 
