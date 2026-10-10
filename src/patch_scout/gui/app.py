@@ -13,6 +13,7 @@ import webview
 
 from patch_scout.gui import logs
 from patch_scout.gui.api import Api
+from patch_scout.gui.instance import SingleInstance, tell_already_running
 from patch_scout.gui.web_files import pin_mime_types, web_root
 from patch_scout.gui.webview2 import (
     DOWNLOAD_URL,
@@ -33,6 +34,7 @@ BACKGROUND_COLOR: Final = "#15120f"
 
 type AskToOpen = Callable[[str, str], bool]
 type OpenUrl = Callable[[str], object]
+type Tell = Callable[[str, str], object]
 type ChooseScreen = Callable[[], Screen | None]
 
 
@@ -90,11 +92,16 @@ def main(
     choose_screen: ChooseScreen = default_screen,
     ask_to_open: AskToOpen = ask_to_open_download_page,
     open_url: OpenUrl = webbrowser.open,
+    tell: Tell = tell_already_running,
+    instance: Callable[[DataFolder], SingleInstance] = lambda folder: SingleInstance.for_folder(
+        folder.root
+    ),
 ) -> int:
     """Open the main window and return the exit code; `--debug` turns on developer tools.
 
     Exit codes: 0 means the window closed normally; 1 means the WebView2 Runtime is missing,
-    or pywebview fell back to another engine after start.
+    or pywebview fell back to another engine after start; 2 means another copy of the app is
+    already running on the same data folder.
     """
     parser = argparse.ArgumentParser(prog="patch-scout")
     parser.add_argument("--debug", action="store_true")
@@ -119,6 +126,27 @@ def main(
         recent=logged.recent,
         log_file=logged.path,
     )
+    # One copy per data folder: a second one would undo the first one's changes (gui/instance.py).
+    guard = instance(folder)
+    if not guard.acquire():
+        logger.warning("another copy of Patch Scout is already running")
+        tell(catalog.text("instance.title"), catalog.text("instance.text"))
+        return 2
+    try:
+        return _open_window(api, catalog, debug, choose_screen, ask_to_open, open_url)
+    finally:
+        guard.release()
+
+
+def _open_window(
+    api: Api,
+    catalog: Catalog,
+    debug: bool,
+    choose_screen: ChooseScreen,
+    ask_to_open: AskToOpen,
+    open_url: OpenUrl,
+) -> int:
+    """Create the window and run until it closes; the exit code is as for `main`."""
     screen = choose_screen()
     geometry = window_geometry(screen)
     window = webview.create_window(

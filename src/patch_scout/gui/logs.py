@@ -7,6 +7,7 @@ Diagnostics can show them and "Copy diagnostics" can include them in a bug repor
 """
 
 import logging
+import threading
 from collections import deque
 from dataclasses import dataclass
 from logging.handlers import RotatingFileHandler
@@ -71,6 +72,18 @@ def setup(data_folder: Path, *, debug: bool) -> Logging:
         pass
     for handler in handlers:
         root.addHandler(handler)
+    # The windowed build has no stderr: an exception a thread doesn't catch goes to the log.
+    threading.excepthook = _log_thread_exception
     if path is None:
         logging.getLogger(__name__).error("the log file can't be written in %s", data_folder)
     return Logging(path=path, recent=recent)
+
+
+def _log_thread_exception(args: threading.ExceptHookArgs) -> None:
+    """Log an exception that ended a thread, instead of losing it."""
+    thread = args.thread.name if args.thread else "a thread"
+    logging.getLogger("patch_scout").error(
+        "uncaught exception in %s",
+        thread,
+        exc_info=args.exc_value,
+    )

@@ -444,6 +444,29 @@ def test_the_image_export_draws_the_page_for_a_video(open_shell: OpenShell) -> N
         assert len(drawn.convert("RGB").getcolors(maxcolors=1 << 20) or []) > 50
 
 
+def test_a_version_that_cant_be_deleted_stays_and_says_why(open_shell: OpenShell) -> None:
+    data = with_versions(version("old", "Live build"))
+    data["deleteResult"] = {"deleted": False, "error": "locked", "versions": []}
+    page = open_shell(data=data)
+    page.locator(".version-row").first.click()
+    page.locator("#details-delete").click()
+    page.locator("#confirm-yes").click()
+
+    expect(page.locator("#toast")).to_contain_text("couldn't be deleted: locked")
+    expect(page.locator("#details-view")).to_be_visible()
+
+
+def test_an_export_the_system_refuses_says_why(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    data["saveResult"] = {"saved": False, "error": "Access is denied"}
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    page.locator("#comparison-export").click()
+    page.locator("#export-text").click()
+
+    expect(page.locator("#export-status")).to_contain_text("Couldn't save there: Access is denied")
+
+
 def test_minor_changes_wait_for_their_filter(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
     search = change(field={"key": "field.search_radius", "args": {}}, level="detail")

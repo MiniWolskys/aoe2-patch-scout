@@ -67,6 +67,8 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 | Swap | Exchanges old and new. |
 
 - **Old and new are assigned automatically:** the lower game build is old; for the same build, the earlier capture is old.
+- **One copy at a time:** a second copy of the app on the same data folder says Patch Scout is already open, and exits. Two copies would undo each other's labels and notes.
+- **When the system refuses** (a file locked by another program, a read-only folder, a full disk), the action says why and nothing is half done: a version that can't be deleted stays, an export that can't be written leaves no partial file, and a capture or comparison still succeeds if only remembering it fails.
 - **On launch:** the last comparison reopens. The window shows straight away, with "Comparing…" while it is computed.
 - **While comparing** (a few seconds on real builds): a "Comparing…" view names both versions, with a sweeping progress bar. A failed comparison goes back to where the reader was and says so; any other failed call shows a short message pointing to Diagnostics.
 

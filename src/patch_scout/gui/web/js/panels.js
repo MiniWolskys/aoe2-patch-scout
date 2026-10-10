@@ -55,7 +55,7 @@ export function initExport(deps) {
     const saved = await deps.api.save_images(images, state.page.title);
     byId("export-status").textContent = saved.saved
       ? deps.t("export.image_saved", { count: images.length, path: String(saved.path ?? "") })
-      : deps.t("export.not_saved");
+      : notSaved(deps.t, saved);
   });
   byId("export-copy").addEventListener("click", async () => {
     const text = byId("export-preview").textContent ?? "";
@@ -88,11 +88,21 @@ export function initExport(deps) {
       );
       byId("export-status").textContent = saved.saved
         ? deps.t("export.saved", { path: String(saved.path ?? "") })
-        : deps.t("export.not_saved");
+        : notSaved(deps.t, saved);
     });
   }
 
   return { open: openPanel };
+}
+
+/**
+ * Why nothing was saved: the user cancelled, or the system refused (read-only folder, full disk).
+ * @param {(key: string, values?: Record<string, unknown>) => string} t
+ * @param {{saved: boolean, error?: string}} answer
+ * @returns {string}
+ */
+export function notSaved(t, answer) {
+  return answer.error ? t("export.save_failed", { reason: answer.error }) : t("export.not_saved");
 }
 
 /**

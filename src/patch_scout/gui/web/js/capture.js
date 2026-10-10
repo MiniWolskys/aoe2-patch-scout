@@ -173,10 +173,20 @@ export function initCapture(deps) {
   /** Poll the capture until it finishes, reporting every status to the app. */
   function watch() {
     window.clearInterval(pollTimer);
+    let finished = false;
     pollTimer = window.setInterval(async () => {
-      const status = await deps.api.get_capture_status();
+      let status;
+      try {
+        status = await deps.api.get_capture_status();
+      } catch (error) {
+        // One failed poll isn't the capture failing: try again on the next tick, quietly.
+        console.error("the capture status couldn't be read", error);
+        return;
+      }
       deps.onStatus(status);
-      if (status !== null && !status.running) {
+      // Two ticks can overlap; the capture is finished only once.
+      if (status !== null && !status.running && !finished) {
+        finished = true;
         window.clearInterval(pollTimer);
         deps.onFinished(status.result ?? {});
       }

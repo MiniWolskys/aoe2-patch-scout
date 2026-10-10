@@ -97,6 +97,9 @@ async function start() {
     let result;
     try {
       result = await api.import_version(path);
+    } catch (error) {
+      console.error("the import failed", error);
+      result = { imported: false, error: "write_failed" };
     } finally {
       byId("comparing-title").textContent = t("comparison.loading");
     }

@@ -71,7 +71,7 @@ FAKE_BRIDGE = """
       capture_id: id, label: label ?? "", prerelease: prerelease ?? false, notes: notes ?? "",
       origin: "captured",
     })),
-    delete_version: answer("delete_version", { versions: [] }),
+    delete_version: answer("delete_version", data.deleteResult ?? { deleted: true, versions: [] }),
     detect_game_folders: answer("detect_game_folders", data.candidates),
     browse_for_folder: answer("browse_for_folder", data.browsed),
     validate_game_folder: answer(
@@ -88,7 +88,10 @@ FAKE_BRIDGE = """
     compare_versions: answer("compare_versions", data.changeSet),
     get_icons: answer("get_icons", data.icons ?? {}),
     export_text: answer("export_text", { text: data.exportText ?? "" }),
-    save_export: answer("save_export", { saved: true, path: "C:/tmp/export.txt" }),
+    save_export: answer(
+      "save_export",
+      data.saveResult ?? { saved: true, path: "C:/tmp/export.txt" },
+    ),
     get_settings: answer("get_settings", data.startup.settings),
     update_settings: answer("update_settings", data.startup.settings),
     purge_backups: answer("purge_backups", { removed: 3 }),

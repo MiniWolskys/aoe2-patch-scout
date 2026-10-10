@@ -44,9 +44,11 @@ class BackupStore:
         """Record which object hash each input path of a capture maps to."""
         path = self._folder.backups / f"{capture_id}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
+        temporary = path.with_name(path.name + ".part")
+        temporary.write_text(
             json.dumps({"files": files}, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
+        temporary.replace(path)
         return path
 
     def purge(self) -> int:

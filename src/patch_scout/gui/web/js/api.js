@@ -59,7 +59,8 @@
  * @property {(captureId: string) => Promise<Record<string, unknown>>} get_version
  * @property {(captureId: string, label?: string | null, prerelease?: boolean | null,
  *   notes?: string | null) => Promise<Version>} update_version
- * @property {(captureId: string) => Promise<{versions: Version[]}>} delete_version
+ * @property {(captureId: string) => Promise<{deleted: boolean, error?: string, versions: Version[]}>}
+ *   delete_version
  * @property {() => Promise<Candidate[]>} detect_game_folders
  * @property {() => Promise<string | null>} browse_for_folder
  * @property {(path: string) => Promise<Record<string, unknown>>} validate_game_folder
@@ -76,12 +77,12 @@
  *   => Promise<{text: string}>} export_text
  * @property {(oldId: string, newId: string, kind?: string, lowPriority?: boolean,
  *   civs?: string[] | null, unnamed?: boolean, details?: boolean, technical?: boolean)
- *   => Promise<{saved: boolean, path?: string}>} save_export
- * @property {(captureId: string, path?: string | null) => Promise<{saved: boolean, path?: string}>}
+ *   => Promise<{saved: boolean, path?: string, error?: string}>} save_export
+ * @property {(captureId: string, path?: string | null) => Promise<{saved: boolean, path?: string, error?: string}>}
  *   export_version
  * @property {() => Promise<string | null>} choose_archive
  * @property {() => Promise<{language: string, messages: Record<string, string>}>} get_messages
- * @property {(images: string[], name: string) => Promise<{saved: boolean, path?: string}>}
+ * @property {(images: string[], name: string) => Promise<{saved: boolean, path?: string, error?: string}>}
  *   save_images
  * @property {(path?: string | null) => Promise<{imported: boolean, error?: string | null,
  *   capture_id?: string, added?: boolean}>} import_version

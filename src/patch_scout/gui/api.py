@@ -167,10 +167,14 @@ class Api:
     def delete_version(self, capture_id: str) -> JsonObject:
         """Delete a snapshot and its library entry."""
         with _Guard("delete_version"):
-            self._snapshots.delete(capture_id)
+            try:
+                self._snapshots.delete(capture_id)
+            except OSError as exc:  # locked by an antivirus or a sync tool: nothing is lost
+                logger.error("version %s couldn't be deleted: %s", capture_id, exc)
+                return {"deleted": False, "error": str(exc), "versions": self._versions()}
             self._library.remove(capture_id)
             self._loaded.pop(capture_id, None)
-            return {"versions": self._versions()}
+            return {"deleted": True, "versions": self._versions()}
 
     # --- capture -----------------------------------------------------------------------------
 
@@ -272,7 +276,10 @@ class Api:
             first, second = self._snapshot(old_id), self._snapshot(new_id)
             older, newer = order(first, second)
             change_set = self._compared(older, newer, show_unreachable=show_unreachable)
-            self._settings.remember_comparison(older.capture_id, newer.capture_id)
+            try:
+                self._settings.remember_comparison(older.capture_id, newer.capture_id)
+            except OSError as exc:  # only reopening it at the next launch is lost
+                logger.warning("the comparison couldn't be remembered: %s", exc)
             return present(change_set, self._catalog).to_json()
 
     def get_icons(self, hashes: Sequence[str]) -> JsonObject:
@@ -317,6 +324,7 @@ class Api:
         unnamed: bool = False,
         details: bool = False,
         technical: bool = False,
+        path: str | None = None,
     ) -> JsonObject:
         """Write the export where the user chooses; `kind` is `text` or `html`."""
         with _Guard("save_export"):
@@ -334,11 +342,14 @@ class Api:
             else:
                 content = render_text(change_set, self._catalog, filters)
                 suffix, name = ".txt", "patch-scout-comparison.txt"
-            path = self._ask_where_to_save(name, suffix)
-            if path is None:
+            chosen = path or self._ask_where_to_save(name, suffix)
+            if chosen is None:
                 return {"saved": False}
-            Path(path).write_text(content, encoding="utf-8")
-            return {"saved": True, "path": path}
+            try:
+                Path(chosen).write_text(content, encoding="utf-8")
+            except OSError as exc:
+                return _not_saved("save_export", chosen, exc)
+            return {"saved": True, "path": chosen}
 
     def save_images(self, images: Sequence[str], name: str, path: str | None = None) -> JsonObject:
         """Write the image export: PNG data URLs drawn by the page; asks where unless `path`.
@@ -359,8 +370,13 @@ class Api:
                     for index in range(1, len(decoded) + 1)
                 ]
             )
-            for file, data in zip(paths, decoded, strict=True):
-                file.write_bytes(data)
+            try:
+                for file, data in zip(paths, decoded, strict=True):
+                    file.write_bytes(data)
+            except OSError as exc:
+                for file in paths:  # no half set of parts
+                    file.unlink(missing_ok=True)
+                return _not_saved("save_images", chosen, exc)
             return {"saved": True, "path": str(paths[0])}
 
     # --- archives (P-21) -----------------------------------------------------------------------
@@ -373,13 +389,16 @@ class Api:
             chosen = path or self._ask_where_to_save(name, archive.SUFFIX)
             if chosen is None:
                 return {"saved": False}
-            archive.export(
-                self._folder,
-                capture_id,
-                Path(chosen),
-                tool_version=self._app_version,
-                notice=archive.NOTICE_TEXT,
-            )
+            try:
+                archive.export(
+                    self._folder,
+                    capture_id,
+                    Path(chosen),
+                    tool_version=self._app_version,
+                    notice=archive.NOTICE_TEXT,
+                )
+            except OSError as exc:
+                return _not_saved("export_version", chosen, exc)
             return {"saved": True, "path": chosen}
 
     def import_version(self, path: str | None = None) -> JsonObject:
@@ -397,6 +416,9 @@ class Api:
             except archive.ArchiveError as exc:
                 logger.warning("import of %s refused: %s", chosen, exc)
                 return {"imported": False, "error": exc.reason}
+            except (OSError, PatchScoutError) as exc:  # the data folder can't take it
+                logger.error("import of %s couldn't be written: %s", chosen, exc)
+                return {"imported": False, "error": "write_failed"}
             self._library.reload()
             return {"imported": True, "capture_id": result.capture_id, "added": result.added}
 
@@ -494,7 +516,10 @@ class Api:
             logger.exception("the capture failed unexpectedly")
             state.result = {"error": f"{type(error).__name__}: {error}"}
         else:
-            self._settings.remember_game_folder(request.game_folder)
+            try:
+                self._settings.remember_game_folder(request.game_folder)
+            except OSError as exc:  # only the folder suggestion is lost, not the capture
+                logger.warning("the game folder couldn't be remembered: %s", exc)
             # The capture wrote its library entry through its own Library (capture/runner.py).
             self._library.reload()
             state.result = {
@@ -707,3 +732,9 @@ def _png(data_url: str) -> bytes:
     if not data.startswith(PNG_SIGNATURE):
         raise ValueError("not a PNG image from the page")
     return data
+
+
+def _not_saved(call: str, path: str, error: OSError) -> JsonObject:
+    """A save the system refused (read-only folder, full disk, locked file): say why."""
+    logger.error("%s couldn't write %s: %s", call, path, error)
+    return {"saved": False, "error": error.strerror or str(error)}

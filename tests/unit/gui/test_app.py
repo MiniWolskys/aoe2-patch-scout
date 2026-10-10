@@ -317,3 +317,29 @@ def test_check_renderer_still_explains_when_the_window_never_shows(
     assert failed.is_set() is True
     assert [title for title, _ in dialog.shown] == [WEBVIEW2_TITLE]
     assert browser.opened == [DOWNLOAD_URL]
+
+
+class _Taken:
+    """A running-copy marker another copy already holds."""
+
+    def acquire(self) -> bool:
+        return False
+
+    def release(self) -> None:
+        raise AssertionError("a marker that wasn't acquired is never released")
+
+
+def test_a_second_copy_says_so_and_exits(fake_webview: FakeWebview) -> None:
+    told: list[tuple[str, str]] = []
+    code = app.main(
+        [],
+        read_value=runtime_installed,
+        choose_screen=lambda: DEFAULT_SCREEN,
+        ask_to_open=Dialog(answer=False),
+        open_url=Browser(),
+        tell=lambda title, text: told.append((title, text)),
+        instance=lambda folder: _Taken(),  # type: ignore[arg-type,return-value]
+    )
+    assert code == 2
+    assert told and "already open" in told[0][1]
+    assert fake_webview.windows == []
