@@ -20,6 +20,7 @@ from patch_scout.store import (
 from patch_scout.store.icons import MAX_SIDE, downscale
 from patch_scout.store.library import UnknownVersionError
 from patch_scout.store.paths import default_root
+from patch_scout.store.settings import SettingsStore
 
 
 @pytest.fixture
@@ -183,6 +184,40 @@ def test_purging_removes_every_backup(folder: DataFolder, tmp_path: Path) -> Non
     assert store.purge() == 0
 
 
+def test_forgetting_a_capture_keeps_the_files_another_capture_still_uses(
+    folder: DataFolder, tmp_path: Path
+) -> None:
+    source = tmp_path / "a.json"
+    source.write_text("{}", encoding="utf-8")
+    store = BackupStore(folder)
+    for digest in ("shared", "own"):
+        store.store(digest, source)
+    store.write_manifest("old", {"a.json": "shared", "b.json": "own"})
+    store.write_manifest("new", {"a.json": "shared"})
+
+    assert store.forget("old") == 2  # its manifest and the file only it used
+
+    assert store.object_path("shared").is_file()
+    assert not store.object_path("own").exists()
+    assert not (folder.backups / "old.json").exists()
+    assert store.forget("old") == 0
+
+
+def test_forgetting_keeps_everything_when_a_manifest_is_unreadable(
+    folder: DataFolder, tmp_path: Path
+) -> None:
+    """A damaged manifest can't say what it uses, so nothing it might use is deleted."""
+    source = tmp_path / "a.json"
+    source.write_text("{}", encoding="utf-8")
+    store = BackupStore(folder)
+    store.store("own", source)
+    store.write_manifest("old", {"a.json": "own"})
+    (folder.backups / "broken.json").write_text("{not json", encoding="utf-8")
+
+    assert store.forget("old") == 1
+    assert store.object_path("own").is_file()
+
+
 def test_the_index_is_reread_when_another_library_added_an_entry(folder: DataFolder) -> None:
     """A capture writes through its own Library, so a long-lived one must be told (gui/api.py)."""
     reader = Library(folder)
@@ -205,3 +240,13 @@ def test_updating_an_entry_another_library_added_rereads_the_index(folder: DataF
 def test_updating_an_entry_that_does_not_exist_says_so(folder: DataFolder) -> None:
     with pytest.raises(UnknownVersionError, match="nope"):
         Library(folder).update("nope", label="x")
+
+
+def test_an_older_settings_file_naming_a_data_folder_still_loads(folder: DataFolder) -> None:
+    folder.root.mkdir(parents=True, exist_ok=True)
+    folder.settings_file.write_text(
+        '{"version": 1, "raw_backups": false, "data_folder": "D:/elsewhere"}', encoding="utf-8"
+    )
+    settings = SettingsStore(folder).load()
+    assert settings.raw_backups is False
+    assert "data_folder" not in settings.to_json()

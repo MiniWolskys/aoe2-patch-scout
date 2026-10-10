@@ -106,6 +106,11 @@ class Api:
         self._window: Any = None
         self._last_comparison: tuple[tuple[object, ...], ChangeSet] | None = None
         self._log: list[str] = []
+        # pywebview runs each call from the page on its own thread. Loading and comparing take
+        # seconds and hundreds of MB, so they run one at a time: a second caller waits and then
+        # reuses the first one's result. Starting a capture is checked and set under its own lock.
+        self._work_lock = threading.RLock()
+        self._capture_lock = threading.Lock()
 
     # --- wiring ------------------------------------------------------------------------------
 
@@ -169,7 +174,7 @@ class Api:
             return _entry_json(entry)
 
     def delete_version(self, capture_id: str) -> JsonObject:
-        """Delete a snapshot and its library entry."""
+        """Delete a snapshot, its library entry, and the raw backups no other version uses."""
         with _Guard("delete_version"):
             try:
                 self._snapshots.delete(capture_id)
@@ -177,7 +182,12 @@ class Api:
                 logger.error("version %s couldn't be deleted: %s", capture_id, exc)
                 return {"deleted": False, "error": str(exc), "versions": self._versions()}
             self._library.remove(capture_id)
-            self._loaded.pop(capture_id, None)
+            with self._work_lock:
+                self._loaded.pop(capture_id, None)
+            try:
+                BackupStore(self._folder).forget(capture_id)
+            except OSError as exc:  # the version is gone; leftover backups only cost disk space
+                logger.warning("backups of %s couldn't all be deleted: %s", capture_id, exc)
             return {"deleted": True, "versions": self._versions()}
 
     # --- capture -----------------------------------------------------------------------------
@@ -232,7 +242,7 @@ class Api:
         capture_anyway: bool = False,
     ) -> JsonObject:
         """Start a capture on a worker thread; the page polls `get_capture_status`."""
-        with _Guard("start_capture"):
+        with _Guard("start_capture"), self._capture_lock:
             if self._capture is not None and not self._capture.done:
                 return {"started": False, "reason": "a capture is already running"}
             settings = self._settings.load()
@@ -560,11 +570,12 @@ class Api:
 
     def _snapshot(self, capture_id: str) -> Snapshot:
         """A whole snapshot; only the two used last stay in memory (~164 MB each)."""
-        snapshot = self._loaded.pop(capture_id, None) or self._snapshots.load(capture_id)
-        self._loaded[capture_id] = snapshot
-        while len(self._loaded) > MAX_LOADED:
-            self._loaded.pop(next(iter(self._loaded)))
-        return snapshot
+        with self._work_lock:
+            snapshot = self._loaded.pop(capture_id, None) or self._snapshots.load(capture_id)
+            self._loaded[capture_id] = snapshot
+            while len(self._loaded) > MAX_LOADED:
+                self._loaded.pop(next(iter(self._loaded)))
+            return snapshot
 
     def _side_info(self, capture_id: str) -> SideInfo:
         entry = self._library.get(capture_id)
@@ -585,17 +596,18 @@ class Api:
         old_info = self._side_info(older.capture_id)
         new_info = self._side_info(newer.capture_id)
         key = (older.capture_id, newer.capture_id, show_unreachable, old_info, new_info)
-        if self._last_comparison is not None and self._last_comparison[0] == key:
-            return self._last_comparison[1]
-        change_set = compare(
-            older,
-            newer,
-            options=Options(show_unreachable=show_unreachable, language=self._language),
-            old_info=old_info,
-            new_info=new_info,
-        )
-        self._last_comparison = (key, change_set)
-        return change_set
+        with self._work_lock:
+            if self._last_comparison is not None and self._last_comparison[0] == key:
+                return self._last_comparison[1]
+            change_set = compare(
+                older,
+                newer,
+                options=Options(show_unreachable=show_unreachable, language=self._language),
+                old_info=old_info,
+                new_info=new_info,
+            )
+            self._last_comparison = (key, change_set)
+            return change_set
 
     def _ask_where_to_save(self, name: str, suffix: str) -> str | None:
         if self._window is None:

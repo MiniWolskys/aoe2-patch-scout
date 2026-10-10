@@ -1,6 +1,6 @@
 # Roadmap
 
-**Status on 2026-10-10:** M0 to M4 are done. M5 has a working build, the release files and steps, but no release yet: the first one is made by hand by the maintainer. The checks that need a PUP branch or a Microsoft Store install are still deferred.
+**Status on 2026-10-10:** M0 to M3 are done. M4 is done apart from the tech tree view, which the maintainer moved before v1.0 (D-39). M5 has a working build, the release files and steps, but no release yet: the first one is made by hand by the maintainer. The checks that need a PUP branch or a Microsoft Store install are still deferred.
 
 The app captures a real install, gates the `.dat`, compares two versions and exports the result as text or HTML. What is left before v1.0 is listed under each milestone below.
 
@@ -138,6 +138,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - [x] Export and import of version archives, and the baseline pack import (P-21), 2026-10-10.
 - [x] The PNG image export, 2026-10-10: the page on screen drawn at 1920 × 1080 for a video, in parts when it is long.
 - [x] The Chronicles civs in their own tab (D-38), 2026-10-10. Return of Rome gets one when it is supported.
+- [ ] **Tech tree view** (D-39, amended 2026-10-10): the civ's tree laid out like the game's, with the comparison's changes marked on it. Built after every other v1.0 task; spec first.
 
 ## M5: Packaging and v1.0
 
@@ -152,12 +153,13 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 
 **Exit criteria**
 - [x] `uv run pyinstaller packaging/patch-scout.spec` produces a one-folder build that runs and compares real captures (217 files, 40.8 MB).
-- [ ] **Not done:** `COPYING.LESSER` (the LGPLv3 text), an exe icon, the baseline pack, release notes, the 3.13 smoke test, and the walkthrough on a clean machine.
+- [x] `COPYING.LESSER` (the LGPLv3 text) and the exe icon, 2026-10-10.
+- [ ] **Not done:** the baseline pack, release notes, the 3.13 smoke test, and the walkthrough on a clean machine.
 
 ## After v1.0
 
 - Apply to the SignPath Foundation; add the code signing policy page and the signing step to the release workflow (O-6).
-- **Civ overview** (D-39): one civ's full tech tree, bonuses and stats in a version, with a comparison's changes highlighted.
+- **Civ overview** (D-39): the rest of the overview beyond the tech tree, i.e. one civ's bonuses and stats in a version, with a comparison's changes highlighted.
 
 ## Later (not v1)
 
