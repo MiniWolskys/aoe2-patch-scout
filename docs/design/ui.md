@@ -77,7 +77,7 @@ The screens were designed in three rounds of mockups with sample data. The mocku
    - the label;
    - the pre-release tickbox, prefilled from Steam when possible (P-23);
    - the reminder to capture the live build before switching Steam to PUP.
-2. **Start capture** closes the dialog. The capture appears as a row at the top of the list. **Capture new version** is disabled until it finishes; the rest of the app stays usable.
+2. **Start capture** checks the folder in the field as it is at that moment and captures exactly that folder; an invalid one shows why and nothing starts. The suggested label follows the folder's build until the user types their own. Start capture then closes the dialog. The capture appears as a row at the top of the list. **Capture new version** is disabled until it finishes; the rest of the app stays usable.
 3. **Opening that row** shows the progress view: a progress bar and the steps. A capture started from the first-launch screen opens the progress view directly, since there is nothing else to show.
 
    | Step | Detail shown |
