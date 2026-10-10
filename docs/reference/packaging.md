@@ -96,7 +96,7 @@ Tags and releases are made by the maintainer (AGENTS.md). For each release:
 
 1. **Version:** set `version` in `pyproject.toml`, then `uv lock`. The exe's file metadata and the About section read it.
 2. **Notices:** `uv run python tools/third_party_notices.py`, review the diff, commit. The release workflow fails if `THIRD_PARTY_NOTICES` is out of date.
-3. **Checks:** `uv run pre-commit run --all-files`, `uv run mypy`, `uv run pytest`, and `uv run pytest -m game` on the live install.
+3. **Checks:** `uv run pre-commit run --all-files`, `uv run mypy`, `uv run pytest`, and `uv run pytest -m game` on the live install. Before the first release, and after any packaging change, also run the [manual checks](#manual-checks-before-a-release) on the built zip.
 4. **Tag** `vX.Y.Z` on `main` and create the GitHub release for it. The release workflow builds the one-folder app, checks it holds no game files, and attaches `PatchScout-X.Y.Z-windows-x64.zip` and its `.sha256`.
    - The zip has `LICENSE`, `COPYING.LESSER`, `THIRD_PARTY_NOTICES` and `README.md` next to `Patch Scout.exe` (legal.md checklist).
 5. **Baseline pack** (P-21), a separate asset, never in the zip:
@@ -111,5 +111,45 @@ Tags and releases are made by the maintainer (AGENTS.md). For each release:
    - the link to the tagged commit (GPL corresponding source);
    - which build the baseline pack holds;
    - the Microsoft notice.
+
+## Manual checks before a release
+
+What CI can't check. Run them on the zip the release workflow built, or on a local `uv run pyinstaller packaging/patch-scout.spec` build zipped the same way.
+
+### Clean profile, standard user
+
+Users aren't administrators and have no Python. Windows Sandbox isn't available on Windows Home, so use a **new standard (non-admin) local account**, or a second PC. A new account has an empty `%LOCALAPPDATA%`, like a first install.
+
+1. **Install:** download the zip into the account's Downloads folder, check its SHA-256, unzip, and run `Patch Scout.exe`. SmartScreen shows "unknown publisher": **More info → Run anyway**. No admin prompt may appear.
+2. **First launch:** the welcome screen offers to capture or to import a baseline pack. Import the baseline pack; it appears in the version list, marked as a baseline.
+3. **Capture:** the detected folder is proposed, not used silently. Typing another folder captures that one. The live build captures with stats available; Diagnostics shows the gates passed.
+4. **Compare** the capture with the baseline:
+   - Overall and a few civ pages read correctly; check the Chronicles tab;
+   - the filters work;
+   - civ icons and unit icons show.
+5. **Exports:** copy text, save `.txt` and `.html` (the HTML opens offline in a browser), and save the images. Saving into a read-only folder says why it failed and leaves no partial file.
+6. **Archives:** export a version as `.aoe2snap`, delete it (confirmation, then gone, backups too), import it back.
+7. **Settings:** turn raw backups off and on; purge backups.
+8. **Diagnostics:** Copy diagnostics holds no game values.
+9. **One copy:** start a second copy; it says Patch Scout is already open, and exits.
+10. **Restart:** close and reopen; the last comparison reopens. `%LOCALAPPDATA%\PatchScout\logs\patch-scout.log` exists and holds no errors from the session.
+11. **Remove:** delete the unzipped folder and `%LOCALAPPDATA%\PatchScout`; nothing else was written (no registry keys, nothing in Program Files).
+
+### Python 3.13 (P-12)
+
+`uv run --python 3.13 pytest` and a build with `uv run --python 3.13 pyinstaller packaging/patch-scout.spec` that captures and compares. It needs a 3.13 download (`uv python install 3.13`).
+
+### Steam PUP branch (P-23)
+
+Switching to the PUP **overwrites the live install in place**: back up the live build's inputs first, or capture it before switching. On the PUP branch:
+1. detection shows the branch, and the capture's pre-release box is prefilled;
+2. the capture compares with the live one;
+3. record in [game-files.md](game-files.md) what the app manifest holds on a beta branch, marked `[verified]` with the build.
+
+Switch back to the live branch afterwards.
+
+### Microsoft Store install
+
+If a Store copy is available: detection proposes it, the capture reads it (the install folder can be access-restricted), and stats are available. If none is available, the release notes say Store installs are untested.
 
 **The app icon** is our own artwork, drawn by `tools/make_icon.py` into `packaging/patch-scout.ico`.
