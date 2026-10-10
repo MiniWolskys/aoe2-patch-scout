@@ -2,7 +2,11 @@
 
 Find out what changed in *Age of Empires II: Definitive Edition* between two game builds, without waiting for patch notes.
 
-> **Status: preparing v1.0.** The app captures, compares and exports for real; the first release is being prepared. Progress is tracked in the [roadmap](docs/roadmap.md).
+> **Status: preparing v1.0.** The app captures, compares, exports and draws tech trees for real; the first release is being prepared. Progress is tracked in the [roadmap](docs/roadmap.md).
+
+![The changes of a patch for every civilization: a few lines, with the civs each one applies to](docs/images/comparison-overall.png)
+
+<p align="center"><em>Update 185872 (101.103.48987.0 → 101.103.54800.0): what changed for every civilization.</em></p>
 
 ## Why
 
@@ -11,18 +15,32 @@ Content creators often get early builds (pre-release, PUP) before any patch note
 ## Features
 
 - **Capture** a snapshot of any AoE2:DE install. The app looks for the game and shows you the folder it found; you can always pick another one, e.g. a pre-release build.
-- **Compare** two snapshots and get a categorised list of changes, with game icons:
+- **Compare** two snapshots and get the changes, page by page: Overall for what changed for everyone, then one page per civilization, with game icons. The Chronicles civilizations have their own tab.
   - new or removed civilizations;
   - units, techs and buildings gained or lost, per civ;
-  - civ bonus and team bonus changes: the game's own wording, word by word;
-  - unit stat changes (HP, attack, armour, range, speed, cost, train time…), marked *all civs* or *specific civs*;
-  - tech cost, research time and effect changes;
+  - civ bonus and team bonus texts, line by line in the game's own wording, with the words that changed marked;
+  - unit stat changes (HP, attack, armour, range, speed, cost, train time…), with the civs they apply to: *all civilizations*, *all except…*, or by name;
+  - what techs and bonuses do, in plain sentences ("Mounted Crossbowman: Max Range +1"), and their cost and research time;
   - text and icon changes.
-- **Tech tree:** see a civ's tree laid out like the game's, with what it gained, lost and had changed marked on it. Hover a unit or tech for the game's own tooltip, with changed values old → new.
-- **Export** as plain text (for video descriptions), a single HTML page, or images for videos, with only the changes you chose to show.
-- **Organise your snapshots:** rename them, and mark the ones from pre-release builds.
+- **What matters first:** changes that matter to players are shown by default. Minor and technical ones (AI search ranges, interface plumbing, rounding) wait behind two filters, and a note says how many are hidden.
+- **Tech tree:** a civ's tree laid out like the game's, with what it gained, lost or had changed marked on it, and its bonuses on the side. Hover a unit or tech for the game's own tooltip, with changed values old → new.
+- **Export** as plain text (for video descriptions), a single HTML page, or 1920 × 1080 images for videos, with only the changes you chose to show.
+- **Organise your snapshots:** rename them, add notes, mark the ones from pre-release builds, and export or import a version as a single file.
+- **Diagnostics:** if something looks wrong, one screen shows how each file was read and checked, and copies a report for a bug report without any game data.
 - **A snapshot of the current live build is published with every release,** so you can compare even if you installed after the patch dropped.
 - **Windows app,** no Python installation needed.
+
+## Screenshots
+
+**A civilization's page:** its bonus text with the line that changed, and its unit changes.
+
+![The Vietnamese page: the bonus text with the changed line in red and green, and two unit changes](docs/images/comparison-civ.png)
+
+**The tech tree:** laid out like the game's, with the changed units marked and the game's own tooltip on hover.
+
+![The Armenians' tech tree with the Man-at-Arms tooltip showing Attack vs Shock Infantry 2 → 3](docs/images/tech-tree.png)
+
+The screenshots show a public live build. Their game content is © Microsoft; see [docs/images/NOTICE](docs/images/NOTICE).
 
 ## How it works
 
@@ -67,6 +85,7 @@ More detail in [docs/design/architecture.md](docs/design/architecture.md).
 | [Roadmap](docs/roadmap.md) | Milestones and what's next |
 | [Decisions](docs/decisions.md) | What was decided and why; open questions |
 | [Architecture](docs/design/architecture.md) | Components, data flow, screens |
+| [User interface](docs/design/ui.md) | Screens, behaviour, the tech tree, colours |
 | [Snapshot format](docs/design/snapshot-format.md) | What a snapshot contains |
 | [Diff rules](docs/design/diff-rules.md) | What counts as a change and how it's shown |
 | [Game files reference](docs/reference/game-files.md) | How the game data is laid out |
@@ -83,7 +102,7 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md), and read the 
 
 - [genieutils-py](https://github.com/SiegeEngineers/genieutils-py) (SiegeEngineers): reads the `.dat` file.
 - [genieutils](https://github.com/Tapsa/genieutils) and [Advanced Genie Editor](https://github.com/Tapsa/AGE) (Tapsa): format reference.
-- [aoe2techtree](https://github.com/SiegeEngineers/aoe2techtree) (SiegeEngineers): prior art for building on AoE2 game data.
+- [aoe2techtree](https://github.com/SiegeEngineers/aoe2techtree) (SiegeEngineers): prior art for building on AoE2 game data, and the reference for the tech tree's look.
 
 ## License
 

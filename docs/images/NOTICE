@@ -1,0 +1,10 @@
+The screenshots in this folder show Patch Scout comparing two public live builds of
+Age of Empires II: Definitive Edition (101.103.48987.0 and 101.103.54800.0). They contain game
+content: icons, names, texts and values.
+
+That game content is not covered by the GPL that covers Patch Scout's code (docs/legal.md).
+Never add a screenshot of a build shared privately with content creators.
+
+Age of Empires II © Microsoft Corporation. Patch Scout was created under Microsoft's "Game
+Content Usage Rules" (https://www.xbox.com/en-US/developers/rules) using assets from Age of
+Empires II, and it is not endorsed by or affiliated with Microsoft.
