@@ -278,6 +278,16 @@ def test_a_projectile_field_is_labelled_as_part_of_its_shooter(open_shell: OpenS
     expect(page.locator(".change-row__field")).to_have_text("Projectile: Attack vs #3")
 
 
+def test_a_failed_comparison_says_so_and_goes_back(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    data["changeSet"] = None  # the bridge answers nothing usable
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    expect(page.locator("#toast")).to_contain_text("The comparison failed")
+    expect(page.locator("#comparing-view")).to_be_hidden()
+
+
 def test_minor_changes_wait_for_their_filter(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
     search = change(field={"key": "field.search_radius", "args": {}}, level="detail")

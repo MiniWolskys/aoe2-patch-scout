@@ -55,6 +55,9 @@ addopts = [
     # The golden-file option lives in a plugin, not a second conftest (tests/support/golden.py).
     "-p",
     "support.golden",
+    # Every test gets its own LOCALAPPDATA, so none touches the real data folder.
+    "-p",
+    "support.isolation",
     "--strict-markers",
     "-m",
     "not game",

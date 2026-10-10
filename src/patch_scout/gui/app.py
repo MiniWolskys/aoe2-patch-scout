@@ -11,6 +11,7 @@ from typing import Final, Protocol, cast
 
 import webview
 
+from patch_scout.gui import logs
 from patch_scout.gui.api import Api
 from patch_scout.gui.web_files import pin_mime_types, web_root
 from patch_scout.gui.webview2 import (
@@ -22,6 +23,7 @@ from patch_scout.gui.webview2 import (
 )
 from patch_scout.gui.window import MIN_SIZE, Screen, primary_screen, window_geometry
 from patch_scout.i18n.catalog import Catalog, load_catalog
+from patch_scout.store import DataFolder
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +99,8 @@ def main(
     parser = argparse.ArgumentParser(prog="patch-scout")
     parser.add_argument("--debug", action="store_true")
     debug: bool = parser.parse_args(argv).debug
-    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
+    folder = DataFolder.default()
+    logged = logs.setup(folder.root, debug=debug)
     pin_mime_types()
     catalog = load_catalog(LANGUAGE)
 
@@ -108,7 +111,14 @@ def main(
         return 1
     logger.info("WebView2 Runtime %s", runtime)
 
-    api = Api(catalog, LANGUAGE, importlib.metadata.version("patch-scout"))
+    api = Api(
+        catalog,
+        LANGUAGE,
+        importlib.metadata.version("patch-scout"),
+        folder,
+        recent=logged.recent,
+        log_file=logged.path,
+    )
     screen = choose_screen()
     geometry = window_geometry(screen)
     window = webview.create_window(

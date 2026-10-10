@@ -128,6 +128,8 @@ export function initDiagnostics(deps) {
       environment.append(el("dd", { class: "mono", text: String(value ?? "") }));
     }
     byId("diagnostics-log").textContent = (latest.log ?? []).join("\n");
+    byId("diagnostics-problems").textContent =
+      (latest.problems ?? []).join("\n") || deps.t("diagnostics.no_problems");
     renderGates(latest.snapshot);
     fillVersions(latest.versions ?? [], captureId);
     dialogs.open("diagnostics-scrim");
@@ -233,6 +235,8 @@ export function initDiagnostics(deps) {
       ...Object.entries(latest.environment ?? {}).map(([name, value]) => `${name}: ${value}`),
       "",
       ...(latest.log ?? []),
+      "",
+      ...(latest.problems ?? []),
     ].join("\n");
     try {
       await navigator.clipboard.writeText(text);
