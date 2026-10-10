@@ -554,10 +554,40 @@ body:not([data-ready]) {
   overflow-y: auto;
 }
 
-.civ-list__group {
-  margin: 14px 0 4px;
-  padding: 0 12px;
-  color: var(--text-3);
+/* Main game / Chronicles (D-38) */
+.civ-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  padding: 3px;
+  border-radius: var(--radius-control);
+  background: var(--bg-inset);
+}
+
+.civ-tab {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.civ-tab:hover {
+  color: var(--text);
+}
+
+.civ-tab[aria-selected="true"] {
+  background: var(--bg-hover);
+  color: var(--text);
+  font-weight: 600;
 }
 
 .civ-row {

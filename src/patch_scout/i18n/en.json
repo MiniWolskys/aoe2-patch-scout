@@ -51,6 +51,7 @@
   "comparison.show_unnamed": "Show objects with no name",
   "comparison.show_unreachable": "Show units a civilization can't get",
   "comparison.swap": "Swap the two versions",
+  "comparison.tab_main": "Main game",
   "detail.effect_command": "{effect}, command {command}",
   "detail.effect_command_raw": "{effect}, command {command}: {raw}",
   "detail.whitespace_only": "spacing only",
