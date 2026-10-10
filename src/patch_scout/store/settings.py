@@ -62,9 +62,16 @@ class SettingsStore:
     def save(self, settings: Settings) -> Settings:
         """Write the settings and keep them for this session."""
         self.folder.root.mkdir(parents=True, exist_ok=True)
-        self.folder.settings_file.write_text(
-            json.dumps(settings.to_json(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        # Whole or not at all: a crash or a full disk never leaves a half-written file.
+        path = self.folder.settings_file
+        temporary = path.with_name(path.name + ".part")
+        try:
+            temporary.write_text(
+                json.dumps(settings.to_json(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+            )
+            temporary.replace(path)
+        finally:
+            temporary.unlink(missing_ok=True)
         self._cached = settings
         return settings
 

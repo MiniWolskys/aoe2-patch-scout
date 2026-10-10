@@ -137,7 +137,12 @@ export function initDetails(deps) {
     if (!agreed) {
       return;
     }
-    await deps.api.delete_version(openId);
+    const deleted = await deps.api.delete_version(openId);
+    if (deleted.deleted === false) {
+      // Locked by another program, say: nothing was removed.
+      dialogs.toast(deps.t("details.delete_failed", { reason: String(deleted.error ?? "") }));
+      return;
+    }
     openId = null;
     await deps.onDeleted();
   });
@@ -161,6 +166,8 @@ export function initDetails(deps) {
     const saved = await deps.api.export_version(openId);
     if (saved.saved) {
       dialogs.toast(deps.t("details.exported", { path: String(saved.path ?? "") }));
+    } else if (saved.error) {
+      dialogs.toast(deps.t("export.save_failed", { reason: saved.error }));
     }
   });
 

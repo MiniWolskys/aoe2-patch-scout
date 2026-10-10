@@ -114,16 +114,19 @@ def export(
         "notes": entry.notes if entry else "",
     }
     temporary = path.with_name(path.name + ".part")
-    with zipfile.ZipFile(temporary, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
-        zipped.writestr(MANIFEST, json.dumps(manifest, indent=2, sort_keys=True))
-        zipped.writestr(SNAPSHOT, gzip.compress(dumps(shared), mtime=0), zipfile.ZIP_STORED)
-        zipped.writestr(ENTRY, json.dumps(library_entry, indent=2, sort_keys=True))
-        zipped.writestr(NOTICE_FILE, notice)
-        for digest in hashes:
-            png = icons.read_png(digest)
-            if png is not None:
-                zipped.writestr(f"{ICONS}{digest}.png", png, zipfile.ZIP_STORED)
-    temporary.replace(path)
+    try:
+        with zipfile.ZipFile(temporary, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
+            zipped.writestr(MANIFEST, json.dumps(manifest, indent=2, sort_keys=True))
+            zipped.writestr(SNAPSHOT, gzip.compress(dumps(shared), mtime=0), zipfile.ZIP_STORED)
+            zipped.writestr(ENTRY, json.dumps(library_entry, indent=2, sort_keys=True))
+            zipped.writestr(NOTICE_FILE, notice)
+            for digest in hashes:
+                png = icons.read_png(digest)
+                if png is not None:
+                    zipped.writestr(f"{ICONS}{digest}.png", png, zipfile.ZIP_STORED)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)  # left only by a failed export
 
 
 def icon_hashes(value: JsonValue) -> set[str]:

@@ -2,6 +2,7 @@
 """The app's log: a file in the data folder, and recent problems for Diagnostics."""
 
 import logging
+import threading
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -12,10 +13,11 @@ from patch_scout.gui import logs
 
 @pytest.fixture
 def root_logger() -> Iterator[logging.Logger]:
-    """The root logger, with its handlers and level put back after the test."""
+    """The root logger, with its handlers, level and thread hook put back after the test."""
     root = logging.getLogger()
-    handlers, level = list(root.handlers), root.level
+    handlers, level, hook = list(root.handlers), root.level, threading.excepthook
     yield root
+    threading.excepthook = hook
     for handler in root.handlers:
         if handler not in handlers:
             handler.close()
@@ -69,3 +71,17 @@ def test_a_data_folder_that_cant_be_written_still_logs(
     assert setup.path is None
     logging.getLogger("patch_scout.test").error("still recorded")
     assert any("still recorded" in line for line in setup.recent.lines())
+
+
+def test_an_exception_that_ends_a_thread_is_logged(
+    tmp_path: Path, root_logger: logging.Logger
+) -> None:
+    setup = logs.setup(tmp_path / "PatchScout", debug=False)
+
+    def fail() -> None:
+        raise RuntimeError("boom in a worker")
+
+    worker = threading.Thread(target=fail, name="worker")
+    worker.start()
+    worker.join()
+    assert any("uncaught exception in worker" in line for line in setup.recent.lines())

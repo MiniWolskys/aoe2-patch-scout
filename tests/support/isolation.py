@@ -6,6 +6,7 @@ this, a test of the app would write into the developer's own Patch Scout folder.
 """
 
 import logging
+import threading
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -16,8 +17,9 @@ import pytest
 def _isolated_data_folder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "LocalAppData"))
     root = logging.getLogger()
-    handlers, level = list(root.handlers), root.level
+    handlers, level, hook = list(root.handlers), root.level, threading.excepthook
     yield
+    threading.excepthook = hook
     for handler in root.handlers:
         if handler not in handlers:
             handler.close()
