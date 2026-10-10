@@ -65,7 +65,10 @@ FAKE_BRIDGE = """
     delete_version: answer("delete_version", { versions: [] }),
     detect_game_folders: answer("detect_game_folders", data.candidates),
     browse_for_folder: answer("browse_for_folder", data.browsed),
-    validate_game_folder: answer("validate_game_folder", data.validation),
+    validate_game_folder: answer(
+      "validate_game_folder",
+      (path) => (data.validations ?? {})[path] ?? data.validation,
+    ),
     start_capture: answer("start_capture", { started: true }),
     get_capture_status: answer("get_capture_status", () => {
       const statuses = data.captureStatuses ?? [];
