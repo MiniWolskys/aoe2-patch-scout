@@ -88,7 +88,7 @@ Every allowlist change goes through a PR that adds a fixture case showing the fi
 
 For each civ, the diff reports only the units that civ can actually get. Reachability is computed at diff time from both snapshots; captures always keep every unit (P-03).
 
-1. **Seeds:** the unit and building IDs of the civ's tech tree nodes and building offers, in either snapshot.
+1. **Seeds:** the unit and building IDs of the civ's tech tree nodes and building offers, in either snapshot, **except what the civ's tree marks `NotAvailable`**: trees and offers also list what a civ can't get. *Before 2026-10-10 those counted, so the new Heavy Mounted Crossbowman read "all 15 civilizations that have it" on 101.103.54800.0, though only 10 can get it, and a ram's change read "all civilizations" for civs without rams.*
 2. **Linked forms.** From every reachable unit, follow these links, and repeat until no unit is added:
    - `Building.transform_unit`: the other form of a transforming unit, e.g. Trebuchet ↔ Trebuchet (Packed);
    - `Unit.blood_unit_id`, only when the target's `language_dll_name` resolves to a string, e.g. Konnik → Konnik (Dismounted).
