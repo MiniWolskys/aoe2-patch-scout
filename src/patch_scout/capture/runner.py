@@ -245,6 +245,7 @@ def _build(
         linked_techs=tier.linked_techs,
         linked_units=tier.linked_units,
         eras=tier.eras,
+        scripts=tier.scripts,
         strings=string_section,
         stat_icons=stat_icons,
         stats=stats.stats,

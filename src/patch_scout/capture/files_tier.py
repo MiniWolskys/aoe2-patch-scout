@@ -11,6 +11,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Final
 
+from patch_scout.capture import scripts
 from patch_scout.capture.inputs import InputReader, MissingInputError
 from patch_scout.capture.strings import lookup
 from patch_scout.snapshot import JsonObject, JsonValue
@@ -124,6 +125,7 @@ class FilesTier:
     linked_techs: list[JsonValue] = field(default_factory=list)
     linked_units: list[JsonValue] = field(default_factory=list)
     eras: list[JsonValue] = field(default_factory=list)
+    scripts: JsonObject = field(default_factory=dict)
     missing_sections: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -152,6 +154,10 @@ def read(reader: InputReader, strings: JsonObject) -> FilesTier:
     _optional(tier, "linked_techs", read_linked_techs(reader))
     _optional(tier, "linked_units", read_linked_units(reader))
     _optional(tier, "eras", read_eras(reader))
+    tier.scripts, missing = scripts.read(reader)
+    for name in missing:
+        tier.missing_sections.append(name)
+        tier.warnings.append(f"section not read: {name}")
     return tier
 
 

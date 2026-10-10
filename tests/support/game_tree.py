@@ -160,6 +160,22 @@ IDS_OPT_ESC_MENU "ESC Menu"
 """
 
 PAPHOS_STRINGS = '407088 "Post-Imperial Age"\n'
+
+# Synthetic XS files, shaped like the game's: section titles between comment rules.
+CONSTANTS_XS = """\
+//======================================================================================
+// Effect Constants
+//======================================================================================
+extern const int cSetAttribute = 0;
+extern const int cAddAttribute = 4;
+
+//======================================================================================
+// Damage Classes
+//======================================================================================
+extern const int cDamageClassPierce = 3;
+extern const int cDamageClassShockInfantry = 29;
+"""
+EFFECTS_XS = "// Synthetic scripted effects\nvoid main() {}\n"
 NON_LOCALIZED = 'IDS_TOOL "Tool"\n'
 
 
@@ -228,6 +244,11 @@ def write(
             {"Name": "antiquity", "Ages": [{"NameId": 407001}, {"NameId": 407088}]},
         ],
     )
+
+    xs = root / "resources" / "_common" / "xs"
+    xs.mkdir(parents=True, exist_ok=True)
+    (xs / "Constants.xs").write_bytes(CONSTANTS_XS.encode("utf-8"))
+    (xs / "Effects.xs").write_bytes(EFFECTS_XS.encode("utf-8"))
 
     english = root / "resources" / "en" / "strings" / "key-value"
     english.mkdir(parents=True, exist_ok=True)
