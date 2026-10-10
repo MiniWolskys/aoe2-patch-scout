@@ -516,3 +516,9 @@ def test_civ_lists_follow_the_order_of_civilizations_json() -> None:
     changes = [change for change in compare(old, new).changes if change.category == "unit_stats"]
 
     assert changes[0].scope.civs == ("Zulu", "Aztecs")
+
+
+def test_civs_are_listed_alphabetically_as_in_the_game(change_set: ChangeSet) -> None:
+    """The game lists civilizations by their English name, not in the data's order."""
+    names = [civ.name for civ in change_set.civs]
+    assert names == sorted(names, key=str.casefold)

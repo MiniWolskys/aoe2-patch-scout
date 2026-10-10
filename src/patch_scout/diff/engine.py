@@ -203,6 +203,8 @@ def compare(
         or ref.internal_name in run.new.tech_trees
         or ref.internal_name in run.old.tech_trees
     )
+    # Alphabetical, as the game lists them (by name in the chosen language).
+    civs = tuple(sorted(civs, key=lambda civ: civ.name.casefold()))
     return ChangeSet(
         old=sides[0],
         new=sides[1],

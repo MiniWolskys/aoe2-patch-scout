@@ -12,13 +12,13 @@ OVERALL
   Technologies
     • Fletching · Cost in food · 100 → 120
 
-REDLANDERS
-  Civilization and team bonuses
-    • Redlanders · Team bonus effect · type 5 a=-1 b=12 c=0 d=1.20 → type 5 a=-1 b=12 c=0 d=1.15
-
 BLUELANDERS
   Availability
     • Archer (Archery Range) · Availability · Not available → Available · (Bluelanders)
     • Fletching · Availability · Not available → Available · (Bluelanders)
   Unit stats
     • Archer · Hit points · 35 → 45 · (Bluelanders)
+
+REDLANDERS
+  Civilization and team bonuses
+    • Redlanders · Team bonus effect · type 5 a=-1 b=12 c=0 d=1.20 → type 5 a=-1 b=12 c=0 d=1.15
