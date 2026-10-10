@@ -21,7 +21,7 @@ Everything derived from the game belongs to Microsoft and is used under the Game
 
 | Where | How game content is kept apart |
 |---|---|
-| Git repo | No raw game files, ever. Fixture snapshots from public builds (P-09) live in `tests/fixtures/game-derived/`, with a `NOTICE` file saying the content is © Microsoft, used under the rules, and not covered by the GPL. Fixture icons are synthetic. |
+| Git repo | No raw game files, ever. Fixture snapshots from public builds (P-09) live in `tests/fixtures/game-derived/`, with a `NOTICE` file saying the content is © Microsoft, used under the rules, and not covered by the GPL. Fixture icons are synthetic. The README's screenshots of public builds live in `docs/images/`, with a `NOTICE` too (D-47). |
 | App zip (release) | **No game content at all.** Only our code, dependencies and our own UI assets. |
 | Baseline pack (release, P-21) | A separate download with the snapshot, its icons and a `NOTICE`. |
 | User exports (archives, HTML, images, text) | Created by the user from their own install. The HTML export carries the Microsoft notice in its footer; export archives include the `NOTICE`. |
@@ -115,6 +115,7 @@ YouTube/Twitch revenue from videos is explicitly fine, which matters for our use
 | Raw game files: `.dat`, game JSON, string files, DDS/PNG art | **Never** | **Never** | **Never** | Copyrighted game files. `.gitignore` blocks the common patterns. |
 | Snapshots of **public** builds | Fixtures only, in `tests/fixtures/game-derived/` with `NOTICE` | No | Yes, with `NOTICE` | Derived game content, not GPL. |
 | Converted game icons | No (fixtures use synthetic images) | No | Yes, with `NOTICE` | O-1, P-22 |
+| Screenshots of the app (README) | Yes, in `docs/images/` with `NOTICE`, public builds only | No | — | D-47 |
 | Anything from a **privately shared** pre-release build | **Never** | **Never** | **Never** | Embargo (below). |
 | Our own UI assets | Yes | Yes | — | GPL-3.0-or-later; must be original, not traced from game art. |
 

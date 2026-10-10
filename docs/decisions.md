@@ -383,6 +383,12 @@ Game-derived content (icons, strings, data values) is © Microsoft and can't be 
 
 Details: [legal.md](legal.md).
 
+### D-47 README screenshots in the repo: Decided
+Chosen by the maintainer on 2026-10-11, over hosting them on GitHub outside the repo or having none.
+- The README shows screenshots of the app. They contain game content (icons, names, values), so they live in `docs/images/` with a `NOTICE`, kept apart from the GPL code as P-22 asks.
+- Screenshots come from **public** builds only, never from a build shared privately with creators.
+- The Game Content Usage Rules allow screenshots in free, non-commercial items.
+
 ### D-10 Baseline snapshots: Decided
 Every release publishes a snapshot of the current live build, so a user who installs after a patch can still diff.
 
