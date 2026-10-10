@@ -159,3 +159,22 @@ def script_titles(text: str) -> dict[int, str]:
     for number, title in _SCRIPT_TITLE.findall(text):
         titles.setdefault(int(number), title)
     return titles
+
+
+def script_functions(text: str) -> dict[int, tuple[str, str]]:
+    """Each numbered function of Effects.xs as (title, code up to the next title), by number.
+
+    A number used twice (the file has two `// 9 -` sections) keeps both parts, joined.
+    """
+    found: dict[int, tuple[str, str]] = {}
+    matches = list(_SCRIPT_TITLE.finditer(text))
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        number, title = int(match.group(1)), match.group(2)
+        code = text[match.end() : end].strip()
+        if number in found:
+            first_title, first_code = found[number]
+            found[number] = (first_title, f"{first_code}\n{code}")
+        else:
+            found[number] = (title, code)
+    return found

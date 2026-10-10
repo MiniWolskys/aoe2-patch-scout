@@ -187,6 +187,7 @@
   "field.resource_capacity": "Resource capacity",
   "field.resource_costs": "Cost",
   "field.resource_decay": "Resource decay",
+  "field.script_changed": "Script changed",
   "field.search_radius": "Search radius",
   "field.secondary_projectile_unit": "Secondary projectile",
   "field.special_ability": "Special ability",
