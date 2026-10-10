@@ -242,6 +242,34 @@ def test_low_priority_changes_are_hidden_until_the_filter_is_on(open_shell: Open
     expect(page.locator("ins")).to_have_text("foot soldier.")
 
 
+def test_objects_with_no_name_are_hidden_until_the_filter_is_on(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    helper = {"kind": "tech", "id": "172", "name": "#172", "where": None, "icon": None}
+    data["changeSet"] = change_set(
+        changes=[change(), change(category="techs", entity=helper | {"named": False})]
+    )
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    expect(page.locator(".change-row__name")).to_have_text(["Knight"])
+
+    page.locator("#comparison-filters").click()
+    page.locator("#filter-unnamed").check()
+
+    expect(page.locator(".change-row__name")).to_have_text(["Knight", "#172"])
+
+
+def test_a_projectile_field_is_labelled_as_part_of_its_shooter(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    nested = {"key": "field.attacks", "args": {"class": "#3"}}
+    data["changeSet"] = change_set(
+        changes=[change(field={"key": "field.projectile", "args": {"field": nested}})]
+    )
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    expect(page.locator(".change-row__field")).to_have_text("Projectile: Attack vs #3")
+
+
 def test_the_search_filter_narrows_the_list(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
     page.locator(".version-row").nth(1).click(modifiers=["Control"])

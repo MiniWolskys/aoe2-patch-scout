@@ -175,7 +175,9 @@ def _row(change: Change, catalog: Catalog, icons: "_IconClasses") -> str:
         name = f"{html.escape(catalog.text(f'kind.{change.kind}'))} {name}"
     if entity.where:
         name += f' <span class="where">{html.escape(entity.where)}</span>'
-    field = html.escape(catalog.text(change.field.key, **change.field.args)) if change.field else ""
+    field = (
+        html.escape(catalog.message(change.field.key, change.field.args)) if change.field else ""
+    )
     return (
         "<tr>"
         f'<td class="icon">{icons.span(entity.icon)}</td>'

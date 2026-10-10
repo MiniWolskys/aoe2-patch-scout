@@ -60,6 +60,9 @@ class Entity:
     name: str
     where: str | None = None
     icon: JsonObject | None = None
+    # False when the game gives the entity no usable name and `name` is only `#<id>`: such
+    # changes are hidden unless the reader asks for them (diff-rules.md, Values and formatting).
+    named: bool = True
 
     def to_json(self) -> JsonObject:
         """The form the GUI and the exports read."""
@@ -69,6 +72,7 @@ class Entity:
             "name": self.name,
             "where": self.where,
             "icon": self.icon,
+            "named": self.named,
         }
 
 

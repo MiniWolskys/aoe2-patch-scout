@@ -8,7 +8,7 @@ language-neutral (P-20).
 
 import logging
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Final
 
 from patch_scout.diff import collapse as collapse_module
@@ -18,6 +18,7 @@ from patch_scout.diff.model import (
     ChangeSet,
     CivRef,
     Entity,
+    Kind,
     Message,
     Notice,
     Scope,
@@ -153,6 +154,12 @@ def compare(
         _other_effects(run)
     _strings(run)
     _volume(run)
+    unnamed = sum(1 for change in run.changes if not change.entity.named)
+    if unnamed:
+        # Hidden by the default filters, so the reader must know they exist (diff-rules.md).
+        run.notices.append(
+            Notice("unnamed_hidden", Message("notice.unnamed_hidden", {"count": unnamed}))
+        )
 
     changes = tuple(sorted_changes(run.changes))
     counts: dict[str, int] = {}
@@ -320,12 +327,14 @@ def _node_changes(
         nodes[key] for side in (1, 0) for name in in_scope if key in (nodes := maps[name][side])
     )
     names = run.new_names if any(key in maps[name][1] for name in in_scope) else run.old_names
+    label = names.one_line(sample.get("name_string_id"))
     entity = Entity(
         kind=use_type.lower(),
         id=str(node_id),
-        name=names.one_line(sample.get("name_string_id")) or unknown_id(node_id),
+        name=label or unknown_id(node_id),
         where=_where(run, in_scope[0], use_type, node_id, sample.get("building_id")),
         icon=_icon_of(sample),
+        named=bool(label),
     )
     sort = (_CIV_FIRST, "", "")
     gained = [name for name in in_scope if key not in maps[name][0] and key in maps[name][1]]
@@ -464,12 +473,12 @@ def _offers(run: _Run, internal_name: str) -> None:
         source = after if after is not None else before
         if source is None:
             continue
-        name = (
-            run.new_names.node_name(internal_name, "Building", building_id)
-            or _text(source.get("name"))
-            or unknown_id(building_id)
+        name = run.new_names.node_name(internal_name, "Building", building_id) or _text(
+            source.get("name")
         )
-        entity = Entity("building", str(building_id), name)
+        entity = Entity(
+            "building", str(building_id), name or unknown_id(building_id), named=bool(name)
+        )
         scope = Scope("some", (internal_name,))
         sort = (_CIV_FIRST, "", "")
         if before is None or after is None:
@@ -647,7 +656,9 @@ def _unit_stats(run: _Run) -> None:
 def _unit_change(
     run: _Run, unit_id: int, civs: Sequence[tuple[str, tuple[int | None, int | None]]]
 ) -> None:
-    in_scope: list[str] = []
+    direct: list[str] = []
+    # A projectile is not a unit in the report: its changes go on each unit that fires it (D-37).
+    fired: dict[int, list[str]] = {}
     records: dict[str, tuple[JsonObject | None, JsonObject | None]] = {}
     for internal_name, (old_slot, new_slot) in civs:
         before = run.old_units.record(unit_id, old_slot) if old_slot is not None else None
@@ -656,19 +667,42 @@ def _unit_change(
             continue
         reach = run.reachable.get(internal_name)
         shooters = reach.fired_by.get(unit_id, ()) if reach else ()
-        reachable = bool(reach and (reach.includes(unit_id) or shooters))
-        if not reachable and not run.options.show_unreachable:
+        if reach is not None and reach.includes(unit_id):
+            direct.append(internal_name)
+        elif shooters:
+            for shooter in shooters:
+                fired.setdefault(shooter, []).append(internal_name)
+        elif run.options.show_unreachable:
+            direct.append(internal_name)
+        else:
             continue
-        in_scope.append(internal_name)
         records[internal_name] = (before, after)
-    in_scope = _comparable(run, in_scope, records.values())
-    if not in_scope:
-        return
-    name = run.new_names.record_name(run.new_units.any_record(unit_id), unit_id)
-    entity = Entity("unit", str(unit_id), name, icon=_unit_icon(run, unit_id))
     _remember_string(run, at_path(run.new_units.any_record(unit_id), "language_dll_name"))
-    for allow in UNIT_FIELDS:
-        _field_change(run, entity, allow, in_scope, records, unit_id)
+    targets = [(unit_id, direct, False)]
+    targets += [(shooter, civ_list, True) for shooter, civ_list in sorted(fired.items())]
+    for entity_id, civ_list, projectile in targets:
+        in_scope = _comparable(run, civ_list, [records[name] for name in civ_list])
+        if not in_scope:
+            continue
+        name = _unit_name(run, entity_id)
+        entity = Entity(
+            "unit",
+            str(entity_id),
+            name or unknown_id(entity_id),
+            icon=_unit_icon(run, entity_id),
+            named=name is not None,
+        )
+        for allow in UNIT_FIELDS:
+            _field_change(run, entity, allow, in_scope, records, projectile=projectile)
+
+
+def _unit_name(run: _Run, unit_id: int) -> str | None:
+    """A unit's display name from either build, the new one first; None when it has none."""
+    for names, units in ((run.new_names, run.new_units), (run.old_names, run.old_units)):
+        name = names.one_line(at_path(units.any_record(unit_id), "language_dll_name"))
+        if name:
+            return name
+    return None
 
 
 def _field_change(
@@ -677,9 +711,14 @@ def _field_change(
     allow: Field,
     in_scope: Sequence[str],
     records: Mapping[str, tuple[JsonObject | None, JsonObject | None]],
-    unit_id: int,
+    *,
+    projectile: bool = False,
 ) -> None:
-    for sub_key, sub_label in _sub_fields(allow, records):
+    """One allowlisted field of a unit; `projectile` when the records are its projectile's."""
+    for sub_key, sub_label in _sub_fields(allow, {name: records[name] for name in in_scope}):
+        label = (
+            Message("field.projectile", {"field": sub_label.to_json()}) if projectile else sub_label
+        )
         changed: dict[str, tuple[JsonValue, JsonValue]] = {}
         for internal_name in in_scope:
             before, after = records[internal_name]
@@ -697,7 +736,7 @@ def _field_change(
                     kind="modified",
                     entity=entity,
                     scope=group.scope,
-                    field=sub_label,
+                    field=label,
                     stat_icon=allow.stat_icon,
                     old=old_text,
                     new=new_text,
@@ -774,33 +813,46 @@ def _techs(run: _Run) -> None:
         source = after if after is not None else before
         if source is None:
             continue
-        names = run.new_names if after is not None else run.old_names
-        name = names.record_name(source, _numeric_key(key))
-        entity = Entity("tech", key, name, icon=_node_icon(run, "Tech", _numeric_key(key)))
+        name = run.new_names.tech_name(after, _numeric_key(key)) or run.old_names.tech_name(
+            before, _numeric_key(key)
+        )
+        entity = Entity(
+            "tech",
+            key,
+            name or unknown_id(key),
+            icon=_node_icon(run, "Tech", _numeric_key(key)),
+            named=name is not None,
+        )
         _remember_string(run, source.get("language_dll_name"))
-        sort = (_GLOBAL, "", "")
+        # A tech the .dat ties to a civ is that civ's bonus: it goes on the civ's page.
+        owners = _tech_civs(run, before, after)
+        scope = Scope("some", owners) if owners else Scope()
+        sort = (_CIV_FIRST, "", "") if owners else (_GLOBAL, "", "")
         if before is None or after is None:
-            run.add(
-                Change("techs", "added" if before is None else "removed", entity, sort_key=sort)
-            )
+            kind: Kind = "added" if before is None else "removed"
+            run.spread(Change("techs", kind, entity, scope, sort_key=sort), scope)
             continue
         for allow in TECH_FIELDS:
+            if allow.key == "effect_id":
+                continue  # reported with the effect's commands, just below
             for sub_key, label in _sub_fields(allow, {"": (before, after)}):
                 old_value = _field_value(before, allow, sub_key)
                 new_value = _field_value(after, allow, sub_key)
                 if old_value == new_value:
                     continue
                 old_text, new_text = pair(old_value, new_value)
-                run.add(
+                run.spread(
                     Change(
                         category="techs",
                         kind="modified",
                         entity=entity,
+                        scope=scope,
                         field=label,
                         old=old_text,
                         new=new_text,
                         sort_key=sort,
-                    )
+                    ),
+                    scope,
                 )
         for change in _effect_changes(
             run,
@@ -811,7 +863,21 @@ def _techs(run: _Run) -> None:
             label=Message("field.tech_effect"),
             sort=sort,
         ):
-            run.add(change)
+            run.spread(replace(change, scope=scope), scope)
+
+
+def _tech_civs(run: _Run, before: JsonObject | None, after: JsonObject | None) -> tuple[str, ...]:
+    """The civs a tech is tied to in the .dat (its `civ` slot), on either side; Gaia is none."""
+    owners: list[str] = []
+    for record, index in ((before, run.old_index), (after, run.new_index)):
+        slot = record.get("civ") if record is not None else None
+        if not isinstance(slot, int) or slot <= 0:
+            continue
+        name = next((name for name, value in index.items() if value == slot), None)
+        if name is not None and name not in owners:
+            owners.append(name)
+    order = {name: position for position, name in enumerate(run.civ_names)}
+    return tuple(sorted(owners, key=lambda name: order.get(name, len(order))))
 
 
 # --- category 6: other effects -----------------------------------------------------------------
@@ -827,8 +893,8 @@ def _other_effects(run: _Run) -> None:
         before, after = old_effects.get(key), new_effects.get(key)
         if before is None or after is None or before == after:
             continue
-        name = _text(after.get("name")) or unknown_id(key)
-        entity = Entity("effect", key, name)
+        name = _text(after.get("name"))
+        entity = Entity("effect", key, name or unknown_id(key), named=bool(name))
         for change in _command_changes(
             entity, before, after, "other_effects", Message("field.effect_command")
         ):
