@@ -443,9 +443,10 @@ ins {
 
 .change-row {
   display: grid;
+  /* Proportional, never sized by content: every row gets the same columns, so arrows line up */
   grid-template-columns:
     var(--game-icon-size) minmax(0, 1fr) minmax(0, 0.9fr)
-    150px minmax(0, 1.1fr);
+    minmax(0, 1.1fr) minmax(0, 1fr);
   column-gap: 14px;
   align-items: center;
   padding: 10px 12px;
@@ -467,6 +468,13 @@ ins {
 
 .change-values .value-old {
   text-align: right;
+}
+
+/* A long value (a status, a raw command) wraps inside its own half instead of running over */
+.change-values .value-old,
+.change-values .value-new {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .change-values__arrow {
