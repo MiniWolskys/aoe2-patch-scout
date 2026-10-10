@@ -443,9 +443,15 @@ Chosen by the maintainer on 2026-09-15, in the app shell spec.
 - **Limit:** headless Chromium isn't WebView2, so UI pull requests also include a manual run of the app, with screenshots.
 - **Chosen over** Python-only tests with manual UI checks, and Node's built-in test runner.
 
+### D-48 Version numbers: 0.1.0 first, 1.0.0 signed: Decided
+Chosen by the maintainer on 2026-10-11.
+- The first public release is **`v0.1.0`**, unsigned. The `0.x` number tells users it is an early release, and Windows SmartScreen warns about it until it is signed.
+- **`v1.0.0` is the first signed release** (O-6).
+- Earlier docs said "v1.0" for the first release. Where they mean the first public release (the feature scope, D-39), that is now `v0.1.0`.
+
 ### O-6 Code signing: Decided (option B, after the first release)
 - **Plan:** SignPath Foundation's free signing for open-source projects.
-- **Timing:** SignPath requires an existing public release and does a reputation check, so **v1.0 ships unsigned** and we apply afterwards.
+- **Timing:** SignPath requires an existing public release and does a reputation check, so **the first release (v0.1.0) ships unsigned** and we apply afterwards (D-48).
 - **Requirements to prepare:**
   - release builds on GitHub-hosted runners;
   - a code signing policy page with team roles;

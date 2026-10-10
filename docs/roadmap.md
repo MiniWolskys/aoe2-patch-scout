@@ -140,7 +140,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - [x] The Chronicles civs in their own tab (D-38), 2026-10-10. Return of Rome gets one when it is supported.
 - [x] **Tech tree view** (D-39, amended 2026-10-10), 2026-10-10: the civ's tree laid out like the game's, with the comparison's changes marked on it and the game's tooltip on hover.
 
-## M5: Packaging and v1.0
+## M5: Packaging and the first release
 
 **Scope**
 - PyInstaller build on a GitHub-hosted Windows runner on tag.
@@ -149,16 +149,16 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - README install section.
 - Release notes and versioning: evaluate release-please, which builds them from Conventional Commits. It needs a token other than `GITHUB_TOKEN`, so that its release PRs trigger CI.
 - Smoke test of the build on Python 3.13 (P-12).
-- First public release **`v1.0.0`, unsigned**.
+- First public release **`v0.1.0`, unsigned**; **`v1.0.0` is the first signed release** (D-48).
 
 **Exit criteria**
 - [x] `uv run pyinstaller packaging/patch-scout.spec` produces a one-folder build that runs and compares real captures (217 files, 40.8 MB).
 - [x] `COPYING.LESSER` (the LGPLv3 text) and the exe icon, 2026-10-10.
 - [ ] **Not done:** the baseline pack, release notes, the 3.13 smoke test, and the walkthrough on a clean machine.
 
-## After v1.0
+## After v0.1.0
 
-- Apply to the SignPath Foundation; add the code signing policy page and the signing step to the release workflow (O-6).
+- Apply to the SignPath Foundation; add the code signing policy page and the signing step to the release workflow (O-6). The first signed release is `v1.0.0` (D-48).
 - **Civ overview** (D-39): the rest of the overview beyond the tech tree, i.e. one civ's bonuses and stats in a version, with a comparison's changes highlighted.
 
 ## Later (not v1)
