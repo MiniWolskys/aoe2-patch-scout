@@ -282,7 +282,7 @@ async function start() {
     },
   });
 
-  const settings = initSettings({ api, t });
+  const settings = initSettings({ api, t, version: startup.app_version });
   const diagnostics = initDiagnostics({ api, t });
 
   initVersionList(byId("version-list"), { t });

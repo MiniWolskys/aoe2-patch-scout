@@ -2,13 +2,13 @@
 
 Find out what changed in *Age of Empires II: Definitive Edition* between two game builds, without waiting for patch notes.
 
-> **Status: early development.** No release yet. This README describes the planned v1; progress is tracked in the [roadmap](docs/roadmap.md).
+> **Status: preparing v1.0.** The app captures, compares and exports for real; the first release is being prepared. Progress is tracked in the [roadmap](docs/roadmap.md).
 
 ## Why
 
 Content creators often get early builds (pre-release, PUP) before any patch notes exist. Today they check tech trees and unit stats by hand to find what changed. This tool reads the game data of each build, keeps a snapshot, and lists every difference in one click.
 
-## Planned features (v1)
+## Features
 
 - **Capture** a snapshot of any AoE2:DE install. The app looks for the game and shows you the folder it found; you can always pick another one, e.g. a pre-release build.
 - **Compare** two snapshots and get a categorised list of changes, with game icons:
@@ -18,7 +18,7 @@ Content creators often get early builds (pre-release, PUP) before any patch note
   - unit stat changes (HP, attack, armour, range, speed, cost, train time…), marked *all civs* or *specific civs*;
   - tech cost, research time and effect changes;
   - text and icon changes.
-- **Export** as plain text (for video descriptions), a single HTML page, or an image you can put straight into a video.
+- **Export** as plain text (for video descriptions) or a single HTML page, with only the changes you chose to show. An image export for videos is planned.
 - **Organise your snapshots:** rename them, and mark the ones from pre-release builds.
 - **A snapshot of the current live build is published with every release,** so you can compare even if you installed after the patch dropped.
 - **Windows app,** no Python installation needed.
@@ -42,11 +42,22 @@ More detail in [docs/design/architecture.md](docs/design/architecture.md).
 - Steam's Public Update Preview (PUP) is a beta branch of your normal install: **switching to it overwrites the live game**, so capture the live build first.
 - Snapshots stay on your computer. If you share an export from a pre-release build, follow the terms under which you got access.
 
-## Requirements (planned)
+## Requirements
 
-- Windows 10 or 11.
+- Windows 10 or 11, 64-bit. **No administrator rights needed.**
 - [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/). Windows 11 and most Windows 10 installs already have it; the app tells you if it's missing.
-- An AoE2:DE installation to capture from.
+- An AoE2:DE installation to capture from, or a version someone exported for you.
+
+## Install
+
+1. Download `PatchScout-<version>-windows-x64.zip` from the [releases page](https://github.com/MiniWolskys/aoe2-patch-scout/releases). The `.sha256` file next to it lets you check the download: in PowerShell, `Get-FileHash <zip>` must print the same value.
+2. Extract the zip anywhere you like, e.g. your Documents folder. There is no installer.
+3. Run **Patch Scout.exe**. The app isn't code-signed yet, so Windows SmartScreen may say it doesn't recognise it: click **More info**, then **Run anyway**. This happens once per download.
+4. **Capture new version** reads your game folder (the app finds Steam installs and shows you the folder). If the game has already updated, import the baseline pack from the same releases page instead (**Import**).
+
+**Where things are:** your versions, icons and the log live in `%LOCALAPPDATA%\PatchScout`. To uninstall, delete the extracted folder, and that data folder if you don't want to keep your versions.
+
+**Sharing a version:** open it and click **Export**. The other person clicks **Import**. Versions marked pre-release ask before they are exported.
 
 ## Documentation
 

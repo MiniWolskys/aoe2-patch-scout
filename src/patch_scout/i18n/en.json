@@ -1,4 +1,9 @@
 {
+  "about.genieutils": "Patch Scout reads the game's data with genieutils-py, which is covered by the GNU Lesser General Public License version 3 (COPYING.LESSER in the app folder). Its files sit in the app folder as plain Python files, so you can replace them with a modified version. THIRD_PARTY_NOTICES lists every bundled component and its licence.",
+  "about.licence": "Patch Scout is free software under the GNU General Public License version 3 or later (LICENSE in the app folder). Its source code, and the exact source of each release, is at github.com/MiniWolskys/aoe2-patch-scout.",
+  "about.microsoft": "Age of Empires II © Microsoft Corporation. Patch Scout was created under Microsoft's \"Game Content Usage Rules\" using assets from Age of Empires II, and it is not endorsed by or affiliated with Microsoft.",
+  "about.title": "About Patch Scout",
+  "about.version": "Version {version}",
   "app.title": "Patch Scout",
   "capture.already_running": "A capture is already running.",
   "capture.browse": "Browse…",

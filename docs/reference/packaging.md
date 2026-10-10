@@ -88,3 +88,27 @@ a = Analysis(
   - **First run:** "Windows protected your PC" appeared, and **Run anyway** worked.
   - **Later runs:** no warning for that extracted copy.
   - **So** every user of an unsigned build sees the warning once. The release notes need to explain it (see [legal.md](../legal.md#code-signing-o-6)).
+
+## Making a release
+
+Tags and releases are made by the maintainer (AGENTS.md). For each release:
+
+1. **Version:** set `version` in `pyproject.toml`, then `uv lock`. The exe's file metadata and the About section read it.
+2. **Notices:** `uv run python tools/third_party_notices.py`, review the diff, commit. The release workflow fails if `THIRD_PARTY_NOTICES` is out of date.
+3. **Checks:** `uv run pre-commit run --all-files`, `uv run mypy`, `uv run pytest`, and `uv run pytest -m game` on the live install.
+4. **Tag** `vX.Y.Z` on `main` and create the GitHub release for it. The release workflow builds the one-folder app, checks it holds no game files, and attaches `PatchScout-X.Y.Z-windows-x64.zip` and its `.sha256`.
+   - The zip has `LICENSE`, `COPYING.LESSER`, `THIRD_PARTY_NOTICES` and `README.md` next to `Patch Scout.exe` (legal.md checklist).
+5. **Baseline pack** (P-21), a separate asset, never in the zip:
+   1. capture the current **public live** build in the app (never a build shared privately with creators);
+   2. find its capture ID in Diagnostics;
+   3. `uv run python tools/make_baseline_pack.py <capture id> PatchScout-baseline-<build>.aoe2snap`;
+   4. upload it with a `.sha256` (`Get-FileHash -Algorithm SHA256`).
+6. **Release notes:**
+   - what changed;
+   - the SmartScreen "unknown publisher" warning and **More info → Run anyway** (unsigned until O-6);
+   - how to check the SHA-256;
+   - the link to the tagged commit (GPL corresponding source);
+   - which build the baseline pack holds;
+   - the Microsoft notice.
+
+**The app icon** is our own artwork, drawn by `tools/make_icon.py` into `packaging/patch-scout.ico`.
