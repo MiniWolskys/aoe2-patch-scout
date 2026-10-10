@@ -191,10 +191,11 @@ def all_civs(
 
 def _available(nodes: JsonValue) -> set[int]:
     """Node IDs some node of the tree makes available: a unit can be listed twice."""
-    return {
-        node["node_id"]
-        for node in (nodes if isinstance(nodes, list) else [])
-        if isinstance(node, dict)
-        and isinstance(node.get("node_id"), int)
-        and node.get("node_status") != "NotAvailable"
-    }
+    available: set[int] = set()
+    for node in nodes if isinstance(nodes, list) else []:
+        if not isinstance(node, dict) or node.get("node_status") == "NotAvailable":
+            continue
+        node_id = node.get("node_id")
+        if isinstance(node_id, int):
+            available.add(node_id)
+    return available
