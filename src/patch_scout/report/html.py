@@ -20,7 +20,14 @@ from PIL import Image
 from patch_scout.diff.model import CATEGORIES, Change, ChangeSet, Entry, Side
 from patch_scout.i18n.catalog import Catalog
 from patch_scout.report.present import present
-from patch_scout.report.text import Filters, field_text, pages, scope_text
+from patch_scout.report.text import (
+    Filters,
+    export_notices,
+    field_text,
+    pages,
+    scope_text,
+    side_parts,
+)
 from patch_scout.snapshot import JsonObject
 
 type IconReader = Callable[[str], bytes | None]
@@ -55,7 +62,7 @@ tr.more td { padding-top: 2px; }
 td.icon { width: 40px; }
 td.entity { font-weight: 500; }
 td.field { color: #aa9e8a; width: 30%; }
-td.values { width: 24%; white-space: nowrap; }
+td.values { width: 24%; overflow-wrap: anywhere; }
 td.scope { color: #aa9e8a; font-size: 13.5px; }
 .game-icon { display: block; width: 40px; height: 40px; border-radius: 2px;
   outline: 1px solid #51432f; outline-offset: 1px; background-color: #0e0c0a;
@@ -106,7 +113,7 @@ def render(
         "</head><body><main>",
         f"<h1>{html.escape(title)}</h1>",
         _sides(change_set, catalog),
-        _notices(change_set, catalog),
+        _notices(change_set, catalog, chosen),
         body,
     ]
     parts.append(_footer(tool_version))
@@ -129,10 +136,7 @@ def _labelled(catalog: Catalog, key: str, value: str) -> str:
 
 
 def _side(side: Side, catalog: Catalog) -> str:
-    parts = [html.escape(side.label)]
-    if side.game_build:
-        parts.append(html.escape(side.game_build))
-    parts.append(html.escape(side.captured_at))
+    parts = [html.escape(part) for part in side_parts(side)]
     if side.prerelease:
         parts.append(f'<span class="tag">{html.escape(catalog.text("report.prerelease"))}</span>')
     if not side.stats_available:
@@ -140,11 +144,11 @@ def _side(side: Side, catalog: Catalog) -> str:
     return " · ".join(parts)
 
 
-def _notices(change_set: ChangeSet, catalog: Catalog) -> str:
+def _notices(change_set: ChangeSet, catalog: Catalog, filters: Filters) -> str:
     return "".join(
-        f'<p class="notice{" warn" if notice.kind == "unusually_many_changes" else ""}">'
-        f"{html.escape(catalog.text(notice.message.key, **notice.message.args))}</p>"
-        for notice in change_set.notices
+        f'<p class="notice{" warn" if notice.key == "notice.unusually_many_changes" else ""}">'
+        f"{html.escape(catalog.text(notice.key, **notice.args))}</p>"
+        for notice in export_notices(change_set, filters)
     )
 
 

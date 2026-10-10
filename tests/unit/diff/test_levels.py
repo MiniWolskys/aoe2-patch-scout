@@ -266,7 +266,7 @@ def test_the_default_export_hides_details_and_says_how_many() -> None:
     assert "Line of sight" in text
     assert "Search radius" not in text
     assert "Blast attack level" not in text
-    assert "2 minor or technical changes are hidden" in text
+    assert "2 minor or technical changes are not included in this export." in text
 
 
 def test_the_filters_bring_details_and_technical_changes_back() -> None:
@@ -274,6 +274,13 @@ def test_the_filters_bring_details_and_technical_changes_back() -> None:
     text = render_text(change_set, CATALOG, Filters(details=True, technical=True))
     assert "Search radius" in text
     assert "Blast attack level" in text
+    assert "not included in this export" not in text  # nothing is left out
+
+
+def test_an_export_counts_only_what_it_leaves_out() -> None:
+    change_set = _compare(new={"ram_los": 5, "ram_search": 5, "knight_blast": 2})
+    text = render_text(change_set, CATALOG, Filters(details=True))
+    assert "1 minor or technical changes are not included in this export." in text
 
 
 def test_levels_are_in_the_change_set_json() -> None:

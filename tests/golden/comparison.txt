@@ -1,9 +1,9 @@
 Patch Scout — what changed
 
-Old: Live build · 2026-09-16T00:00:00Z
-New: PUP build · 2026-09-16T00:00:00Z · pre-release
+Old: Live build · 2026-09-16
+New: PUP build · 2026-09-16 · pre-release
 
-! 2 minor or technical changes are hidden. Show them with "Show minor changes" and "Show technical changes" in Filters.
+! 2 minor or technical changes are not included in this export.
 
 OVERALL
   Unit stats
