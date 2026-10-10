@@ -5,6 +5,7 @@ No user-visible English lives here. Labels are `Message`s, a catalog key plus it
 same change set renders in any language the app grows (O-3, P-20).
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Final, Literal
 
@@ -34,7 +35,9 @@ type Kind = Literal[
     "icon_redrawn",
     "icon_remapped",
 ]
-type ScopeKind = Literal["global", "all", "all_except", "some"]
+# "all" and "all_except" count every civ in the comparison; "having" and "having_except" count
+# only the civs that have the entity, when there are too many of them to name.
+type ScopeKind = Literal["global", "all", "all_except", "having", "having_except", "some"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +61,9 @@ class Entity:
     name: str
     where: str | None = None
     icon: JsonObject | None = None
+    # False when the game gives the entity no usable name and `name` is only `#<id>`: such
+    # changes are hidden unless the reader asks for them (diff-rules.md, Values and formatting).
+    named: bool = True
 
     def to_json(self) -> JsonObject:
         """The form the GUI and the exports read."""
@@ -67,6 +73,7 @@ class Entity:
             "name": self.name,
             "where": self.where,
             "icon": self.icon,
+            "named": self.named,
         }
 
 
@@ -76,15 +83,17 @@ class Scope:
 
     kind: ScopeKind = "global"
     civs: tuple[str, ...] = ()
+    # How many civs have the entity; set for "having" and "having_except" only.
+    count: int = 0
 
     def to_json(self) -> JsonObject:
         """The form the GUI and the exports read."""
-        return {"kind": self.kind, "civs": list(self.civs)}
+        return {"kind": self.kind, "civs": list(self.civs), "count": self.count}
 
     @property
     def affected(self) -> tuple[str, ...]:
         """The civs named in the scope; empty for a global or all-civs change."""
-        return self.civs if self.kind in ("some", "all_except") else ()
+        return self.civs if self.kind in ("some", "all_except", "having_except") else ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -137,6 +146,48 @@ class Change:
             "detail": self.detail.to_json() if self.detail else None,
             "raw": self.raw,
             "civ": self.civ,
+            "low_priority": self.low_priority,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class Entry:
+    """One entity's changes on one page with one scope: what a reader sees as one item.
+
+    Built from the field-level changes by `entries.group`; the renderers draw entries, while the
+    change set keeps every field-level change for tests and the raw view.
+    """
+
+    category: str
+    kind: Kind
+    entity: Entity
+    scope: Scope
+    civ: str | None
+    changes: tuple[Change, ...]
+    # Values a new or removed entity's entry leaves out: defaults, and fields that aren't main
+    # stats (diff-rules.md, One entry per entity).
+    hidden: int = 0
+
+    @property
+    def low_priority(self) -> bool:
+        """Whether the comparison collapses this entry by default."""
+        return self.category in LOW_PRIORITY
+
+    def to_json(self, positions: Mapping[int, int]) -> JsonObject:
+        """The form the GUI reads: its changes as positions in the change set's `changes` list.
+
+        `positions` maps `id(change)` to that position, so no change is written twice.
+        """
+        return {
+            "category": self.category,
+            "kind": self.kind,
+            "entity": self.entity.to_json(),
+            "scope": self.scope.to_json(),
+            "civ": self.civ,
+            "changes": [
+                positions[id(change)] for change in self.changes if id(change) in positions
+            ],
+            "hidden": self.hidden,
             "low_priority": self.low_priority,
         }
 
@@ -209,18 +260,25 @@ class ChangeSet:
     notices: tuple[Notice, ...] = ()
     civs: tuple[CivRef, ...] = ()
     identical: bool = False
+    # The changes grouped one entry per entity (diff-rules.md); what the renderers draw.
+    entries: tuple[Entry, ...] = ()
 
     @property
     def overall_count(self) -> int:
-        """How many changes are not tied to a single civ."""
-        return sum(1 for change in self.changes if change.civ is None)
+        """How many entries are not tied to a single civ."""
+        return sum(1 for entry in self.entries if entry.civ is None)
 
     def for_civ(self, internal_name: str | None) -> list[Change]:
         """The changes shown on one civ's page, or on Overall when `internal_name` is None."""
         return [change for change in self.changes if change.civ == internal_name]
 
+    def entries_for(self, internal_name: str | None) -> list[Entry]:
+        """The entries shown on one civ's page, or on Overall when `internal_name` is None."""
+        return [entry for entry in self.entries if entry.civ == internal_name]
+
     def to_json(self) -> JsonObject:
         """The form the GUI and the exports read."""
+        positions = {id(change): position for position, change in enumerate(self.changes)}
         return {
             "old": self.old.to_json(),
             "new": self.new.to_json(),
@@ -228,7 +286,8 @@ class ChangeSet:
             "notices": [notice.to_json() for notice in self.notices],
             "civs": [civ.to_json() for civ in self.civs],
             "changes": [change.to_json() for change in self.changes],
-            "counts": {"overall": self.overall_count, "total": len(self.changes)},
+            "entries": [entry.to_json(positions) for entry in self.entries],
+            "counts": {"overall": self.overall_count, "total": len(self.entries)},
         }
 
 
