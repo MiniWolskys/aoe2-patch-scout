@@ -72,6 +72,8 @@
  * @property {(oldId: string, newId: string,
  *   showUnreachable?: boolean) => Promise<Record<string, any>>} compare_versions
  * @property {(hashes: string[]) => Promise<Record<string, string>>} get_icons
+ * @property {(oldId: string, newId: string, civ: string, details?: boolean, technical?: boolean,
+ *   lowPriority?: boolean) => Promise<Record<string, any> | null>} get_tech_tree
  * @property {(oldId: string, newId: string, lowPriority?: boolean,
  *   civs?: string[] | null, unnamed?: boolean, details?: boolean, technical?: boolean)
  *   => Promise<{text: string}>} export_text
