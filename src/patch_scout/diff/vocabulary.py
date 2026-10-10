@@ -55,6 +55,12 @@ class Vocabulary:
         """A unit class as the `.dat` numbers it, e.g. 36 -> "Cavalry Archer"."""
         return self._label(_UNIT_CLASS, identifier)
 
+    def resource_identifier(self, identifier: JsonValue) -> str | None:
+        """A player resource's bare identifier, e.g. 33 -> "EffectFunctionNumber"."""
+        if not isinstance(identifier, int) or isinstance(identifier, bool):
+            return None
+        return self._table(_RESOURCE).get(identifier)
+
     def resource(self, identifier: JsonValue) -> str | None:
         """A player resource, e.g. 0 -> "Food"."""
         return self._label(_RESOURCE, identifier)

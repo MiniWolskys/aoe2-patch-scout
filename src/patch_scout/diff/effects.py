@@ -8,6 +8,7 @@ command that doesn't fit a template returns None, and the caller keeps the raw c
 sentence is worse than a raw one (D-04).
 """
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Final
@@ -29,6 +30,10 @@ _UNVERIFIED: Final = frozenset(
 _SET, _ADD = 0, 1
 _DISABLE, _ENABLE = 0, 1
 TIMES: Final = "\N{MULTIPLICATION SIGN}"
+# The player resource that, when set, runs a function of Effects.xs (its Constants.xs name).
+_SCRIPT_RESOURCE: Final = "EffectFunctionNumber"
+# A numbered function's title comment in Effects.xs, e.g. "// 52 - Effect of Kasbah for Berbers".
+_SCRIPT_TITLE: Final = re.compile(r"^//\s*(\d+)\s*-\s*(.+?)\s*$", re.MULTILINE)
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +43,8 @@ class Lookup:
     unit: Callable[[int], str]
     tech: Callable[[int], str]
     vocabulary: Vocabulary
+    # A scripted effect's title in Effects.xs, by function number; None when it has none.
+    script: Callable[[int], str | None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +66,17 @@ def describe(command: JsonValue, lookup: Lookup) -> Sentence | None:
         return None
     if kind in ("SetAttribute", "AddAttribute", "MulAttribute"):
         return _attribute(kind, a, b, c, float(d), lookup)
+    if (
+        kind == "ModResource"
+        and b == _SET
+        and lookup.vocabulary.resource_identifier(a) == _SCRIPT_RESOURCE
+        and float(d).is_integer()
+        and d >= 0
+    ):
+        # Setting this resource runs that function of Effects.xs: the Kasbah tech sets it to 52,
+        # "Effect of Kasbah for Berbers" (game-files.md §11).
+        title = lookup.script(int(d)) or unknown_id(int(d))
+        return Sentence(Message("effect.script", {"title": title}))
     if kind == "ModResource" and b in (_SET, _ADD):
         value = f"={display(d)}" if b == _SET else _signed(d)
         return Sentence(Message("effect.resource", {"resource": _resource(a, lookup)}), value)
@@ -133,3 +151,11 @@ def _int(value: JsonValue) -> int | None:
     if isinstance(value, float) and value.is_integer():
         return int(value)
     return None
+
+
+def script_titles(text: str) -> dict[int, str]:
+    """Each numbered function's title in Effects.xs; the first title of a number wins."""
+    titles: dict[int, str] = {}
+    for number, title in _SCRIPT_TITLE.findall(text):
+        titles.setdefault(int(number), title)
+    return titles
