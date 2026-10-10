@@ -137,7 +137,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - [x] Capture, compare and export text or HTML work end to end in the app.
 - [x] Export and import of version archives, and the baseline pack import (P-21), 2026-10-10.
 - [ ] **Not done:** the PNG image export.
-- [ ] **Requested 2026-10-10:** the Chronicles civs (and Return of Rome, once supported) in their own tab, instead of at the bottom of the civ list. Timing open.
+- [x] The Chronicles civs in their own tab (D-38), 2026-10-10. Return of Rome gets one when it is supported.
 
 ## M5: Packaging and v1.0
 

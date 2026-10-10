@@ -128,28 +128,73 @@ function renderCivList(view, changes) {
     const key = change.civ ?? null;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
-  list.append(
-    civRow(view, {
-      internal_name: null,
-      name: view.t("comparison.overall"),
-      count: counts.get(null) ?? 0,
-      added: false,
-      icon: null,
-    }),
-  );
   const civs = view.changeSet.civs ?? [];
   const base = civs.filter((civ) => civ.era !== "antiquity");
   const chronicles = civs.filter((civ) => civ.era === "antiquity");
-  for (const civ of base) {
+  // The Chronicles civs have their own tab (D-38): a separate mode to players, like Return of
+  // Rome. The open page decides which tab is shown.
+  const inChronicles = chronicles.some((civ) => civ.internal_name === view.civ);
+  if (chronicles.length > 0) {
+    const tabs = el("div", { class: "civ-tabs", attrs: { role: "tablist" } });
+    tabs.append(
+      civTab(view.t("comparison.tab_main"), !inChronicles, () => view.onCiv(null)),
+      civTab(
+        view.t("comparison.chronicles"),
+        inChronicles,
+        () => view.onCiv(chronicles[0].internal_name),
+        // What waits behind the tab: NEW for a new civ, else its number of changes.
+        chronicles.some((civ) => civ.added)
+          ? el("span", { class: "tag tag--new", text: view.t("comparison.new_civ") })
+          : el("span", {
+              class: "civ-row__count num",
+              text: String(
+                chronicles.reduce((sum, civ) => sum + (counts.get(civ.internal_name) ?? 0), 0),
+              ),
+            }),
+      ),
+    );
+    list.append(tabs);
+  }
+  const shown = inChronicles ? chronicles : base;
+  if (!inChronicles) {
+    list.append(
+      civRow(view, {
+        internal_name: null,
+        name: view.t("comparison.overall"),
+        count: counts.get(null) ?? 0,
+        added: false,
+        icon: null,
+      }),
+    );
+  }
+  for (const civ of shown) {
     list.append(civRow(view, { ...civ, count: counts.get(civ.internal_name) ?? 0 }));
   }
-  if (chronicles.length > 0) {
-    // The Chronicles civs are kept apart from the base civs (D-38).
-    list.append(el("p", { class: "civ-list__group label", text: view.t("comparison.chronicles") }));
-    for (const civ of chronicles) {
-      list.append(civRow(view, { ...civ, count: counts.get(civ.internal_name) ?? 0 }));
-    }
+}
+
+/**
+ * One tab above the civ list.
+ * @param {string} label
+ * @param {boolean} selected
+ * @param {() => void} onSelect
+ * @param {HTMLElement} [badge]
+ * @returns {HTMLElement}
+ */
+function civTab(label, selected, onSelect, badge) {
+  const tab = el("button", {
+    class: "civ-tab",
+    attrs: { type: "button", role: "tab", "aria-selected": String(selected) },
+  });
+  tab.append(el("span", { text: label }));
+  if (badge !== undefined) {
+    tab.append(badge);
   }
+  tab.addEventListener("click", () => {
+    if (!selected) {
+      onSelect();
+    }
+  });
+  return tab;
 }
 
 /**
