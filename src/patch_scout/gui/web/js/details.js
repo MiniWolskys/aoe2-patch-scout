@@ -142,6 +142,28 @@ export function initDetails(deps) {
     await deps.onDeleted();
   });
 
+  // Share one version as an archive (P-21); a pre-release one asks first (P-14).
+  byId("details-export").addEventListener("click", async () => {
+    if (openId === null) {
+      return;
+    }
+    const prerelease = input("details-prerelease").checked;
+    if (prerelease) {
+      const agreed = await dialogs.confirm({
+        title: deps.t("details.export_embargo_title"),
+        text: deps.t("details.export_embargo_text"),
+        confirm: deps.t("details.export"),
+      });
+      if (!agreed) {
+        return;
+      }
+    }
+    const saved = await deps.api.export_version(openId);
+    if (saved.saved) {
+      dialogs.toast(deps.t("details.exported", { path: String(saved.path ?? "") }));
+    }
+  });
+
   return { show: showVersion };
 }
 

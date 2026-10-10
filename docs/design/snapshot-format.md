@@ -286,11 +286,20 @@ The game's XS script files ([game-files.md §11](../reference/game-files.md#11-x
 
 ## Export archive
 
-**Contents:** a zip file (`.aoe2snap`, extension proposed) with:
+**Contents:** a zip file with the extension `.aoe2snap` (`store/archive.py`):
+- `manifest.json`: `format` (1), `tool_version`, `schema_version`, `capture_id`, `baseline` (true for the baseline pack, P-21) and `icons`, the icon hashes it holds;
 - `snapshot.json.gz`, with `meta.source_path` set to `null`;
-- `library-entry.json`: the current label and pre-release flag;
-- the referenced icons (O-1);
-- `NOTICE`: game content © Microsoft, used under the Game Content Usage Rules, not covered by the GPL (P-22);
-- `manifest.json`: tool version, schema version, list of icon hashes.
+- `library-entry.json`: the current label, pre-release flag and notes;
+- `icons/<hash>.png`: every icon the snapshot references that the store holds (O-1);
+- `NOTICE`: the Microsoft notice from the Game Content Usage Rules, and that the game content is not covered by the GPL (P-22).
+
+**The baseline pack is the same archive** with `baseline: true`; its version reads "Baseline pack" as its source.
+
+**Import trusts nothing in an archive:**
+- only the names above are read; any other file, and any icon name that isn't a 64-character hash, is ignored, so no path from the archive is ever written;
+- sizes are capped (snapshot 200 MB uncompressed, icons 1 MB each and 20,000 in all);
+- the snapshot must parse and migrate; one from a newer schema is refused;
+- each icon must decode as a PNG of at most 128 px and is re-encoded before it is stored; an icon already in the store is never replaced;
+- nothing is added unless the whole archive is valid, and a version already in the library is left as it is.
 
 **Embargo:** exporting a snapshot ticked as pre-release asks for confirmation (P-14).

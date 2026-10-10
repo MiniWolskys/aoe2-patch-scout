@@ -77,6 +77,11 @@
  * @property {(oldId: string, newId: string, kind?: string, lowPriority?: boolean,
  *   civs?: string[] | null, unnamed?: boolean, details?: boolean, technical?: boolean)
  *   => Promise<{saved: boolean, path?: string}>} save_export
+ * @property {(captureId: string, path?: string | null) => Promise<{saved: boolean, path?: string}>}
+ *   export_version
+ * @property {() => Promise<string | null>} choose_archive
+ * @property {(path?: string | null) => Promise<{imported: boolean, error?: string | null,
+ *   capture_id?: string, added?: boolean}>} import_version
  * @property {() => Promise<Settings>} get_settings
  * @property {(rawBackups?: boolean | null) => Promise<Settings>} update_settings
  * @property {() => Promise<{removed: number}>} purge_backups

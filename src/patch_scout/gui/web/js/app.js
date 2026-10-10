@@ -83,6 +83,35 @@ async function start() {
     drawVersionList();
   }
 
+  /** Add a version from an archive or the baseline pack (P-21), then open it. */
+  async function importVersion() {
+    const path = await api.choose_archive();
+    if (!path) {
+      return;
+    }
+    // A real archive takes seconds to check and store: say so meanwhile.
+    const previous = state.view;
+    byId("comparing-title").textContent = t("import.running");
+    byId("comparing-meta").textContent = path;
+    showView("comparing-view");
+    let result;
+    try {
+      result = await api.import_version(path);
+    } finally {
+      byId("comparing-title").textContent = t("comparison.loading");
+    }
+    if (!result.imported) {
+      showView(previous);
+      if (result.error) {
+        dialogs.toast(t(`import.error.${result.error}`));
+      }
+      return;
+    }
+    await refreshVersions();
+    await openVersion(String(result.capture_id));
+    dialogs.toast(t(result.added ? "import.added" : "import.already"));
+  }
+
   async function openVersion(captureId) {
     state.openId = captureId;
     await detailsView.show(captureId, state.comparison !== null);
@@ -112,6 +141,7 @@ async function start() {
   async function openComparison(firstId, secondId) {
     const request = ++comparisonRequest;
     const previous = state.view;
+    byId("comparing-title").textContent = t("comparison.loading");
     const label = (id) => state.versions.find((version) => version.capture_id === id)?.label ?? "";
     byId("comparing-meta").textContent = t("comparison.loading_meta", {
       first: label(firstId),
@@ -258,6 +288,8 @@ async function start() {
   initVersionList(byId("version-list"), { t });
   onClick("capture-button", () => void capture.openDialog());
   onClick("first-launch-capture", () => void capture.openDialog());
+  onClick("import-button", () => void importVersion());
+  onClick("first-launch-import", () => void importVersion());
   onClick("settings-button", () => void settings.open());
   onClick("diagnostics-button", () => void diagnostics.open(state.openId));
   onClick("comparison-export", () => void exporter.open());

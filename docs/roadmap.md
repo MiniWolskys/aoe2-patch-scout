@@ -86,7 +86,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 - [x] Capturing the live install twice gives identical snapshots, apart from `captured_at` and `capture_id`.
 - [x] Detection failure falls back to Browse cleanly.
 - [x] Synthetic fixture trees cover every reader; game tests pass locally (13 tests, `AOE2DE_PATH`).
-- [ ] **Still open:** importing snapshot archives and the baseline pack (P-21); the Import button is visible but disabled.
+- [x] Importing version archives and the baseline pack (P-21), 2026-10-10.
 - **Help wanted:** someone with the Microsoft Store / Game Pass version checks detection and folder layout.
 
 ## M2: Stats-tier capture
@@ -135,7 +135,8 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 
 **Exit criteria**
 - [x] Capture, compare and export text or HTML work end to end in the app.
-- [ ] **Not done:** the PNG image export, and export/import of snapshot archives and the baseline pack (P-21).
+- [x] Export and import of version archives, and the baseline pack import (P-21), 2026-10-10.
+- [ ] **Not done:** the PNG image export.
 - [ ] **Requested 2026-10-10:** the Chronicles civs (and Return of Rome, once supported) in their own tab, instead of at the bottom of the civ list. Timing open.
 
 ## M5: Packaging and v1.0

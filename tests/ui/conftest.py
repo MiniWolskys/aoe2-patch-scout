@@ -82,6 +82,9 @@ FAKE_BRIDGE = """
     purge_backups: answer("purge_backups", { removed: 3 }),
     get_diagnostics: answer("get_diagnostics", data.diagnostics),
     get_snapshot_section: answer("get_snapshot_section", { example: true }),
+    export_version: answer("export_version", { saved: true, path: "C:/tmp/live.aoe2snap" }),
+    choose_archive: answer("choose_archive", data.chosenArchive ?? "C:/tmp/live.aoe2snap"),
+    import_version: answer("import_version", data.importResult ?? { imported: false, error: null }),
   };
   if (late) {
     window.pywebview = { api: {} };

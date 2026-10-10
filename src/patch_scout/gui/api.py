@@ -32,6 +32,7 @@ from patch_scout.store import (
     Library,
     LibraryEntry,
     SnapshotStore,
+    archive,
 )
 from patch_scout.store.settings import Settings, SettingsStore
 
@@ -330,6 +331,60 @@ class Api:
             Path(path).write_text(content, encoding="utf-8")
             return {"saved": True, "path": path}
 
+    # --- archives (P-21) -----------------------------------------------------------------------
+
+    def export_version(self, capture_id: str, path: str | None = None) -> JsonObject:
+        """Write one version as an archive; asks where unless `path` is given."""
+        with _Guard("export_version"):
+            entry = self._library.get(capture_id)
+            name = _file_name(entry.label if entry else capture_id) + archive.SUFFIX
+            chosen = path or self._ask_where_to_save(name, archive.SUFFIX)
+            if chosen is None:
+                return {"saved": False}
+            archive.export(
+                self._folder,
+                capture_id,
+                Path(chosen),
+                tool_version=self._app_version,
+                notice=archive.NOTICE_TEXT,
+            )
+            return {"saved": True, "path": chosen}
+
+    def import_version(self, path: str | None = None) -> JsonObject:
+        """Add the version an archive holds; asks for the file unless `path` is given.
+
+        An archive the app can't use is an answer, not an error: `error` names why, and the
+        page shows the matching message.
+        """
+        with _Guard("import_version"):
+            chosen = path or self._ask_which_archive()
+            if chosen is None:
+                return {"imported": False, "error": None}
+            try:
+                result = archive.import_(self._folder, Path(chosen))
+            except archive.ArchiveError as exc:
+                logger.warning("import of %s refused: %s", chosen, exc)
+                return {"imported": False, "error": exc.reason}
+            self._library.reload()
+            return {"imported": True, "capture_id": result.capture_id, "added": result.added}
+
+    def choose_archive(self) -> str | None:
+        """Open the native file picker for an archive; None when the user cancels."""
+        with _Guard("choose_archive"):
+            return self._ask_which_archive()
+
+    def _ask_which_archive(self) -> str | None:
+        if self._window is None:
+            return None
+        import webview
+
+        chosen = self._window.create_file_dialog(
+            webview.OPEN_DIALOG, file_types=(f"Patch Scout version (*{archive.SUFFIX})",)
+        )
+        if not chosen:
+            return None
+        return str(chosen if isinstance(chosen, str) else chosen[0])
+
     # --- settings and diagnostics --------------------------------------------------------------
 
     def get_settings(self) -> JsonObject:
@@ -599,3 +654,9 @@ def _filters(
         details=details,
         technical=technical,
     )
+
+
+def _file_name(label: str) -> str:
+    """A label made safe as a Windows file name."""
+    cleaned = "".join("_" if char in r'<>:"/\|?*' or ord(char) < 32 else char for char in label)
+    return cleaned.strip(" .") or "version"
