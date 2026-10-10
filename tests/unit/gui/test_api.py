@@ -373,3 +373,34 @@ def test_an_archive_that_cant_be_imported_says_why(api: Api, tmp_path: Path) -> 
 
 def test_cancelling_the_file_pickers_does_nothing(api: Api) -> None:
     assert api.import_version() == {"imported": False, "error": None}
+
+
+def _png_data_url() -> str:
+    import base64
+    import io
+
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (4, 2), (20, 18, 15)).save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
+def test_one_image_is_saved_where_asked(api: Api, tmp_path: Path) -> None:
+    path = tmp_path / "overall.png"
+    result = api.save_images([_png_data_url()], "Overall", str(path))
+    assert result == {"saved": True, "path": str(path)}
+    assert path.read_bytes().startswith(b"\x89PNG")
+
+
+def test_parts_are_numbered(api: Api, tmp_path: Path) -> None:
+    path = tmp_path / "franks.png"
+    api.save_images([_png_data_url(), _png_data_url()], "Franks", str(path))
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["franks-1.png", "franks-2.png"]
+
+
+def test_something_that_is_not_a_png_is_refused(api: Api, tmp_path: Path) -> None:
+    path = tmp_path / "x.png"
+    with pytest.raises(ValueError):
+        api.save_images(["data:image/png;base64,aGVsbG8="], "x", str(path))
+    assert not path.exists()
