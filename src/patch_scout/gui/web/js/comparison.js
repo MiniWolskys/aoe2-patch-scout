@@ -211,12 +211,25 @@ function changeRow(view, entry) {
   }
   row.append(entity);
 
-  // The lines share the row's field and values columns (a subgrid), so arrows line up.
+  // The lines share the row's field, values and note columns (a subgrid), so arrows line up and
+  // each change's detail sits on its own line. The entry's civs head the first line's note.
   const lines = el("div", { class: "change-row__lines" });
   const changes = entry.changes ?? [];
-  for (const change of changes) {
-    lines.append(fieldCell(view, change), values(change));
-  }
+  changes.forEach((change, index) => {
+    const note = el("div", { class: "change-row__note" });
+    if (index === 0) {
+      note.textContent = scopeText(view.t, entry.scope);
+    }
+    if (change.detail) {
+      note.append(
+        el("span", {
+          class: "change-row__detail",
+          text: view.t(change.detail.key, change.detail.args),
+        }),
+      );
+    }
+    lines.append(fieldCell(view, change), values(change), note);
+  });
   if (entry.hidden > 0) {
     lines.append(
       el("div", {
@@ -226,20 +239,6 @@ function changeRow(view, entry) {
     );
   }
   row.append(lines);
-
-  const note = el("div", { class: "change-row__note" });
-  note.textContent = scopeText(view.t, entry.scope);
-  for (const change of changes) {
-    if (change.detail) {
-      note.append(
-        el("span", {
-          class: "change-row__detail",
-          text: view.t(change.detail.key, change.detail.args),
-        }),
-      );
-    }
-  }
-  row.append(note);
   return row;
 }
 

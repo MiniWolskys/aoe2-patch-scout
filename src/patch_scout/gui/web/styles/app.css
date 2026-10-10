@@ -636,10 +636,10 @@ body:not([data-ready]) {
   font-size: var(--fs-xs);
 }
 
-/* An entry's field-and-values lines use the row's own columns, so the arrows line up */
+/* An entry's field, values and note lines use the row's own columns, so the arrows line up */
 .change-row__lines {
   display: grid;
-  grid-column: 3 / span 2;
+  grid-column: 3 / span 3;
   grid-template-columns: subgrid;
   row-gap: 6px;
   align-items: center;

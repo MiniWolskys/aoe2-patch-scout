@@ -308,6 +308,57 @@ def test_a_unit_with_several_changed_fields_is_one_row(open_shell: OpenShell) ->
     expect(page.locator(".value-new")).to_have_text(["110", "1.4"])
 
 
+def test_long_old_and_new_values_do_not_overlap(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    status = change(
+        category="civ_availability",
+        field={"key": "field.node_status", "args": {}},
+        stat_icon=None,
+        old="ResearchRequired",
+        new="ResearchedCompleted",
+        scope={"kind": "all_except", "civs": ["Achaemenids", "Athenians", "Spartans"]},
+    )
+    data["changeSet"] = change_set(changes=[status], entries=[entry(status)])
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    old = page.locator(".value-old").bounding_box()
+    new = page.locator(".value-new").bounding_box()
+    note = page.locator(".change-row__note").first.bounding_box()
+    assert old is not None and new is not None and note is not None
+    assert old["x"] + old["width"] <= new["x"]
+    assert new["x"] + new["width"] <= note["x"]
+
+
+def test_each_change_detail_sits_on_its_own_line(open_shell: OpenShell) -> None:
+    data = with_versions(version("new", "PUP build"), version("old", "Live build"))
+    commands = [
+        change(
+            category="techs",
+            field={"key": "field.effect_command", "args": {}},
+            stat_icon=None,
+            old="",
+            new=f"type 4 a=2705 b=-1 c={number} d=1",
+            detail={
+                "key": "detail.effect_command",
+                "args": {"effect": "Bodkin Arrow", "command": number},
+            },
+        )
+        for number in (167, 168, 169)
+    ]
+    data["changeSet"] = change_set(changes=commands, entries=[entry(*commands)])
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+
+    details = page.locator(".change-row__detail")
+    expect(details).to_have_count(3)
+    for index in range(3):
+        value = page.locator(".change-values").nth(index).bounding_box()
+        detail = details.nth(index).bounding_box()
+        assert value is not None and detail is not None
+        assert value["y"] <= detail["y"] + detail["height"] / 2 <= value["y"] + value["height"]
+
+
 def test_a_new_unit_says_how_many_values_it_leaves_out(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
     hit_points = change(old="", new="65")
