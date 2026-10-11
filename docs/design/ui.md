@@ -205,7 +205,7 @@ A drawer on the right, full height and about 460 px wide, over a light scrim; th
   3. **Notices:** a version whose game data couldn't be read; the stats then come from the other one.
   4. **Description:** the game's help text without its title and stat lines.
   5. **Sections:**
-     - unit or building: Stats, Cost and training, and the upgrade's research;
+     - unit or building: Stats, Cost and training, and the upgrade's research. Stats show each value once: Melee and Pierce attack and armour with their icons, then the bonuses and other armour classes; the game's displayed attack and armour only where they differ (D-50);
      - tech: Research, then Effects, what it does.
   6. **What affects it** (with a civ):
      - Civilization bonuses, Team bonus, Unique technologies, Technologies;

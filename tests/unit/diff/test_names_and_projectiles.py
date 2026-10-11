@@ -94,7 +94,7 @@ def test_a_projectile_change_is_reported_on_the_unit_that_fires_it() -> None:
 
 def test_a_projectile_field_reads_as_part_of_its_shooter() -> None:
     text = render_text(_compare({}, {}), load_catalog("en"))
-    assert "Archer · Projectile: Attack vs #3 · 6 → 7" in text
+    assert "Archer · Projectile: Bonus vs #3 · 6 → 7" in text
 
 
 def test_a_tech_without_a_display_name_uses_its_internal_name() -> None:

@@ -37,7 +37,9 @@ _DETAIL_UNIT_FIELDS: Final = frozenset(
     }
 )
 _BLAST_LEVELS: Final = frozenset({"field.blast_attack_level", "field.blast_defense_level"})
-_BY_CLASS: Final = frozenset({"field.armours", "field.attacks"})
+_BY_CLASS: Final = frozenset(
+    {"field.armours", "field.attacks", "field.armours_basic", "field.attacks_basic"}
+)
 # Bookkeeping on techs: the effect itself, when it changed, is reported with its commands.
 _DETAIL_TECH_FIELDS: Final = frozenset(
     {"field.repeatable", "field.required_tech_count", "field.tech_type"}
@@ -159,13 +161,14 @@ def _number(text: str | None) -> float | None:
 
 # --- displayed stats -----------------------------------------------------------------------------
 
-# A displayed stat and the stat it repeats; None means any attack class.
-_DISPLAYED: Final = {
-    "field.displayed_melee_armour": ("field.armours", 4),
-    "field.displayed_pierce_armour": ("field.armours", 3),
-    "field.displayed_attack": ("field.attacks", None),
-    "field.displayed_range": ("field.max_range", None),
-    "field.displayed_reload_time": ("field.reload_time", None),
+# A displayed stat and the stats it repeats; None means any attack class.
+_ATTACKS: Final = frozenset({"field.attacks", "field.attacks_basic"})
+_DISPLAYED: Final[dict[str, tuple[frozenset[str], int | None]]] = {
+    "field.displayed_melee_armour": (frozenset({"field.armours_basic"}), 4),
+    "field.displayed_pierce_armour": (frozenset({"field.armours_basic"}), 3),
+    "field.displayed_attack": (_ATTACKS, None),
+    "field.displayed_range": (frozenset({"field.max_range"}), None),
+    "field.displayed_reload_time": (frozenset({"field.reload_time"}), None),
 }
 
 
@@ -195,10 +198,10 @@ def _repeated_displayed_stats(changes: list[Change], context: Context) -> list[C
 
 
 def _repeats(
-    shown: Change, other: Change, partner: tuple[str, int | None], context: Context
+    shown: Change, other: Change, partner: tuple[frozenset[str], int | None], context: Context
 ) -> bool:
-    key, armour_class = partner
-    if _field_key(other) != key or (shown.old, shown.new) != (other.old, other.new):
+    keys, armour_class = partner
+    if _field_key(other) not in keys or (shown.old, shown.new) != (other.old, other.new):
         return False
     if armour_class is None:
         return True

@@ -197,7 +197,7 @@ def test_search_radius_is_a_detail() -> None:
 
 def test_a_displayed_stat_repeating_its_armour_class_is_a_detail() -> None:
     levels = _levels(_compare(new={"melee": 3, "shown_melee": 3}), "Scorpion")
-    assert levels == {"Armour vs Melee": "headline", "Displayed melee armour": "detail"}
+    assert levels == {"Melee armour": "headline", "Displayed melee armour": "detail"}
 
 
 def test_a_displayed_stat_that_disagrees_stays_a_headline() -> None:
@@ -238,7 +238,7 @@ def test_a_unit_no_civ_could_get_before_reads_as_added() -> None:
 
 def test_a_zero_armour_class_coming_or_going_is_technical() -> None:
     levels = _levels(_compare(old={"extra_armour": [{"class_": 3, "amount": 0}]}), "Knight")
-    assert levels == {"Armour vs Pierce": "technical"}
+    assert levels == {"Pierce armour": "technical"}
 
 
 # --- availability and effects -------------------------------------------------------------------

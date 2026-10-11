@@ -17,6 +17,7 @@ from patch_scout.diff import collapse as collapse_module
 from patch_scout.diff import entries as entries_module
 from patch_scout.diff import levels
 from patch_scout.diff.allowlist import RESOURCE_KEYS, TECH_FIELDS, UNIT_FIELDS, Field
+from patch_scout.diff.classes import ClassKind, class_field
 from patch_scout.diff.effects import (
     Lookup,
     describe,
@@ -987,10 +988,8 @@ def _sub_fields(
             (key, Message(f"field.{allow.key}", {"location": _location_name(run, key)}))
             for key in ordered
         ]
-    return [
-        (key, Message(allow.label, {"class": run.vocabulary.armour_class(key) or unknown_id(key)}))
-        for key in ordered
-    ]
+    kind: ClassKind = "armours" if allow.key == "armours" else "attacks"
+    return [(key, class_field(kind, key, run.vocabulary)) for key in ordered]
 
 
 def _location_name(run: _Run, location: JsonValue) -> str:

@@ -84,6 +84,20 @@ The allowlist names **stat concepts**. The mapping to snapshot field paths is fi
 
 Every allowlist change goes through a PR that adds a fixture case showing the field.
 
+## Attack and armour classes (D-50)
+
+A unit's attacks and armours are lists of classes with an amount. They are worded the way players say them:
+
+| Class | Armour | Attack |
+|---|---|---|
+| Melee or Pierce | `Melee armour: -2` | `Pierce attack: 6` |
+| Any other | `Archers armour class: 0` | `Bonus vs Shock Infantry: 3` |
+
+- **Basic classes** are recognised by their `Constants.xs` names (`Melee`, `Pierce`), not by number. A class the constants don't name keeps its number: `#31 armour class`.
+- **Unit stats, effect sentences and the details drawer** all use this wording, including projectiles (`Projectile: Pierce attack`).
+- **Every armour class is shown,** even one that looks unused. Class 31, unnamed and on most units, has no unit attacking it on 101.103.54800.0, but the Achaemenids' Sagaris (Chronicles) gives cavalry +2 against it. Hiding classes risks losing information.
+- **The details drawer shows each value once.** The game also stores a displayed attack and displayed melee and pierce armour, the numbers its interface shows. The drawer lists the Melee and Pierce classes first, with the stat icons, and lists a displayed value only when it differs from its class in either version, as "Displayed melee armour" and the like. The comparison already ranks a displayed value that moved like its class as a detail ([Levels](#levels-d-46)).
+
 ## Reachability (D-37)
 
 For each civ, the diff reports only the units that civ can actually get. Reachability is computed at diff time from both snapshots; captures always keep every unit (P-03).
@@ -92,7 +106,7 @@ For each civ, the diff reports only the units that civ can actually get. Reachab
 2. **Linked forms.** From every reachable unit, follow these links, and repeat until no unit is added:
    - `Building.transform_unit`: the other form of a transforming unit, e.g. Trebuchet ↔ Trebuchet (Packed);
    - `Unit.blood_unit_id`, only when the target's `language_dll_name` resolves to a string, e.g. Konnik → Konnik (Dismounted).
-3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it, labelled `Projectile: <field>` (e.g. `Arbalester · Projectile: Attack vs Pierce · 6 → 7`), with the civs where that unit fires it.
+3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it, labelled `Projectile: <field>` (e.g. `Arbalester · Projectile: Pierce attack · 6 → 7`), with the civs where that unit fires it.
 4. **Not followed:**
    - `Unit.dead_unit_id` (corpses, rubble);
    - `DeadFish.tracking_unit`;
@@ -131,7 +145,7 @@ For each unit ID and allowlisted field of the raw unit records:
 | One value pair, more than 8 civs in scope (not all), all changed | `Onager — attack 50 → 55 (all 45 civilizations that have it)` |
 | One value pair, more than 8 civs in scope (not all), most changed | `(all 45 civilizations that have it, except Goths)` |
 | One value pair, few civs changed | `Knight — HP 120 → 130 (Franks)` |
-| Several value pairs | One line per group, largest group first. The largest group, when no other is as large, may use the "except" forms; the civs of the other groups are among its exceptions and are named on their own lines: `Champion — attack vs Shock infantry 8 → 9 (all civilizations except Achaemenids, …)` and `6 → 9 (Achaemenids, …)` |
+| Several value pairs | One line per group, largest group first. The largest group, when no other is as large, may use the "except" forms; the civs of the other groups are among its exceptions and are named on their own lines: `Champion — Bonus vs Shock Infantry 8 → 9 (all civilizations except Achaemenids, …)` and `6 → 9 (Achaemenids, …)` |
 
 **Thresholds:**
 - The app names at most 8 civs in a list ("… and 3 more"), with the full list on hover. **Exports name every civ**: they are read out or pasted, so nothing may be cut.
@@ -199,14 +213,14 @@ Every changed effect command is shown in up to three layers, most readable first
 
 - **Target:** the unit in `a`, else the class in `b` ("Cavalry class"). A command with neither stays raw.
 - **Scripted effects:** setting the resource `EffectFunctionNumber` runs that numbered function of `Effects.xs`; the sentence uses the function's title comment, e.g. "Effect of Kasbah for Berbers" (game-files.md §11; the Kasbah tech sets it to 52 on 101.103.54800.0).
-- **Attack and armour** (attributes 9 and 8) unpack `d` as class × 256 + amount, e.g. "Archer: Attack vs Pierce · +1". A negative `d`, or a multiplied attack or armour, stays raw: its packing isn't verified.
+- **Attack and armour** (attributes 9 and 8) unpack `d` as class × 256 + amount, e.g. "Archer: Pierce attack · +1". A negative `d`, or a multiplied attack or armour, stays raw: its packing isn't verified.
 - **An attribute the constants don't name** stays raw, and so do attributes whose value probably packs data in a way not yet verified: `ResourceCost`, `AddArmorType`, `AddAttackType`, `RemoveArmorType` and `RemoveAttackType`. Attack and armour are recognised by their XS names (`Attack`, `Armor`), not by number.
 - **Two commands that differ only in a slot the sentence doesn't show** stay raw, so a change never reads "×1.5 → ×1.5".
 - **Tech cost and time** (`AddTechCost`, `ModTechTime`): `a` is the tech, `b` the resource (`-1` every one; food, wood, stone or gold for a cost), `c` the mode. Verified on 101.103.54800.0 from bonuses named after what they do: mode 0 sets ("free Careening, Dry Dock" sets their food and gold to 0), mode 2 multiplies (the Italians' "Age up 15% cheaper" is ×0.85). Modes 1 and -1, other `b` values, and a time with a resource stay raw.
 - **Other types** (`SpawnUnit`, `ModifyTech`, `SetPlayerData`, the unit-attribute variants 10–12, `SetTechCost`) have no template yet: their slot meanings aren't verified from game files. Types the constants don't name, such as 15 (120 commands on 101.103.54800.0), stay raw.
 
 **How a changed command reads:**
-- **Same target and attribute on both sides:** one line with both values, e.g. "Archer: Attack vs Pierce · +1 → +2".
+- **Same target and attribute on both sides:** one line with both values, e.g. "Archer: Pierce attack · +1 → +2".
 - **Otherwise:** the old sentence with only an old value, and the new one with only a new value.
 - **A sentence without a value** says it in words: "New: Enables Crossbowman", "No longer: Enables Crossbowman".
 - **The raw command** stays in the change's detail: "Bodkin Arrow, command 7: type 4 a=4 b=-1 c=9 d=769".
@@ -282,7 +296,7 @@ The details drawer lists the effect commands that touch one unit, building or te
 - **Display:**
   - Show the shortest decimal form that tells old and new apart: `2.0 → 1.9`, not `2 → 2`.
   - Resources are shown by name: type 0 is food, 1 wood, 2 stone and 3 gold, checked against costs the game shows in its own interface (game-files.md §4).
-  - Armour and attack classes are named from the snapshots' `Constants.xs`, e.g. "Attack vs Shock Infantry" (see Effects). Train and research locations show the building's name.
+  - Armour and attack classes are named from the snapshots' `Constants.xs` and worded as players say them (D-50; see [Attack and armour classes](#attack-and-armour-classes-d-50)). Train and research locations show the building's name.
   - **Required techs** show tech names separated by semicolons (names can hold commas, e.g. "C-Bonus, Free Chemistry"), without the empty `-1` slots. A tech whose required count is 0 lists none: its slots then hold placeholders such as tech 0, "New Research". A change that only touches such slots is not reported.
   - Unknown IDs are shown as `#<id>`.
 - **Names:**
