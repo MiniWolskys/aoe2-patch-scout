@@ -207,6 +207,7 @@ def fixture_data(**overrides: Any) -> dict[str, Any]:
         "validation": {"valid": True, "path": "D:/Games/AoE2DE", "game_build": "101.103.48987.0"},
         "captureStatuses": [],
         "changeSet": change_set(),
+        "entity": entity_details(),
         "icons": {},
         "exportText": "Patch Scout - what changed\n",
         "diagnostics": {
@@ -227,9 +228,10 @@ def calls(page: Page, name: str) -> list[list[Any]]:
 
 def tree_node(key: str, name: str, column: int, row: int, **overrides: Any) -> dict[str, Any]:
     """One tile of a tech tree, shaped the way `tree.build` writes it."""
-    use_type, _, _ = key.partition(":")
+    use_type, _, rest = key.partition(":")
     node: dict[str, Any] = {
         "key": key,
+        "id": int(rest.partition("@")[0]),
         "kind": use_type.lower(),
         "node_type": "Unit" if use_type == "Unit" else use_type,
         "name": name,
@@ -326,5 +328,95 @@ def tech_tree(**overrides: Any) -> dict[str, Any]:
             tree_node("Unit:74", "Militia", 2, 1, group=1, available=False),
         ],
         "links": [["Unit:24", "Unit:4"]],
+    }
+    return data | overrides
+
+
+def detail_row(
+    key: str, old: str | None, new: str | None, state: str, **args: Any
+) -> dict[str, Any]:
+    """One line of the details panel, shaped the way `entity.details` writes it."""
+    return {
+        "field": {"key": key, "args": args},
+        "stat_icon": "hp" if key == "field.hit_points" else None,
+        "old": old,
+        "new": new,
+        "state": state,
+    }
+
+
+def entity_details(**overrides: Any) -> dict[str, Any]:
+    """A Militia's details: a changed and an unchanged stat, a civ bonus and a tech."""
+    data: dict[str, Any] = {
+        "kind": "unit",
+        "id": 74,
+        "name": "Militia",
+        "old_name": None,
+        "icon": None,
+        "age": 1,
+        "civ": "Franks",
+        "presence": "both",
+        "available": {"old": True, "new": True},
+        "stats_missing": {"old": False, "new": False},
+        "description": [
+            [_run("text", text="All-purpose Infantry.")],
+            [_run("text", text="Upgrades: attack (Blacksmith).", grey=True, italic=True)],
+        ],
+        "sections": [
+            {
+                "key": "stats",
+                "title": {"key": "entity.section.stats", "args": {}},
+                "rows": [
+                    detail_row("field.hit_points", "40", "45", "changed"),
+                    detail_row("field.line_of_sight", "4", "4", "same"),
+                ],
+            }
+        ],
+        "groups": [
+            {
+                "key": "civ",
+                "title": {"key": "entity.group.civ", "args": {}},
+                "sources": [
+                    {
+                        "key": "tech:693",
+                        "name": {"key": "entity.source", "args": {"name": "Civ bonus: Tough"}},
+                        "requires": "Feudal Age",
+                        "rows": [
+                            detail_row(
+                                "effect.attribute",
+                                None,
+                                "+5",
+                                "added",
+                                target="Militia",
+                                attribute="Hitpoints",
+                            )
+                        ],
+                    }
+                ],
+            },
+            {
+                "key": "techs",
+                "title": {"key": "entity.group.techs", "args": {}},
+                "sources": [
+                    {
+                        "key": "tech:67",
+                        "name": {"key": "entity.source", "args": {"name": "Forging"}},
+                        "requires": None,
+                        "rows": [
+                            detail_row(
+                                "effect.attribute",
+                                "+1",
+                                None,
+                                "removed",
+                                target="Militia",
+                                attribute="Attack",
+                            )
+                        ],
+                    }
+                ],
+            },
+        ],
+        "scripts": [],
+        "note": {"key": "entity.note", "args": {}},
     }
     return data | overrides

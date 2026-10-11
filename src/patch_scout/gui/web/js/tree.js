@@ -37,6 +37,7 @@ const MARKS = ["gained", "lost", "changed", "renamed"];
  *   fit: boolean,
  *   onFit: () => void,
  *   onNode?: (node: Record<string, any>, tile: HTMLElement, shown: boolean) => void,
+ *   onOpen?: (node: Record<string, any>) => void,
  * }} view
  */
 export function render(view) {
@@ -264,6 +265,10 @@ function tile(view, node, at) {
     button.addEventListener("focus", () => onNode(node, button, true));
     button.addEventListener("mouseleave", () => onNode(node, button, false));
     button.addEventListener("blur", () => onNode(node, button, false));
+  }
+  const onOpen = view.onOpen;
+  if (onOpen !== undefined) {
+    button.addEventListener("click", () => onOpen(node));
   }
   return button;
 }

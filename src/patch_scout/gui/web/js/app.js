@@ -7,6 +7,7 @@ import * as comparison from "./comparison.js";
 import * as details from "./details.js";
 import * as dialogs from "./dialogs.js";
 import { byId, clear, el, input, onClick, show } from "./dom.js";
+import { initEntityPanel } from "./entity-panel.js";
 import { applyTranslations, createTranslator } from "./i18n.js";
 import * as icons from "./icons.js";
 import { initDiagnostics, initExport, initPicker, initSettings } from "./panels.js";
@@ -209,6 +210,10 @@ async function start() {
       treeMode: inTree,
       filters: state.filters,
       onCiv: selectCiv,
+      onEntity: (entity) => {
+        // A civ page opens it for that civ; Overall, for the civ chosen last, if any.
+        openEntity(entity.kind, Number(entity.id), current.civ ?? current.treeCiv, entity.name);
+      },
       onPick: (side) => {
         const current = side === "old" ? state.comparison?.oldId : state.comparison?.newId;
         if (current !== undefined) {
@@ -362,8 +367,34 @@ async function start() {
           treePanel.hide();
         }
       },
+      onOpen: (node) => {
+        treePanel.hide();
+        openEntity(node.kind, node.id, civ, node.name);
+      },
     });
   }
+
+  /**
+   * Open the details of a unit, building or tech of the open comparison (D-49).
+   * @param {string} kind
+   * @param {number} id
+   * @param {string | null} civ
+   * @param {string} [name]
+   */
+  function openEntity(kind, id, civ, name) {
+    const current = state.comparison;
+    if (current === null || !Number.isInteger(id)) {
+      return;
+    }
+    entityPanel.open({ oldId: current.oldId, newId: current.newId, kind, id, civ, name });
+  }
+
+  const entityPanel = initEntityPanel({
+    api,
+    t,
+    civs: () => state.comparison?.changeSet.civs ?? [],
+    statIcons: () => state.comparison?.changeSet.stat_icons ?? {},
+  });
 
   const capture = initCapture({
     api,

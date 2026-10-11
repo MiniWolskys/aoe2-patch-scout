@@ -104,6 +104,7 @@ def build(
         nodes.append(
             {
                 "key": key,
+                "id": node.get("node_id"),
                 "kind": str(node.get("use_type", "")).lower(),
                 "node_type": node.get("node_type"),
                 "name": _name(side, civ, node),

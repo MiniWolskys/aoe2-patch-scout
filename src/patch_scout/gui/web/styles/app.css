@@ -1125,6 +1125,221 @@ body[data-failed] > :not(.startup-error, script) {
   font-size: var(--fs-xs);
 }
 
+/* Details of a unit, building or tech (D-49): a drawer on the right, the page dimmed beside it */
+
+.scrim--drawer {
+  justify-content: flex-end;
+  align-items: stretch;
+  z-index: 30;
+}
+
+.drawer {
+  display: flex;
+  box-sizing: border-box;
+  width: 460px;
+  max-width: calc(100vw - 48px);
+  height: 100%;
+  flex-direction: column;
+  background: var(--bg-raised);
+  box-shadow:
+    inset 1px 0 0 var(--line-strong),
+    var(--shadow-dialog);
+}
+
+.drawer__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 16px 12px 20px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.drawer__identity {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.drawer__icon {
+  --game-icon-size: 56px;
+}
+
+.drawer__heading {
+  min-width: 0;
+}
+
+.drawer__title {
+  margin: 0;
+  font-size: var(--fs-dialog);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.drawer__meta {
+  margin: 2px 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.drawer__civ {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.drawer__civ .input {
+  flex: 1;
+}
+
+.drawer__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 12px 20px 20px;
+  overflow-y: auto;
+}
+
+.drawer__body > * {
+  flex-shrink: 0;
+}
+
+.drawer__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.drawer__notice {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-control);
+  background: var(--bg-inset);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.drawer__description p {
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+.drawer__description .is-bold {
+  font-weight: 600;
+}
+
+.drawer__description .is-italic {
+  font-style: italic;
+}
+
+.drawer__description .is-grey {
+  color: var(--text-2);
+}
+
+.drawer__static-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.drawer__stat-icon {
+  --game-icon-size: 18px;
+  box-shadow: none;
+}
+
+.drawer__section {
+  margin: 12px 0 2px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.drawer__rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 16px;
+}
+
+.drawer__row {
+  display: contents;
+}
+
+.drawer__value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* A line in one version only: its label says so too, since a sentence may have no value */
+.drawer__row.is-added .change-row__field {
+  color: var(--new);
+}
+
+.drawer__row.is-removed .change-row__field {
+  color: var(--old);
+  text-decoration: line-through;
+}
+
+.drawer__source {
+  padding: 6px 0;
+}
+
+.drawer__source + .drawer__source {
+  border-top: 1px dashed var(--line-subtle);
+}
+
+.drawer__source-name {
+  margin: 0 0 2px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.drawer__requires {
+  margin: 0 0 4px;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.drawer__note {
+  margin: 12px 0 0;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+/* A change row's icon that opens the details */
+.change-row__open {
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-icon);
+  background: none;
+  cursor: pointer;
+}
+
+/* No icon: an empty frame, so there is still something to click */
+.change-row__open .change-row__no-icon {
+  display: block;
+  box-sizing: border-box;
+  height: var(--game-icon-size);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-icon);
+}
+
+.change-row__open:hover .change-row__no-icon,
+.change-row__open:focus-visible .change-row__no-icon {
+  border-color: var(--accent);
+}
+
+.change-row__open:hover .game-icon,
+.change-row__open:focus-visible .game-icon {
+  box-shadow:
+    0 0 0 1px var(--bg-app),
+    0 0 0 2px var(--accent);
+}
+
 /* Dialogs */
 
 .dialog__title {

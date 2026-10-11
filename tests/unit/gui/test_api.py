@@ -539,6 +539,35 @@ def test_a_civ_tech_tree_comes_with_its_marks(api: Api, install: Path, tmp_path:
     assert api.get_tech_tree(first, second, "Nowhere") is None
 
 
+def test_an_entitys_details_compare_the_two_versions(
+    api: Api, install: Path, tmp_path: Path
+) -> None:
+    first = capture(api, install, "Live")
+    other = game_tree.write(
+        tmp_path / "new",
+        dat_bytes=sample_dat.sample_bytes(archer_hp=40),
+        unavailable_civs=(),
+    )
+    second = capture(api, other, "PUP")
+
+    details = api.get_entity_details(first, second, "unit", 4, "Redlanders")
+
+    assert details is not None and details["civ"] == "Redlanders"
+    sections: Any = details["sections"]
+    hit_points = next(
+        row for row in sections[0]["rows"] if row["field"]["key"] == "field.hit_points"
+    )
+    assert (hit_points["old"], hit_points["new"], hit_points["state"]) == ("30", "40", "changed")
+    assert api.get_entity_details(first, second, "unit", 4, None) is not None
+
+
+def test_an_unknown_entity_or_kind_has_no_details(api: Api, install: Path) -> None:
+    first = capture(api, install, "Live")
+
+    assert api.get_entity_details(first, first, "unit", 9999, None) is None
+    assert api.get_entity_details(first, first, "civ", 4, None) is None
+
+
 def test_diagnostics_name_the_pillow_version_without_its_metadata(
     api: Api, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -8,6 +8,9 @@ import * as icons from "./icons.js";
 // A new value longer than this is a list (a new civ's tech tree), shown across the wide layout.
 const LONG_VALUE = 40;
 
+// The entities whose icon opens their details (D-49).
+const DETAILED = new Set(["unit", "building", "tech"]);
+
 // The order categories are shown in (diff-rules.md); the change set uses the same names.
 const CATEGORIES = [
   "civilizations",
@@ -31,6 +34,7 @@ const CATEGORIES = [
  *     technical: boolean, search: string},
  *   onCiv: (internalName: string | null) => void,
  *   onPick: (side: "old" | "new") => void,
+ *   onEntity?: (entity: Record<string, any>) => void,
  * }} view
  */
 export function render(view) {
@@ -304,7 +308,28 @@ function renderPage(view, changes) {
 function changeRow(view, entry) {
   const row = el("div", { class: "change-row" });
   const image = icons.element(entry.entity?.icon);
-  row.append(image ?? el("span", { class: "change-row__no-icon" }));
+  const shown = image ?? el("span", { class: "change-row__no-icon" });
+  const onEntity = view.onEntity;
+  if (
+    onEntity !== undefined &&
+    DETAILED.has(entry.entity?.kind) &&
+    /^\d+$/.test(entry.entity?.id ?? "")
+  ) {
+    // A unit, building or tech opens its details (D-49).
+    const button = el("button", {
+      class: "change-row__open",
+      attrs: {
+        type: "button",
+        "aria-label": view.t("entity.open", { name: entry.entity.name ?? "" }),
+        title: view.t("entity.open", { name: entry.entity.name ?? "" }),
+      },
+    });
+    button.append(shown);
+    button.addEventListener("click", () => onEntity(entry.entity));
+    row.append(button);
+  } else {
+    row.append(shown);
+  }
 
   const entity = el("div", { class: "change-row__entity" });
   const name = el("span", { class: "change-row__name" });
