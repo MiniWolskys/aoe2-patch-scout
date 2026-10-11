@@ -346,7 +346,10 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
   - **Missing:** this folder has no icon for line of sight or train time; those need text labels (D-09 fallback).
   - **In use:** the 19 keys listed in [snapshot-format.md](../design/snapshot-format.md#stat_icons).
   - File name case varies (`reloadTime.png`), so match names case-insensitively.
-- Age and legend icons: `widgetui\textures\menu\techtree\`.
+- Age and legend icons: `widgetui\textures\menu\techtree\`. [verified 101.103.54800.0]
+  - **Age shields** of the tech tree screen: `techtree_dark age.png`, `techtree_feudal age.png`, `techtree_castle age.png`, `techtree_imperial age.png`. The file names hold a space. They are captured as `stat_icons` `age_1` to `age_4`.
+  - The same folder has the Chronicles ages (`techtree_archaic_age.png`, `techtree_civic_age.png`, `techtree_classical_age.png`, `techtree_ant_imperial_age.png`) and the key swatches (`techtree_key_*.png`). Neither is captured.
+  - Other age art: `widgetui\textures\ingame\icons\shield_<age>-age_<state>.png` (the in-game HUD shields) and `resources\_common\wpfg\resources\Icons\age-1.png`…`age-4.png` (square badges).
 
 ### Handling
 See [snapshot-format.md](../design/snapshot-format.md) (icon store) and [diff-rules.md](../design/diff-rules.md) (redraw vs remap).

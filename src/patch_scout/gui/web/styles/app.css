@@ -894,9 +894,22 @@ body[data-failed] > :not(.startup-error, script) {
 .tree__age-label {
   position: sticky;
   left: 0;
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  width: 120px; /* LABEL_WIDTH in tree.js */
   padding: 10px 12px;
   color: var(--text-3);
+  text-align: center;
+}
+
+/* The game's age shield, above the age's name */
+.tree__age-shield {
+  display: block;
+  height: 84px;
+  width: auto;
 }
 
 .tree__lines {

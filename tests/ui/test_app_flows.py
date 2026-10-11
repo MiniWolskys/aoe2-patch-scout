@@ -6,6 +6,7 @@ from typing import Any
 
 from playwright.sync_api import Page, expect
 from support.ui_data import (
+    PIXEL,
     calls,
     change,
     change_set,
@@ -695,13 +696,6 @@ def test_a_comparison_of_identical_versions_says_nothing_changed(open_shell: Ope
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
 
     expect(page.locator("#comparison-changes")).to_contain_text("No changes to show")
-
-
-# A 1x1 PNG, enough for an <img> to load.
-PIXEL = (
-    "data:image/png;base64,"
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
-)
 
 
 def test_a_change_with_a_stat_icon_shows_the_icon(open_shell: OpenShell) -> None:

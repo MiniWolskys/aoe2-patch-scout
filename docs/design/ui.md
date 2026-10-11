@@ -165,6 +165,7 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
   - lines leave a node just below it, run across, and go down to the node that comes from it; a line never crosses another tile.
 
   The tree scrolls sideways; **Fit to width** scales it to the window.
+- **Age shields:** each age band shows its shield from the game's tech tree screen, above its name, in a column that stays in view while the tree scrolls. A snapshot without them shows the names alone ([snapshot-format.md](snapshot-format.md#stat_icons)).
 - **Left panel, as in the game:** the civ's crest and name, its bonus text with this patch's changes (removed in red, added in green, line by line), and the key of tile colours.
 - **Tiles:** icon and name, coloured as in the game's key: unit, building, technology; common, regional, unique. What the civ can't get is dimmed and crossed.
 - **Marks** (legend in the header), following the comparison's filters:

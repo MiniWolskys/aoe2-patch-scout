@@ -5,7 +5,15 @@ from collections.abc import Callable
 from typing import Any
 
 from playwright.sync_api import Page, expect
-from support.ui_data import calls, fixture_data, startup_data, tech_tree, version
+from support.ui_data import (
+    PIXEL,
+    calls,
+    change_set,
+    fixture_data,
+    startup_data,
+    tech_tree,
+    version,
+)
 
 type OpenShell = Callable[..., Page]
 
@@ -133,6 +141,30 @@ def _open_tree(open_shell: OpenShell, **overrides: Any) -> Page:
     page.locator("#comparison-tree").click()
     expect(page.locator(".tree-node").first).to_be_visible()
     return page
+
+
+def test_each_age_shows_its_shield_above_its_name(open_shell: OpenShell) -> None:
+    shields = {f"age_{age}": {"hash": str(age) * 64, "category": "ages"} for age in range(1, 5)}
+    page = _open_tree(
+        open_shell,
+        changeSet=change_set(stat_icons=shields),
+        icons={str(age) * 64: PIXEL for age in range(1, 5)},
+    )
+
+    labels = page.locator(".tree__age-label")
+    expect(labels.locator("img.tree__age-shield")).to_have_count(4)
+    expect(labels.nth(1)).to_contain_text("Feudal Age")
+    # Decoration: the age name is the text.
+    assert labels.nth(1).locator("img").get_attribute("alt") == ""
+
+
+def test_without_shields_the_ages_show_their_names_alone(open_shell: OpenShell) -> None:
+    page = _open_tree(open_shell)
+
+    expect(page.locator(".tree__age-shield")).to_have_count(0)
+    expect(page.locator(".tree__age-label")).to_have_text(
+        ["Dark Age", "Feudal Age", "Castle Age", "Imperial Age"]
+    )
 
 
 def test_hovering_a_node_shows_the_games_tooltip_with_old_and_new_values(
