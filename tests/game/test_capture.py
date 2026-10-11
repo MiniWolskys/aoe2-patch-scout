@@ -6,6 +6,7 @@ Nothing here writes inside the game folder, and no path is hardcoded (CONTRIBUTI
 
 import os
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -240,3 +241,70 @@ def test_every_civ_tech_tree_is_drawn_without_overlaps(
         }
         assert available <= set(drawn), civ
         assert all(node["mark"] is None for node in drawn.values()), civ
+
+
+def _sources(view: object) -> list[Any]:
+    details: Any = view
+    return [source for group in details["groups"] for source in group["sources"]]
+
+
+def test_a_units_details_never_take_a_tech_command_for_a_unit_bonus(
+    captured: tuple[Snapshot, DataFolder],
+) -> None:
+    """D-49 on real data. Tech 74 (Scale Mail Armor) shares its number with the Militia, and the
+    Bulgarians' tech tree effect halves its cost: that is not a Militia bonus (verified on
+    101.103.54800.0)."""
+    from typing import Any
+
+    from patch_scout.entity.details import build
+
+    snapshot, _ = captured
+    militia: Any = build(snapshot, snapshot, "unit", 74, "Bulgarians")
+    assert militia is not None and militia["available"]["new"] is True
+    rows = [row for source in _sources(militia) for row in source["rows"]]
+    assert rows, "the Militia has techs that affect it"
+    assert not any(str(row["field"]["key"]).startswith("effect.tech_") for row in rows)
+    names = [source["name"]["args"].get("name") for source in _sources(militia)]
+    assert "Forging" in names
+
+
+def test_an_upgrades_details_list_the_bonus_on_its_research(
+    captured: tuple[Snapshot, DataFolder],
+) -> None:
+    """The Bulgarians' free Militia-line upgrades are a bonus on the Man-at-Arms research."""
+    from typing import Any
+
+    from patch_scout.entity.details import build
+
+    snapshot, _ = captured
+    man_at_arms: Any = build(snapshot, snapshot, "unit", 75, "Bulgarians")
+    assert any(section["key"] == "upgrade" for section in man_at_arms["sections"])
+    civ_rows = [
+        row
+        for group in man_at_arms["groups"]
+        if group["key"] == "civ"
+        for source in group["sources"]
+        for row in source["rows"]
+    ]
+    assert any(row["field"]["key"] == "effect.tech_resource_cost" for row in civ_rows)
+
+
+def test_every_node_of_a_few_civs_has_details(captured: tuple[Snapshot, DataFolder]) -> None:
+    """Every node of a base civ, a civ with a regional building and a Chronicles civ, and every
+    node with no civ chosen, builds without error."""
+    from patch_scout.entity.details import build
+
+    snapshot, _ = captured
+    kinds = {"Unit": "unit", "Building": "building", "Tech": "tech"}
+    chronicles = next(
+        str(civ["internal_name"])
+        for civ in snapshot.civs
+        if isinstance(civ, dict) and civ.get("era") == "antiquity"
+    )
+    for civ in ("Britons", "Bulgarians", chronicles):
+        nodes: Any = snapshot.tech_trees[civ]
+        for node in nodes:
+            kind, node_id = kinds[str(node["use_type"])], node["node_id"]
+            assert isinstance(node_id, int)
+            for chosen in (civ, None):
+                assert build(snapshot, snapshot, kind, node_id, chosen) is not None, (civ, node)
