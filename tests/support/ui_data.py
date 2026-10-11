@@ -7,6 +7,12 @@ from playwright.sync_api import Page
 
 from patch_scout.i18n.catalog import load_catalog
 
+# A 1x1 PNG, enough for an <img> to load.
+PIXEL = (
+    "data:image/png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+)
+
 
 def version(capture_id: str, label: str, **overrides: Any) -> dict[str, Any]:
     """One row of the version list."""

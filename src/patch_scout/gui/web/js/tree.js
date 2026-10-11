@@ -33,6 +33,7 @@ const MARKS = ["gained", "lost", "changed", "renamed"];
  *   tree: Record<string, any>,
  *   civName: string,
  *   civIcon: Record<string, any> | null,
+ *   ageIcons?: Record<string, any>,
  *   fit: boolean,
  *   onFit: () => void,
  *   onNode?: (node: Record<string, any>, tile: HTMLElement, shown: boolean) => void,
@@ -67,7 +68,13 @@ export function render(view) {
     const band = el("div", { class: "tree__age" });
     band.style.top = `${top * CELL.height}px`;
     band.style.height = `${rows * CELL.height}px`;
-    band.append(el("span", { class: "tree__age-label label", text: t(`tree.age.${index + 1}`) }));
+    const label = el("span", { class: "tree__age-label label" });
+    const shield = ageShield(view.ageIcons, index + 1);
+    if (shield !== null) {
+      label.append(shield);
+    }
+    label.append(el("span", { text: t(`tree.age.${index + 1}`) }));
+    band.append(label);
     canvas.append(band);
     top += rows;
   });
@@ -90,6 +97,27 @@ export function render(view) {
   canvas.style.transform = scale < 1 ? `scale(${scale})` : "";
   sizer.style.width = `${width * scale}px`;
   sizer.style.height = `${height * scale}px`;
+}
+
+/**
+ * An age's shield, as the game's tech tree screen shows it; null when the snapshot has none.
+ * Decoration only: the age's name is the text.
+ * @param {Record<string, any> | undefined} ageIcons
+ * @param {number} age 1 to 4
+ * @returns {HTMLImageElement | null}
+ */
+function ageShield(ageIcons, age) {
+  const hash = ageIcons?.[`age_${age}`]?.hash;
+  const source = typeof hash === "string" ? icons.source(hash) : undefined;
+  if (source === undefined) {
+    return null;
+  }
+  const image = document.createElement("img");
+  image.className = "tree__age-shield";
+  image.src = source;
+  image.alt = "";
+  image.setAttribute("aria-hidden", "true");
+  return image;
 }
 
 // Tile colours by kind, as in the game's key: unit, building, technology; common, regional,

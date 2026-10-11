@@ -982,6 +982,33 @@
     "stats_available": true
   },
   "stat_icons": {
+    "age_1": {
+      "category": "ages",
+      "hash": "240a7a4c7a39bd638747d20c4ada1c083bd1e028b7e77e27b9658621ab3167a7",
+      "height": 4,
+      "missing_reason": null,
+      "picture_index": null,
+      "source": "widgetui/textures/menu/techtree/techtree_dark age.png",
+      "width": 4
+    },
+    "age_2": {
+      "category": "ages",
+      "hash": "c815599c68c0951f4ec6560c3462d678cb1f0cfb645c39773c685d33e8f2c75b",
+      "height": 4,
+      "missing_reason": null,
+      "picture_index": null,
+      "source": "widgetui/textures/menu/techtree/techtree_feudal age.png",
+      "width": 4
+    },
+    "age_3": {
+      "category": "ages",
+      "hash": "a91f2f3373b75adde2f34f951c9c19cc732ee080d01e75647412602d3b16f9d4",
+      "height": 4,
+      "missing_reason": null,
+      "picture_index": null,
+      "source": "widgetui/textures/menu/techtree/techtree_castle age.png",
+      "width": 4
+    },
     "hp": {
       "category": "stat_icons",
       "hash": "f9e0cb097296bc2449c7d4f6e725298e8217e52eb3a01488d425a165e382e8ac",

@@ -348,6 +348,8 @@ async function start() {
       tree,
       civName: named?.name ?? civ ?? "",
       civIcon: named?.icon ?? null,
+      // The age shields travel with the stat icons, and were fetched with the comparison.
+      ageIcons: current.changeSet.stat_icons ?? {},
       fit: state.treeFit,
       onFit: () => {
         state.treeFit = !state.treeFit;
