@@ -17,7 +17,13 @@ from patch_scout.diff import collapse as collapse_module
 from patch_scout.diff import entries as entries_module
 from patch_scout.diff import levels
 from patch_scout.diff.allowlist import RESOURCE_KEYS, TECH_FIELDS, UNIT_FIELDS, Field
-from patch_scout.diff.effects import Lookup, describe, script_functions, script_titles
+from patch_scout.diff.effects import (
+    Lookup,
+    describe,
+    raw_pair,
+    script_functions,
+    script_titles,
+)
 from patch_scout.diff.model import (
     Change,
     ChangeSet,
@@ -1240,7 +1246,7 @@ def _command_changes(
     )
     changes: list[Change] = []
     for old_command, new_command, position in _aligned(old_commands, new_commands):
-        old_text, new_text = _command_pair(old_command, new_command)
+        old_text, new_text = raw_pair(old_command, new_command)
         base = Change(
             category=category,
             kind="modified",
@@ -1344,23 +1350,6 @@ def _aligned(
 def _commands(effect: JsonObject) -> list[JsonValue]:
     commands = effect.get("commands")
     return list(commands) if isinstance(commands, list) else []
-
-
-def _command_pair(old: JsonValue, new: JsonValue) -> tuple[str, str]:
-    """Both sides of a raw command, formatted together so their numbers line up (O-5, layer 3)."""
-    old_fields = old if isinstance(old, dict) else {}
-    new_fields = new if isinstance(new, dict) else {}
-    old_parts: list[str] = []
-    new_parts: list[str] = []
-    for key in ("type", "a", "b", "c", "d"):
-        prefix = "type " if key == "type" else f"{key}="
-        old_value, new_value = pair(old_fields.get(key), new_fields.get(key))
-        old_parts.append(f"{prefix}{old_value}")
-        new_parts.append(f"{prefix}{new_value}")
-    return (
-        " ".join(old_parts) if old_fields else "",
-        " ".join(new_parts) if new_fields else "",
-    )
 
 
 def _scripts(run: _Run) -> None:
