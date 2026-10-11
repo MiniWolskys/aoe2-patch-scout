@@ -13,6 +13,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Final
 
+from patch_scout.diff.classes import ClassKind, class_field
 from patch_scout.diff.model import Message
 from patch_scout.diff.values import display, pair, unknown_id
 from patch_scout.diff.vocabulary import Vocabulary, label
@@ -20,7 +21,7 @@ from patch_scout.snapshot import JsonObject, JsonValue
 
 # Attributes, by XS name, whose value packs a class and an amount: d = class * 256 + amount
 # (game-files.md §11).
-_PACKED: Final = {"Armor": "field.armours", "Attack": "field.attacks"}
+_PACKED: Final[dict[str, ClassKind]] = {"Armor": "armours", "Attack": "attacks"}
 # Attributes whose value probably packs too, in a way not verified yet: they stay raw.
 _UNVERIFIED: Final = frozenset(
     {"ResourceCost", "AddArmorType", "AddAttackType", "RemoveArmorType", "RemoveAttackType"}
@@ -114,8 +115,9 @@ def _attribute(
         if kind == "MulAttribute" or d < 0 or not d.is_integer():
             return None
         armour_class, amount = int(d) >> 8, int(d) & 0xFF
-        name = lookup.vocabulary.armour_class(armour_class) or unknown_id(armour_class)
-        attribute: JsonValue = Message(_PACKED[identifier], {"class": name}).to_json()
+        attribute: JsonValue = class_field(
+            _PACKED[identifier], armour_class, lookup.vocabulary
+        ).to_json()
         value = f"={amount}" if kind == "SetAttribute" else _signed(amount)
     else:
         attribute = label(identifier)

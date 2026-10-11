@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from typing import Final
 
 from patch_scout.diff.allowlist import RESOURCE_KEYS
+from patch_scout.diff.classes import ClassKind, attacked_classes, class_field, shown
 from patch_scout.diff.effects import Lookup, describe, raw_pair
 from patch_scout.diff.model import Message
 from patch_scout.diff.names import Names
@@ -171,7 +172,8 @@ def build(
     naming = Naming(tuple((side.snapshot, side.names, side.units) for side in reversed(sides)))
     vocabulary = Vocabulary(new, old)
     lookup = Lookup(unit=naming.unit, tech=naming.tech, vocabulary=vocabulary, script=naming.script)
-    context = _Context(entity_kind, entity_id, use_type, naming, vocabulary, lookup)
+    attacked = attacked_classes((old, new))
+    context = _Context(entity_kind, entity_id, use_type, naming, vocabulary, lookup, attacked)
     names = [
         _name(side, entity_kind, entity_id, node, record)
         for side, node, record in zip(sides, nodes, records, strict=True)
@@ -220,6 +222,8 @@ class _Context:
     naming: Naming
     vocabulary: Vocabulary
     lookup: Lookup
+    # The classes some attack targets, in either version; other armour classes are left out.
+    attacked: frozenset[int]
 
 
 @dataclass(slots=True)
@@ -309,7 +313,7 @@ def _side_parts(
             context, effect_record(side.snapshot, record.get("effect_id")), None
         )
     else:
-        sections["stats"] = _unit_stats(record, context.vocabulary)
+        sections["stats"] = _unit_stats(record, context.vocabulary, context.attacked)
         sections["cost"] = _costs(
             at_path(record, "creatable.resource_costs"),
             at_path(record, "creatable.train_locations"),
@@ -395,7 +399,7 @@ def _costs(
     return rows
 
 
-def _unit_stats(record: JsonObject, vocabulary: Vocabulary) -> list[_Row]:
+def _unit_stats(record: JsonObject, vocabulary: Vocabulary, attacked: frozenset[int]) -> list[_Row]:
     """The stats a player reads, in the game's order; a stat the unit doesn't use is left out."""
     rows: list[_Row] = []
 
@@ -431,9 +435,11 @@ def _unit_stats(record: JsonObject, vocabulary: Vocabulary) -> list[_Row]:
     add(
         "pierce_armour", "creatable.displayed_pierce_armour", "entity.pierce_armour", "pierce_armor"
     )
-    # Having an armour class matters even at 0: an attack's bonus against it then applies.
+    # Having an armour class matters even at 0: an attack's bonus against it then applies. A class
+    # nothing attacks changes no damage, so it is left out (D-50).
     for armour_class, amount in _classes(at_path(record, "type_50.armours")):
-        rows.append(_class_row("armours", armour_class, amount, vocabulary))
+        if shown(armour_class, attacked, vocabulary):
+            rows.append(_class_row("armours", armour_class, amount, vocabulary))
     if ranged:
         add("range", "type_50.max_range", "entity.range", "range")
         add("min_range", "type_50.min_range", "field.min_range", "range", keep=nonzero)
@@ -487,9 +493,10 @@ def _classes(entries: JsonValue) -> list[tuple[int, JsonValue]]:
     return found
 
 
-def _class_row(kind: str, armour_class: int, amount: JsonValue, vocabulary: Vocabulary) -> _Row:
-    name = vocabulary.armour_class(armour_class) or unknown_id(armour_class)
-    return _Row((kind, str(armour_class)), Message(f"field.{kind}", {"class": name}), amount)
+def _class_row(
+    kind: ClassKind, armour_class: int, amount: JsonValue, vocabulary: Vocabulary
+) -> _Row:
+    return _Row((kind, str(armour_class)), class_field(kind, armour_class, vocabulary), amount)
 
 
 # --- what affects it --------------------------------------------------------------------------

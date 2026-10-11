@@ -372,7 +372,7 @@ def test_a_projectile_field_is_labelled_as_part_of_its_shooter(open_shell: OpenS
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
 
-    expect(page.locator(".change-row__field")).to_have_text("Projectile: Attack vs #3")
+    expect(page.locator(".change-row__field")).to_have_text("Projectile: Bonus vs #3")
 
 
 def test_importing_a_version_opens_it(open_shell: OpenShell) -> None:
@@ -484,7 +484,7 @@ def test_minor_changes_wait_for_their_filter(open_shell: OpenShell) -> None:
 
 def test_an_effect_sentence_reads_in_words(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
-    attack = {"key": "field.attacks", "args": {"class": "Pierce"}}
+    attack = {"key": "field.attacks_basic", "args": {"class": "Pierce"}}
     target = {"key": "effect.class_target", "args": {"class": "Archer"}}
     sentence = change(
         category="techs",
@@ -497,7 +497,7 @@ def test_an_effect_sentence_reads_in_words(open_shell: OpenShell) -> None:
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
 
-    expect(page.locator(".change-row__field")).to_have_text("Archer class: Attack vs Pierce")
+    expect(page.locator(".change-row__field")).to_have_text("Archer class: Pierce attack")
 
 
 def test_a_unit_with_several_changed_fields_is_one_row(open_shell: OpenShell) -> None:

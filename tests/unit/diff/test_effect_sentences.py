@@ -69,11 +69,11 @@ def test_adding_to_an_attribute_names_the_unit_and_the_attribute() -> None:
 
 def test_attack_and_armour_unpack_the_class_from_the_value() -> None:
     assert _read(describe(_command(4, a=4, c=9, d=3 * 256 + 1), LOOKUP)) == (
-        "Archer: Attack vs Pierce",
+        "Archer: Pierce attack",
         "+1",
     )
     assert _read(describe(_command(0, a=38, c=8, d=4 * 256 + 2), LOOKUP)) == (
-        "Knight: Armour vs Melee",
+        "Knight: Melee armour",
         "=2",
     )
 
@@ -178,7 +178,10 @@ def test_sentences_carry_their_parts_as_messages() -> None:
     assert sentence is not None
     assert sentence.label == Message(
         "effect.attribute",
-        {"target": "Archer", "attribute": {"key": "field.attacks", "args": {"class": "Pierce"}}},
+        {
+            "target": "Archer",
+            "attribute": {"key": "field.attacks_basic", "args": {"class": "Pierce"}},
+        },
     )
 
 
@@ -229,7 +232,7 @@ def _line(change: Change) -> tuple[str, str | None, str | None]:
 
 def test_a_changed_amount_reads_as_one_sentence_with_old_and_new_values() -> None:
     [change] = _changes([_command(4, a=4, c=9, d=769.0)], [_command(4, a=4, c=9, d=770.0)])
-    assert _line(change) == ("Archer: Attack vs Pierce", "+1", "+2")
+    assert _line(change) == ("Archer: Pierce attack", "+1", "+2")
 
 
 def test_an_added_command_has_only_a_new_value() -> None:

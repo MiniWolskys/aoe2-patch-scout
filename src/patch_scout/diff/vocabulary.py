@@ -41,6 +41,12 @@ class Vocabulary:
         """An attack or armour class, e.g. 29 -> "Shock Infantry"."""
         return self._label(_ARMOUR, identifier)
 
+    def armour_class_identifier(self, identifier: JsonValue) -> str | None:
+        """An attack or armour class's bare identifier, e.g. 4 -> "Melee"."""
+        if not isinstance(identifier, int) or isinstance(identifier, bool):
+            return None
+        return self._table(_ARMOUR).get(identifier)
+
     def attribute(self, identifier: JsonValue) -> str | None:
         """A unit attribute (the `c` slot of an effect command), e.g. 44 -> "Blast Attack Level"."""
         return self._label(_ATTRIBUTE, identifier)

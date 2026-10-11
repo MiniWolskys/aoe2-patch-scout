@@ -103,7 +103,11 @@ def _militia(hit_points: int) -> JsonObject:
         "language_dll_name": 5074,
         "type_50": {
             "attacks": [{"amount": 4, "class_": 4}, {"amount": 0, "class_": 29}],
-            "armours": [{"amount": 0, "class_": 4}, {"amount": 1, "class_": 3}],
+            "armours": [
+                {"amount": 0, "class_": 4},
+                {"amount": 1, "class_": 3},
+                {"amount": 2, "class_": 31},
+            ],
             "displayed_attack": 4,
             "displayed_melee_armour": 0,
             "max_range": 0.0,
@@ -390,17 +394,17 @@ def test_a_changed_stat_reads_old_and_new_and_the_others_one_value() -> None:
     assert (sight["old"], sight["new"], sight["state"]) == ("4", "4", "same")
 
 
-def test_attack_classes_with_no_amount_are_left_out_but_every_armour_class_is_shown() -> None:
+def test_attack_classes_with_no_amount_and_armour_classes_nothing_attacks_are_left_out() -> None:
     stats = _section(_details(), "stats")
     attack_classes = [
-        r["field"]["args"]["class"] for r in stats if r["field"]["key"] == "field.attacks"
+        r["field"]["args"]["class"] for r in stats if r["field"]["key"] == "field.attacks_basic"
     ]
     armour_classes = [
-        r["field"]["args"]["class"] for r in stats if r["field"]["key"] == "field.armours"
+        r["field"]["args"]["class"] for r in stats if r["field"]["key"] == "field.armours_basic"
     ]
     assert attack_classes == ["Melee"]
     assert armour_classes == ["Melee", "Pierce"]
-    assert _row(stats, "field.armours", **{"class": "Melee"})["new"] == "0"
+    assert _row(stats, "field.armours_basic", **{"class": "Melee"})["new"] == "0"
 
 
 def test_stats_a_melee_unit_does_not_have_are_left_out() -> None:
