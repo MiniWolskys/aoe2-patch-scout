@@ -159,11 +159,11 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 ## After v0.1.0
 
 - Apply to the SignPath Foundation; add the code signing policy page and the signing step to the release workflow (O-6). The first signed release is `v1.0.0` (D-48).
-- **Civ overview** (D-39): the rest of the overview beyond the tech tree, i.e. one civ's bonuses and stats in a version, with a comparison's changes highlighted.
+- **Civ overview** (D-39): the rest of the overview beyond the tech tree, i.e. one civ's bonuses and stats in a version, with a comparison's changes highlighted. One unit, building or tech at a time is covered by the details drawer (D-49).
 
 ## Later (not v1)
 
-- Showing how a unit is affected by its civ's bonuses (D-20, P-17).
+- Applying a civ's bonuses to a unit's values (P-17). The details drawer already lists them (D-49).
 - Other languages: language selector defaulting to the game language from Steam (O-3, P-20).
 - Return of Rome (`modes\Pompeii`, `VER 8.8`).
 - Importing history from aoe2techtree `data/` or `HSZemi/aoe2dat` (partial snapshots).

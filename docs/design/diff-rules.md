@@ -250,7 +250,23 @@ Instead, as in the game itself, the app shows:
 - **civ bonuses** as their own list: the bonus text and the effect sentences (see Effects);
 - **units** with their raw stats.
 
-Showing how a civ's bonuses affect a unit may come later as a separate feature ([roadmap.md](../roadmap.md), "Later").
+The details drawer (D-49) shows how a civ's bonuses affect a unit as a **list** next to its raw values; computing applied values stays under "Later" ([roadmap.md](../roadmap.md)).
+
+## What affects an entity (D-49)
+
+The details drawer lists the effect commands that touch one unit, building or tech. A command matches by what its type says its slots mean, looked up by name in the snapshot's `Constants.xs`, never by "slot `a` equals the ID": unit and tech IDs overlap. On 101.103.54800.0 the Bulgarians' tech tree effect halves the cost of tech 74, Scale Mail Armor, which is not the Militia, unit 74.
+
+- **A unit or building** (with its class from the record shown):
+  - `SetAttribute`, `AddAttribute`, `MulAttribute` with `a` the unit, or `a = -1` and `b` its class;
+  - `EnableObject` with `a` the unit;
+  - `UpgradeUnit` with `a` or `b` the unit, but not both: an age-up "upgrades" the Town Center to itself, which only changes its look.
+- **A tech:** `AddTechCost` and `ModTechTime` with `a` the tech.
+- **Left out:**
+  - `DisableTech`: availability, which the tech tree already shows;
+  - every other type.
+- **A unit upgrade** (a `UnitUpgrade` node) also matches the commands on its research (`trigger_tech_id`), so the Bulgarians' free Militia-line upgrades appear under the Man-at-Arms.
+- **A scripted effect** (`ModResource` setting `EffectFunctionNumber`) can't be matched to anything. The drawer names the civ's scripted bonuses by their `Effects.xs` title instead.
+- **Sentences and raw commands** follow the Effects rules above.
 
 ## Change-volume check
 

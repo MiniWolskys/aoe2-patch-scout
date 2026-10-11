@@ -182,6 +182,39 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
   5. "Values before civilization bonuses and technologies".
 
   A changed value reads old → new in red and green; a value the data doesn't have reads `?`. The panel stays inside the window.
+- **Click a tile** to open its details drawer (below). The hover panel hides.
+
+### Details panel (D-49)
+
+A drawer on the right, full height and about 460 px wide, over a light scrim; the tree or the change list stays visible beside it.
+- **Opening it:**
+  - a click on a tech tree tile;
+  - a click on the icon of a change-list entry about a unit, building or tech. That icon is a button labelled "Details of <name>"; an entry without an icon shows an empty dashed frame to click. Other entries (civs, effects, texts) have no details.
+- **Closing it:** Escape, the ✕ button, or a click on the dimmed page. Focus goes back to what opened it.
+- **Civ:** a picker under the header, "No civilization" then every civ of the comparison. It starts on:
+  - the tree's civ;
+  - the change list's civ page;
+  - from Overall, the civ chosen last, else none.
+
+  Changing it reads the details again; the page keeps its own civ.
+- **From top to bottom:**
+  1. **Header:** icon, name, "Unit · Feudal Age", and "Formerly X" if renamed.
+  2. **Tags:**
+     - "Not available to <civ>"; when availability changed, "No longer available to <civ>" in red or "Newly available to <civ>" in green;
+     - "Only in the newer/older version".
+  3. **Notices:** a version whose game data couldn't be read; the stats then come from the other one.
+  4. **Description:** the game's help text without its title and stat lines.
+  5. **Sections:**
+     - unit or building: Stats, Cost and training, and the upgrade's research;
+     - tech: Research, then Effects, what it does.
+  6. **What affects it** (with a civ):
+     - Civilization bonuses, Team bonus, Unique technologies, Technologies;
+     - each source with its name and "Requires …" (the techs players see);
+     - when nothing affects it: "No civilization bonus or technology affects it";
+     - the civ's scripted bonuses, by title.
+  7. **Note:** values are before bonuses and techs, and the effects listed aren't applied.
+- **Values:** one value when both versions agree; old → new in red and green when they differ. A line in one version only reads in green, or struck in red, label included.
+- **No civilization:** the record most civs share, and the techs of the base civs' trees.
 
 ### Diagnostics and Settings
 
@@ -195,6 +228,8 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
 ## Open questions
 
 1. **Civ bonuses and unit stats (D-20) in the civ-navigated comparison.** Where do a civ's bonus text, effect sentences and the unit stats view go?
+   - **Answered in part by D-49:** one unit's, building's or tech's stats, and the bonuses that affect it, are in the details drawer.
+   - **Still open:** a whole-civ view.
 2. **Categories inside a civ's page.** Are entries grouped by category (diff-rules.md) or listed as one list?
 3. ~~**Changes shared by a few civs**~~ **Answered by D-44** (Proposed): under each of those civs, not in Overall.
 4. ~~**Civ list order**~~ **Answered 2026-10-11:** alphabetical by name, as the game lists them. The change set holds them in that order, so the exports follow it too.

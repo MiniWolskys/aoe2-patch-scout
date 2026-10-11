@@ -24,6 +24,7 @@ Content creators often get early builds (pre-release, PUP) before any patch note
   - text and icon changes.
 - **What matters first:** changes that matter to players are shown by default. Minor and technical ones (AI search ranges, interface plumbing, rounding) wait behind two filters, and a note says how many are hidden.
 - **Tech tree:** a civ's tree laid out like the game's, with what it gained, lost or had changed marked on it, and its bonuses on the side. Hover a unit or tech for the game's own tooltip, with changed values old → new.
+- **Details:** click a unit, building or tech, in the tree or the change list, for all its stats in both versions and, for a civ, every bonus and technology that affects it.
 - **Export** as plain text (for video descriptions), a single HTML page, or 1920 × 1080 images for videos, with only the changes you chose to show.
 - **Organise your snapshots:** rename them, add notes, mark the ones from pre-release builds, and export or import a version as a single file.
 - **Diagnostics:** if something looks wrong, one screen shows how each file was read and checked, and copies a report for a bug report without any game data.
