@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """A unit, building or tech in detail, with what affects it for one civ (D-49)."""
 
+import copy
 from dataclasses import replace
 from typing import Any
 
@@ -394,17 +395,32 @@ def test_a_changed_stat_reads_old_and_new_and_the_others_one_value() -> None:
     assert (sight["old"], sight["new"], sight["state"]) == ("4", "4", "same")
 
 
-def test_attack_classes_with_no_amount_and_armour_classes_nothing_attacks_are_left_out() -> None:
+def _classes_and_icons(stats: list[dict[str, Any]]) -> list[tuple[str, Any, Any]]:
+    return [
+        (r["field"]["key"], r["field"]["args"].get("class"), r["stat_icon"])
+        for r in stats
+        if r["field"]["key"].startswith(("field.attacks", "field.armours", "field.displayed"))
+    ]
+
+
+def test_attack_and_armour_classes_show_once_with_melee_and_pierce_first() -> None:
+    """An attack class with no amount is left out; every armour class is shown, even at 0."""
     stats = _section(_details(), "stats")
-    attack_classes = [
-        r["field"]["args"]["class"] for r in stats if r["field"]["key"] == "field.attacks_basic"
+    assert _classes_and_icons(stats) == [
+        ("field.attacks_basic", "Melee", "melee_attack"),
+        ("field.armours_basic", "Melee", "melee_armor"),
+        ("field.armours_basic", "Pierce", "pierce_armor"),
+        ("field.armours", "#31", None),
     ]
-    armour_classes = [
-        r["field"]["args"]["class"] for r in stats if r["field"]["key"] == "field.armours_basic"
-    ]
-    assert attack_classes == ["Melee"]
-    assert armour_classes == ["Melee", "Pierce"]
     assert _row(stats, "field.armours_basic", **{"class": "Melee"})["new"] == "0"
+
+
+def test_a_displayed_value_that_differs_from_its_class_is_shown() -> None:
+    new = copy.deepcopy(NEW)
+    units: Any = (new.stats or {})["units"]
+    units[str(MILITIA)]["base"]["type_50"]["displayed_melee_armour"] = 3
+    row = _row(_section(_details(new=new), "stats"), "field.displayed_melee_armour")
+    assert (row["old"], row["new"], row["state"]) == ("0", "3", "changed")
 
 
 def test_stats_a_melee_unit_does_not_have_are_left_out() -> None:

@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from typing import Final
 
 from patch_scout.diff.allowlist import RESOURCE_KEYS
-from patch_scout.diff.classes import ClassKind, attacked_classes, class_field, shown
+from patch_scout.diff.classes import BASIC, ClassKind, basic_name, class_field
 from patch_scout.diff.effects import Lookup, describe, raw_pair
 from patch_scout.diff.model import Message
 from patch_scout.diff.names import Names
@@ -36,6 +36,12 @@ _UPGRADE_NODE: Final = "UnitUpgrade"
 # Template runs that the panel shows as its own rows rather than in the description.
 _VALUE_RUNS: Final = frozenset({"stat", "cost"})
 _GROUPS: Final = ("civ", "team", "unique", "techs")
+_CLASS_ICONS: Final = {
+    ("attacks", "Melee"): "melee_attack",
+    ("attacks", "Pierce"): "pierce_attack",
+    ("armours", "Melee"): "melee_armor",
+    ("armours", "Pierce"): "pierce_armor",
+}
 # The groups that are the civ's own: their scripted bonuses are named (spec, decision 9).
 _CIV_GROUPS: Final = frozenset({"civ", "team", "unique"})
 _GROUP_TITLES: Final = {
@@ -56,6 +62,8 @@ class _Row:
     field: Message
     value: JsonValue
     stat_icon: str | None = None
+    # The rows this one may only repeat, such as a displayed armour and its armour class.
+    repeats: tuple[RowKey, ...] = ()
 
 
 @dataclass(slots=True)
@@ -172,8 +180,7 @@ def build(
     naming = Naming(tuple((side.snapshot, side.names, side.units) for side in reversed(sides)))
     vocabulary = Vocabulary(new, old)
     lookup = Lookup(unit=naming.unit, tech=naming.tech, vocabulary=vocabulary, script=naming.script)
-    attacked = attacked_classes((old, new))
-    context = _Context(entity_kind, entity_id, use_type, naming, vocabulary, lookup, attacked)
+    context = _Context(entity_kind, entity_id, use_type, naming, vocabulary, lookup)
     names = [
         _name(side, entity_kind, entity_id, node, record)
         for side, node, record in zip(sides, nodes, records, strict=True)
@@ -222,8 +229,6 @@ class _Context:
     naming: Naming
     vocabulary: Vocabulary
     lookup: Lookup
-    # The classes some attack targets, in either version; other armour classes are left out.
-    attacked: frozenset[int]
 
 
 @dataclass(slots=True)
@@ -313,7 +318,7 @@ def _side_parts(
             context, effect_record(side.snapshot, record.get("effect_id")), None
         )
     else:
-        sections["stats"] = _unit_stats(record, context.vocabulary, context.attacked)
+        sections["stats"] = _unit_stats(record, context.vocabulary)
         sections["cost"] = _costs(
             at_path(record, "creatable.resource_costs"),
             at_path(record, "creatable.train_locations"),
@@ -399,8 +404,12 @@ def _costs(
     return rows
 
 
-def _unit_stats(record: JsonObject, vocabulary: Vocabulary, attacked: frozenset[int]) -> list[_Row]:
-    """The stats a player reads, in the game's order; a stat the unit doesn't use is left out."""
+def _unit_stats(record: JsonObject, vocabulary: Vocabulary) -> list[_Row]:
+    """The stats a player reads, in the game's order; a stat the unit doesn't use is left out.
+
+    The game shows a unit's attack and its melee and pierce armour on their own, besides the
+    classes that hold them. Those displayed values are listed only where they differ (D-50).
+    """
     rows: list[_Row] = []
 
     def add(
@@ -410,35 +419,53 @@ def _unit_stats(record: JsonObject, vocabulary: Vocabulary, attacked: frozenset[
         icon: str | None = None,
         *,
         keep: Callable[[float], bool] = lambda _: True,
+        repeats: tuple[RowKey, ...] = (),
     ) -> None:
         value = at_path(record, path)
         if _number(value) is not None and keep(float(value)):  # type: ignore[arg-type]  # a number
-            rows.append(_Row((key,), Message(label), value, stat_icon=icon))
+            rows.append(_Row((key,), Message(label), value, stat_icon=icon, repeats=repeats))
 
     def nonzero(value: float) -> bool:
         return value != 0
 
-    attacks = _classes(at_path(record, "type_50.attacks"))
+    attacks = [
+        (armour_class, amount)
+        for armour_class, amount in _classes(at_path(record, "type_50.attacks"))
+        if amount != 0
+    ]
+    armours = _classes(at_path(record, "type_50.armours"))
     ranged = (_number(at_path(record, "type_50.max_range")) or 0) > 0
     add("hp", "hit_points", "field.hit_points", "hp")
+    basic_attacks = _basic(attacks, vocabulary)
+    for armour_class, amount in basic_attacks.values():
+        rows.append(_class_row("attacks", armour_class, amount, vocabulary))
     if attacks or (_number(at_path(record, "type_50.displayed_attack")) or 0) != 0:
         add(
-            "attack",
+            "displayed_attack",
             "type_50.displayed_attack",
-            "entity.attack",
-            "pierce_attack" if ranged else "melee_attack",
+            "field.displayed_attack",
+            repeats=tuple(("attacks", str(c)) for c, _ in basic_attacks.values()),
         )
     for armour_class, amount in attacks:
-        if amount != 0:
+        if basic_name(armour_class, vocabulary) is None:
             rows.append(_class_row("attacks", armour_class, amount, vocabulary))
-    add("melee_armour", "type_50.displayed_melee_armour", "entity.melee_armour", "melee_armor")
-    add(
-        "pierce_armour", "creatable.displayed_pierce_armour", "entity.pierce_armour", "pierce_armor"
-    )
-    # Having an armour class matters even at 0: an attack's bonus against it then applies. A class
-    # nothing attacks changes no damage, so it is left out (D-50).
-    for armour_class, amount in _classes(at_path(record, "type_50.armours")):
-        if shown(armour_class, attacked, vocabulary):
+    # Having an armour class matters even at 0: an attack's bonus against it then applies.
+    basic_armours = _basic(armours, vocabulary)
+    for armour_class, amount in basic_armours.values():
+        rows.append(_class_row("armours", armour_class, amount, vocabulary))
+    for key, path, basic in (
+        ("displayed_melee_armour", "type_50.displayed_melee_armour", "Melee"),
+        ("displayed_pierce_armour", "creatable.displayed_pierce_armour", "Pierce"),
+    ):
+        partner = basic_armours.get(basic)
+        add(
+            key,
+            path,
+            f"field.{key}",
+            repeats=(("armours", str(partner[0])),) if partner is not None else (),
+        )
+    for armour_class, amount in armours:
+        if basic_name(armour_class, vocabulary) is None:
             rows.append(_class_row("armours", armour_class, amount, vocabulary))
     if ranged:
         add("range", "type_50.max_range", "entity.range", "range")
@@ -493,10 +520,47 @@ def _classes(entries: JsonValue) -> list[tuple[int, JsonValue]]:
     return found
 
 
+def _basic(
+    classes: list[tuple[int, JsonValue]], vocabulary: Vocabulary
+) -> dict[str, tuple[int, JsonValue]]:
+    """The Melee and Pierce entries, in that order, by name."""
+    found = {basic_name(c, vocabulary): (c, amount) for c, amount in classes}
+    return {name: found[name] for name in BASIC if name in found}
+
+
 def _class_row(
     kind: ClassKind, armour_class: int, amount: JsonValue, vocabulary: Vocabulary
 ) -> _Row:
-    return _Row((kind, str(armour_class)), class_field(kind, armour_class, vocabulary), amount)
+    basic = basic_name(armour_class, vocabulary)
+    icon = _CLASS_ICONS.get((kind, basic)) if basic is not None else None
+    label = class_field(kind, armour_class, vocabulary)
+    return _Row((kind, str(armour_class)), label, amount, stat_icon=icon)
+
+
+def _without_repeats(
+    old: list[_Row] | None, new: list[_Row] | None
+) -> tuple[list[_Row] | None, list[_Row] | None]:
+    """Both versions without the rows that only repeat another, in every version that has them.
+
+    A displayed value that differs from its class in either version is kept: the game would show
+    one value and use another.
+    """
+    versions = [rows for rows in (old, new) if rows is not None]
+    candidates = {row.key for rows in versions for row in rows if row.repeats}
+    dropped = {key for key in candidates if all(_repeated(rows, key) for rows in versions)}
+
+    def strip(rows: list[_Row] | None) -> list[_Row] | None:
+        return None if rows is None else [row for row in rows if row.key not in dropped]
+
+    return strip(old), strip(new)
+
+
+def _repeated(rows: list[_Row], key: RowKey) -> bool:
+    by_key = {row.key: row for row in rows}
+    row = by_key.get(key)
+    if row is None:
+        return True
+    return any(partner in by_key and by_key[partner].value == row.value for partner in row.repeats)
 
 
 # --- what affects it --------------------------------------------------------------------------
@@ -653,6 +717,7 @@ def _merge_sections(
         old, new = (part.sections.get(key) if part is not None else None for part in parts)
         if old is None and new is None:
             continue
+        old, new = _without_repeats(old, new)
         rows = _merge_rows(old, new)
         if not rows:
             continue

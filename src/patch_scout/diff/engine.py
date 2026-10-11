@@ -17,7 +17,7 @@ from patch_scout.diff import collapse as collapse_module
 from patch_scout.diff import entries as entries_module
 from patch_scout.diff import levels
 from patch_scout.diff.allowlist import RESOURCE_KEYS, TECH_FIELDS, UNIT_FIELDS, Field
-from patch_scout.diff.classes import ClassKind, attacked_classes, class_field, shown
+from patch_scout.diff.classes import ClassKind, class_field
 from patch_scout.diff.effects import (
     Lookup,
     describe,
@@ -94,9 +94,6 @@ class _Run:
     reachable_before: frozenset[int] = frozenset()
     new_to_players: frozenset[int] = frozenset()
     script_titles: dict[int, str] | None = None
-    # The classes some attack targets, in either build; other armour classes are noise (D-50).
-    attacked: frozenset[int] = frozenset()
-    hidden_classes: set[int] = field(default_factory=set)
     compared_values: int = 0
     changed_values: int = 0
 
@@ -170,10 +167,7 @@ def compare(
     _availability(run)
     _bonuses(run)
     if run.compare_stats:
-        run.attacked = attacked_classes((old, new))
         _unit_stats(run)
-        if run.hidden_classes:
-            logger.info("Armour classes nothing attacks, left out: %s", sorted(run.hidden_classes))
         _techs(run)
         _other_effects(run)
     _strings(run)
@@ -994,10 +988,6 @@ def _sub_fields(
             (key, Message(f"field.{allow.key}", {"location": _location_name(run, key)}))
             for key in ordered
         ]
-    if allow.key == "armours":
-        hidden = [key for key in ordered if not shown(key, run.attacked, run.vocabulary)]
-        run.hidden_classes.update(key for key in hidden if isinstance(key, int))
-        ordered = [key for key in ordered if key not in hidden]
     kind: ClassKind = "armours" if allow.key == "armours" else "attacks"
     return [(key, class_field(kind, key, run.vocabulary)) for key in ordered]
 
