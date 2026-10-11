@@ -41,6 +41,15 @@ Chosen by the maintainer on 2026-09-15.
 - **Amended 2026-10-10 by the maintainer:** the **tech tree** part comes **before v1.0**, once every other v1.0 task is done. It is laid out like the game's tech tree (ages as rows, buildings heading columns, lines between upgrades), styled in the app's design. It shows the new version's tree with the comparison's changes marked on it: gained, lost, and changed. It opens with one button from the comparison and shares its civ picker. The spec is agreed before it is built.
 - **Built 2026-10-10** (ui.md "Tech tree"). The maintainer chose the hover panel in the game's tooltip format, the last civ chosen when opened from Overall, and no tree export.
 
+### D-49 Details of a unit, building or tech: Decided
+Asked for by the maintainer on 2026-10-11; designed and built by the agent under the autonomous workflow.
+- **What:** clicking a unit, building or tech opens a drawer on the right with everything about it, in both versions: the game's description, its stats, its cost and train or research time, its upgrade's research, and for a tech what it does. Values that differ read old → new in red and green, as in the comparison.
+- **Where:** every tech tree tile (a click; hovering still shows the tooltip), and the icon of every change-list entry about a unit, building or tech.
+- **Civ:** the drawer has its own civ picker. It starts on the tree's civ, the change list's civ page, or from Overall the civ chosen last (none if none). With a civ, it lists what affects the entity, by source: the civ's bonuses (its tech tree effect and its "C-Bonus" techs), its team bonus, its unique techs, and the techs it can research. With no civ, it shows the record most civs share and the techs of the base civs' trees.
+- **Listed, never applied (D-20 holds):** the bonuses are effect sentences next to the raw values. The note says so.
+- **What affects an entity** follows each command type's meaning, never "slot `a` holds the ID" ([diff-rules.md](design/diff-rules.md#what-affects-an-entity-d-49)). A scripted bonus can't be matched to units: the drawer names the civ's scripted bonuses instead.
+- **Not in it:** an export, bonus-applied values (P-17), allies' team bonuses, links to other entities.
+
 ### D-15 GUI in v1: Decided
 v1 ships a pywebview desktop GUI.
 
@@ -175,6 +184,7 @@ Details: [diff-rules.md](design/diff-rules.md#reachability-d-37).
   - a **civ bonuses** view (bonus text + effect sentences);
   - a **units** view (raw stats).
 - Showing how a unit is affected by its civ's bonuses may come later.
+- **Amended 2026-10-11 (D-49):** the details drawer shows how a unit is affected, as a **list** of the bonuses and techs whose commands touch it, next to its raw values. Nothing is applied.
 
 
 ### P-17 Effective (bonus-applied) stats: Decided, not in v1

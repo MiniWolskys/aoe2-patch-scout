@@ -96,6 +96,20 @@ FAKE_BRIDGE = """
     get_tech_tree: answer("get_tech_tree", (oldId, newId, civ) =>
       data.techTreeError ? null : { ...(data.techTree ?? {}), civ },
     ),
+    // The details answer for the entity asked for; `entityDelays` holds the milliseconds each
+    // answer waits, in call order, so a test can make an older answer arrive last.
+    get_entity_details: (...args) => {
+      record("get_entity_details", args);
+      if (data.entityError) {
+        return Promise.reject(new Error(data.entityError));
+      }
+      const [, , kind, id, civ] = args;
+      // The name says what was asked for, so a test can tell the answers apart.
+      const name = `${data.entity?.name ?? "Entity"} ${id} ${civ ?? "-"}`;
+      const value = data.entity === null ? null : { ...(data.entity ?? {}), kind, id, civ, name };
+      const delay = (data.entityDelays ?? []).shift() ?? 0;
+      return new Promise((resolve) => setTimeout(() => resolve(value), delay));
+    },
     export_text: answer("export_text", { text: data.exportText ?? "" }),
     save_export: answer(
       "save_export",

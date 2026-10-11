@@ -20,6 +20,7 @@ from patch_scout import locate
 from patch_scout.capture import runner
 from patch_scout.capture.runner import CaptureRequest, Progress
 from patch_scout.diff import ChangeSet, Options, SideInfo, compare, order
+from patch_scout.entity import details as entity_details
 from patch_scout.errors import PatchScoutError
 from patch_scout.gui.logs import RecentProblems
 from patch_scout.i18n.catalog import Catalog
@@ -322,6 +323,22 @@ class Api:
                 technical=technical,
                 low_priority=low_priority,
                 language=self._language,
+            )
+
+    def get_entity_details(
+        self,
+        old_id: str,
+        new_id: str,
+        kind: str,
+        entity_id: int,
+        civ: str | None = None,
+    ) -> JsonObject | None:
+        """A unit, building or tech in both versions, with what affects it for a civ (D-49)."""
+        with _Guard("get_entity_details"):
+            first, second = self._snapshot(old_id), self._snapshot(new_id)
+            older, newer = order(first, second)
+            return entity_details.build(
+                older, newer, kind, int(entity_id), civ or None, language=self._language
             )
 
     def get_icons(self, hashes: Sequence[str]) -> JsonObject:

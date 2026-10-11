@@ -244,6 +244,25 @@
       </section>
     </main>
 
+    <!-- Details of a unit, building or tech (D-49, ui.md "Details panel") -->
+    <div class="scrim scrim--drawer" id="entity-scrim" hidden>
+      <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="entity-title">
+        <header class="drawer__header">
+          <div class="drawer__identity" id="entity-identity">
+            <h2 class="drawer__title" id="entity-title" data-i18n="entity.title"></h2>
+          </div>
+          <button type="button" class="button icon-button" id="entity-close" data-i18n-attr="aria-label:entity.close title:entity.close">
+            <span aria-hidden="true">✕</span>
+          </button>
+        </header>
+        <label class="drawer__civ">
+          <span class="label" data-i18n="entity.civ"></span>
+          <select class="input" id="entity-civ"></select>
+        </label>
+        <div class="drawer__body" id="entity-body" aria-live="polite"></div>
+      </div>
+    </div>
+
     <!-- Capture dialog (ui.md, "Capture") -->
     <div class="scrim" id="capture-scrim" hidden>
       <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="capture-dialog-title">

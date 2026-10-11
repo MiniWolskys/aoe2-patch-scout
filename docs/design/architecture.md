@@ -70,6 +70,7 @@ There is **no CLI** (P-08, rejected). The GUI is the only interface; what a `ver
 | `patch_scout.diff` | `diff(old, new, rules) → ChangeSet`: matching, allowlist, per-civ collapse, effect sentences, change-volume check | `snapshot`, `i18n` | No |
 | `patch_scout.report` | `ChangeSet → plain text / self-contained HTML` | `diff`, `store` (icons), `i18n` | No |
 | `patch_scout.tree` | One civ's tech tree as the page draws it (D-39): layout in age rows and building lanes, change marks, the game's tooltip template with the civ's own values | `snapshot`, `diff`, `i18n` | No |
+| `patch_scout.entity` | One unit, building or tech in detail, in both versions (D-49): its stats, cost and research, and for a civ the bonuses and techs whose effect commands affect it, as effect sentences, never applied | `snapshot`, `diff`, `tree` (tooltip template), `i18n` | No |
 | `patch_scout.i18n` | Message catalogs for UI labels and report sentences; language fallback to English | stdlib | No |
 | `patch_scout.gui` | pywebview window, Python↔JS API, frontend (including image export), Diagnostics window | everything above | No (goes through `capture`) |
 
@@ -77,8 +78,8 @@ There is **no CLI** (P-08, rejected). The GUI is the only interface; what a `ver
 
 - **Only** `locate` and `capture.*` read game files. The GUI and the Diagnostics window never do (D-13).
 - **Only** `capture.stats_tier` and `capture.gates` import `genieutils`. Library objects never leave those modules (D-05).
-- `snapshot`, `diff`, `tree` and `report` do **no I/O on game files** and don't import GUI code. `diff` is a pure function, which makes fixture-based testing possible.
-- **No user-visible text hardcoded** in `diff`, `tree`, `report` or the frontend. Every label and sentence comes from an `i18n` catalog, even while English is the only language (O-3).
+- `snapshot`, `diff`, `tree`, `entity` and `report` do **no I/O on game files** and don't import GUI code. `diff` is a pure function, which makes fixture-based testing possible.
+- **No user-visible text hardcoded** in `diff`, `tree`, `entity`, `report` or the frontend. Every label and sentence comes from an `i18n` catalog, even while English is the only language (O-3).
 - Nothing opens a network connection (D-02).
 
 ## Finding the game (D-19)
