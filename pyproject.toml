@@ -1,6 +1,6 @@
 [project]
 name = "patch-scout"
-version = "0.1.1"
+version = "0.2.0"
 description = "Find out what changed in Age of Empires II: Definitive Edition between two game builds."
 readme = "README.md"
 license = "GPL-3.0-or-later"
