@@ -245,9 +245,14 @@ def _in_any_tree(side: _Side, use_type: str, entity_id: int) -> bool:
 
 
 def _available(side: _Side, node: JsonObject | None) -> bool | None:
-    if side.civ is None or not side.has_civ:
+    """Whether the civ's tree offers it; None when its tree doesn't list it at all.
+
+    A unit outside every tree, such as a packed Trebuchet, may still be the civ's (D-37): only a
+    node marked NotAvailable says the civ can't get it.
+    """
+    if side.civ is None or not side.has_civ or node is None:
         return None
-    return node is not None and node.get("node_status") != _UNAVAILABLE
+    return node.get("node_status") != _UNAVAILABLE
 
 
 def _name(
@@ -616,7 +621,10 @@ def _effect_rows(
         sentence = describe(command, context.lookup)
         if sentence is None:
             label, value = Message("field.effect_command"), raw_pair(command, command)[1]
-            identity = "raw"
+            # Paired by type and target, so one raw command added before another doesn't shift
+            # every later one onto the wrong counterpart.
+            slots = command if isinstance(command, dict) else {}
+            identity = f"raw {slots.get('type')} {slots.get('a')} {slots.get('b')} {slots.get('c')}"
         else:
             label, value = sentence.label, sentence.value or ""
             identity = json.dumps(label.to_json(), sort_keys=True)

@@ -236,3 +236,14 @@ def test_a_change_in_availability_is_said_in_the_comparisons_colours(
     page = _compared(open_shell, entity=gained)
     _open_archer(page)
     expect(page.locator("#entity-scrim .tag--new")).to_have_text("Newly available to Franks")
+
+
+def test_closing_before_the_answer_comes_shows_nothing_later(open_shell: OpenShell) -> None:
+    page = _compared(open_shell, entity=None, entityDelays=[600])
+    _open_archer(page)
+
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(900)
+
+    expect(page.locator("#entity-scrim")).to_be_hidden()
+    expect(page.locator("#toast")).to_be_hidden()

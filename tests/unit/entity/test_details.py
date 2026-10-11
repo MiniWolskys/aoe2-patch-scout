@@ -601,3 +601,29 @@ def test_a_bonus_requirement_names_only_techs_players_see() -> None:
     # The tech's own panel lists every requirement, as the comparison does.
     research = _section(_details("tech", FREE_UPGRADES, new=new), "research")
     assert _row(research, "field.required_techs")["new"] == "Feudal Age; Shadow Node+ for Age Two"
+
+
+def test_a_civ_whose_tree_does_not_list_it_makes_no_claim_about_availability() -> None:
+    # Beta's tree doesn't list Bagains at all: absent from a tree isn't "not available", since a
+    # civ also owns forms outside its tree, such as a packed Trebuchet (D-37).
+    assert _details("tech", BAGAINS, civ="Beta")["available"] == {"old": None, "new": None}
+    assert _details("tech", CHAIN_MAIL, civ="Beta")["available"] == {"old": False, "new": False}
+
+
+def test_a_raw_command_added_before_another_does_not_shift_the_pairing() -> None:
+    stats: Any = NEW.stats
+    effects = dict(stats["effects"])
+    bagains = dict(effects[str(BAGAINS)])
+    bagains["commands"] = [_command(4, a=MILITIA, c=78, d=2.0), *bagains["commands"]]
+    effects[str(BAGAINS)] = bagains
+    new = replace(NEW, stats={**stats, "effects": effects})
+    rows = _group(_details(new=new), "unique")[0]["rows"]
+    raw = [
+        (row["old"], row["new"], row["state"])
+        for row in rows
+        if row["field"]["key"] == "field.effect_command"
+    ]
+    assert raw == [
+        (None, "type 4 a=74 b=-1 c=78 d=2", "added"),
+        ("type 4 a=74 b=-1 c=77 d=1", "type 4 a=74 b=-1 c=77 d=1", "same"),
+    ]

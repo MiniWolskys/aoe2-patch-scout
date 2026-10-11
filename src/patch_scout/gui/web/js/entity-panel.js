@@ -51,9 +51,15 @@ export function initEntityPanel(options) {
   civSelect.addEventListener("change", () => {
     if (current !== null) {
       current = { ...current, civ: civSelect.value || null };
+      drawLoading(current);
       void load(current);
     }
   });
+
+  /** @returns {boolean} */
+  function isOpen() {
+    return !byId(SCRIM).hidden;
+  }
 
   /** @param {Request} request */
   function open(request) {
@@ -103,19 +109,22 @@ export function initEntityPanel(options) {
         request.id,
         request.civ,
       );
-      if (details !== null) {
-        await icons.preload(api, [details.icon?.hash]);
-      }
     } catch (error) {
       console.error("the details failed", error);
-      if (number === requestNumber) {
+      if (number === requestNumber && isOpen()) {
         dialogs.close(SCRIM);
         dialogs.toast(t("entity.failed"));
       }
       return;
     }
-    if (number !== requestNumber || current !== request) {
-      return; // another entity or civ was asked for meanwhile
+    if (details !== null) {
+      // A missing icon only leaves the header without its picture.
+      await icons.preload(api, [details.icon?.hash]).catch((error) => {
+        console.error("the details icon failed", error);
+      });
+    }
+    if (number !== requestNumber || current !== request || !isOpen()) {
+      return; // another entity or civ was asked for meanwhile, or the drawer was closed
     }
     if (details === null) {
       dialogs.close(SCRIM);
