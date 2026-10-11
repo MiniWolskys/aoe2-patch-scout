@@ -280,6 +280,12 @@ def write(
             else:
                 (path / name).write_bytes(dds_bytes(4, 4, colour))
 
+    # Three of the four age shields: the Imperial Age one is missing.
+    shields = root / "widgetui" / "textures" / "menu" / "techtree"
+    shields.mkdir(parents=True, exist_ok=True)
+    for index, age in enumerate(("dark", "feudal", "castle")):
+        (shields / f"techtree_{age} age.png").write_bytes(png_bytes(4, 4, (90, 40 * index, 0, 255)))
+
     unit_icons = root / "resources" / "_common" / "wpfg" / "resources" / "uniticons"
     unit_icons.mkdir(parents=True, exist_ok=True)
     (unit_icons / "017_50730.png").write_bytes(png_bytes(4, 4, (200, 30, 30, 255)))

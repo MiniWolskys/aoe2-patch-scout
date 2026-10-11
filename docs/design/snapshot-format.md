@@ -179,6 +179,8 @@ Maps a stat key to an icon ref. The game's stat icons come from `widgetui\textur
 less certain files (the bleed and bypass damage variants and the six `powerup*` icons) are
 left out ([game-files.md §10](../reference/game-files.md#other-icon-sets)). Line of sight and train time have no game icon. The UI falls back to text labels when an icon is missing.
 
+The section also holds the age shields of the game's tech tree screen, `age_1` (Dark Age) to `age_4` (Imperial Age), with category `ages` (`AGE_ICON_FILES`). The tech tree draws them beside its age bands. A snapshot captured before they were added has no `age_*` keys, and the tree then shows the age names alone.
+
 ### `scripts`
 The game's XS script files ([game-files.md §11](../reference/game-files.md#11-xs-scripts-resources_commonxs)):
 

@@ -55,6 +55,15 @@ STAT_ICON_FILES: Final = {
     "hp_loss": "hpLoss.png",
     "transport": "transport.png",
 }
+# The age shields of the game's tech tree screen, keyed by age (game-files.md §10). Their names
+# hold a space.
+AGE_ICON_FOLDER: Final = "widgetui/textures/menu/techtree"
+AGE_ICON_FILES: Final = {
+    "age_1": "techtree_dark age.png",
+    "age_2": "techtree_feudal age.png",
+    "age_3": "techtree_castle age.png",
+    "age_4": "techtree_imperial age.png",
+}
 
 _DDS_MAGIC: Final = b"DDS "
 _DDS_HEADER_SIZE: Final = 124
@@ -142,10 +151,12 @@ class IconPipeline:
         return self.resolve(category, relative if self._reader.exists(relative) else None)
 
     def stat_icons(self) -> JsonObject:
-        """The game's stat icons, keyed by our own stat keys (D-09)."""
+        """The game's interface icons, keyed by our own keys: stats (D-09) and age shields."""
         icons: JsonObject = {}
         for key, name in STAT_ICON_FILES.items():
             icons[key] = self.resolve("stat_icons", self._reader.find(STAT_ICON_FOLDER, name))
+        for key, name in AGE_ICON_FILES.items():
+            icons[key] = self.resolve("ages", self._reader.find(AGE_ICON_FOLDER, name))
         return icons
 
     def _find_indexed(self, folder: str, picture_index: int) -> str | None:

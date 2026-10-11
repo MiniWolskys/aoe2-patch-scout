@@ -113,6 +113,18 @@ def test_the_stat_icons_the_game_has_are_resolved(pipeline: icons.IconPipeline) 
     assert stat_icons["gold"]["missing_reason"] == "file not found"
 
 
+def test_the_age_shields_of_the_tech_tree_screen_are_resolved(
+    pipeline: icons.IconPipeline,
+) -> None:
+    stat_icons = pipeline.stat_icons()
+    feudal = ref(stat_icons["age_2"])
+    assert feudal["source"] == "widgetui/textures/menu/techtree/techtree_feudal age.png"
+    assert feudal["category"] == "ages"
+    assert isinstance(feudal["hash"], str)
+    # The fake install has no Imperial Age shield.
+    assert ref(stat_icons["age_4"])["missing_reason"] == "file not found"
+
+
 def test_the_same_file_is_decoded_once(pipeline: icons.IconPipeline) -> None:
     first = ref(pipeline.tech_tree_icon("Unit", 17))
     second = ref(pipeline.tech_tree_icon("Unit", 17))
