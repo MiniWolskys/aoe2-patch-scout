@@ -68,7 +68,7 @@ The allowlist names **stat concepts**. The mapping to snapshot field paths is fi
 | Line of sight | |
 | Movement speed | |
 | Attack values | Per armour class; report as class → amount, with class names |
-| Armour values | Per armour class, including displayed melee/pierce. A class no attack targets is left out (see below) |
+| Armour values | Per armour class, including displayed melee/pierce |
 | Range (min / max), displayed range | |
 | Reload time | Attack speed |
 | Accuracy percent | |
@@ -95,12 +95,8 @@ A unit's attacks and armours are lists of classes with an amount. They are worde
 
 - **Basic classes** are recognised by their `Constants.xs` names (`Melee`, `Pierce`), not by number. A class the constants don't name keeps its number: `#31 armour class`.
 - **Unit stats, effect sentences and the details drawer** all use this wording, including projectiles (`Projectile: Pierce attack`).
-- **An armour class nothing attacks is left out.** A class counts as attacked when, in either build, a unit record or a civ override has a non-zero attack against it, or an effect's `AddAttribute` or `SetAttribute` on `Attack` gives one. Any other armour class changes no damage, so its values are left out of unit stats and the details drawer.
-  - Melee and Pierce are always kept.
-  - The rule is data-driven, so a class comes back as soon as a build attacks it.
-  - From 101.103.48987.0 to 101.103.54800.0 this hides classes 0, 34 (Fishing Ships) and 40. Class 31 is unnamed and on most units, and every unit's attack against it is 0, but the Achaemenids' Sagaris gives cavalry +2 against it: it stays.
-  - The comparison logs the classes it left out (at info level, in the log file).
-  - Effect sentences are not filtered: a command on such a class still reads as a sentence, never as a raw command.
+- **Every armour class is shown,** even one that looks unused. Class 31, unnamed and on most units, has no unit attacking it on 101.103.54800.0, but the Achaemenids' Sagaris (Chronicles) gives cavalry +2 against it. Hiding classes risks losing information.
+- **The details drawer shows each value once.** The game also stores a displayed attack and displayed melee and pierce armour, the numbers its interface shows. The drawer lists the Melee and Pierce classes first, with the stat icons, and lists a displayed value only when it differs from its class in either version, as "Displayed melee armour" and the like. The comparison already ranks a displayed value that moved like its class as a detail ([Levels](#levels-d-46)).
 
 ## Reachability (D-37)
 

@@ -50,12 +50,11 @@ Asked for by the maintainer on 2026-10-11; designed and built by the agent under
 - **What affects an entity** follows each command type's meaning, never "slot `a` holds the ID" ([diff-rules.md](design/diff-rules.md#what-affects-an-entity-d-49)). A scripted bonus can't be matched to units: the drawer names the civ's scripted bonuses instead.
 - **Not in it:** an export, bonus-applied values (P-17), allies' team bonuses, links to other entities.
 
-### D-50 Attack and armour wording; armour classes nothing attacks: Decided
+### D-50 Attack and armour wording: Decided
 Asked for by the maintainer on 2026-10-11; the agent proposed the design and the maintainer approved it.
 - **Wording:** players read Melee and Pierce as a unit's own armour and attack ("Melee armour: -2", "Pierce attack: 6"), and the other classes as an armour class and a bonus against it ("Archers armour class: 0", "Bonus vs Shock Infantry: 3"). This replaces "Armour vs" and "Attack vs" everywhere ([diff-rules.md](design/diff-rules.md#attack-and-armour-classes-d-50)).
-- **Classes nothing attacks are hidden:** an armour class that no attack targets with a non-zero amount, in either build, is left out of unit stats and the details drawer. Melee and Pierce are always kept.
-- **Why data-driven:** the maintainer asked to hide class 31 in a way that is easy to reverse. A rule needs no reversal: a class returns as soon as a build gives an attack against it. Snapshots keep every class.
-- **Class 31 stays shown** on 101.103.48987.0 and 101.103.54800.0: no unit attacks it, but the Achaemenids' unique tech Sagaris (Chronicles) gives cavalry +2 against it. The rule hides classes 0, 34 and 40 there.
+- **No value twice in the details drawer:** the Melee and Pierce classes carry the stat icons, and the game's displayed attack and armour are listed only where they differ from their class.
+- **Every armour class stays shown.** The maintainer first asked to hide class 31 as unused. It turned out that no unit attacks it on 101.103.54800.0 but the Achaemenids' Sagaris (Chronicles) does, and the maintainer preferred some noise to the risk of losing information.
 
 ### D-15 GUI in v1: Decided
 v1 ships a pywebview desktop GUI.
