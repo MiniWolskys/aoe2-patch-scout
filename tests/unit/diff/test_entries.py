@@ -80,6 +80,29 @@ def test_a_new_unit_shows_its_main_stats_and_counts_the_rest() -> None:
     assert entry.hidden == 2
 
 
+def test_a_unit_that_only_gains_a_cost_is_not_new() -> None:
+    """The Missionary gained a food cost (Spanish, 101.103.54800.0) and read "NEW: Missionary".
+
+    Every unit has hit points, so a unit new to players always gains them.
+    """
+    spanish = Scope("some", ("Spanish",))
+    missionary = Entity("unit", "775", "Missionary")
+    food = Change(
+        "unit_stats",
+        "modified",
+        missionary,
+        spanish,
+        field=Message("field.cost", {"resource": "food"}),
+        old="",
+        new="30",
+        civ="Spanish",
+    )
+
+    entries = group([food])
+
+    assert [(entry.kind, len(entry.changes)) for entry in entries] == [("modified", 1)]
+
+
 def test_a_field_that_only_appears_with_a_default_value_is_not_listed() -> None:
     """A placeholder unit filled in (the Mounted Crossbowman) gains dozens of "added 0" fields."""
     entries = group(

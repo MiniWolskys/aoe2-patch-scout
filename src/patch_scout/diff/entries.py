@@ -74,7 +74,7 @@ def _entry(members: list[Change]) -> Entry:
     shown = [change for change in members if not _trivial(change)] or members[:1]
     # Only a unit's stats read as "a new unit": other categories keep every change they have.
     stats = first.category == "unit_stats"
-    if stats and all(_is_new(change) for change in members):
+    if stats and all(_is_new(change) for change in members) and _gains_hit_points(members):
         kind = "added"
         shown = [change for change in members if _worth_showing(change)]
     elif stats and len(members) > 1 and all(_is_gone(change) for change in members):
@@ -113,6 +113,17 @@ def _distinct(members: list[Change]) -> list[Change]:
 
 def _is_new(change: Change) -> bool:
     return change.kind == "modified" and not change.old and bool(change.new)
+
+
+def _gains_hit_points(members: list[Change]) -> bool:
+    """Whether a unit gains its hit points: every unit has them, so a new one always does.
+
+    A unit that only gains a value in a new slot is not new: the Missionary gained a food cost
+    (Spanish, 101.103.54800.0).
+    """
+    return any(
+        change.field is not None and change.field.key == "field.hit_points" for change in members
+    )
 
 
 def _trivial(change: Change) -> bool:
