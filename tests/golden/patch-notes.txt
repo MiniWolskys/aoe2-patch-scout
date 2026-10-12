@@ -1,0 +1,23 @@
+Patch notes: Live build → PUP build (pre-release)
+Written by Patch Scout from the game's data. These are not the official patch notes.
+
+GENERAL
+
+Unit stats
+
+- Archer hit points increased from 30 → 35 (except Bluelanders).
+- Archery Range hit points increased from 1000 → 1100.
+
+Technologies
+
+- Fletching cost in food increased from 100 → 120.
+
+CIVILIZATIONS
+
+Bluelanders
+
+- Archer hit points increased from 35 → 45.
+- Gain access to Archer.
+- Gain access to Fletching.
+
+8 more changes aren't in these notes: minor and technical ones, and the ones that can't be written as a sentence. The comparison in Patch Scout lists them all.

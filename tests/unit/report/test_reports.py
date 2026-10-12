@@ -19,7 +19,7 @@ from patch_scout.diff.entries import group
 from patch_scout.diff.model import Change, ChangeSet, CivRef, Entity, Message, Scope, Side
 from patch_scout.diff.values import words
 from patch_scout.i18n.catalog import Catalog, load_catalog
-from patch_scout.report import Filters, render_html, render_text
+from patch_scout.report import Filters, notes, render_html, render_text
 from patch_scout.report.html import ICON_PIXELS, MICROSOFT_NOTICE, shrink_icon
 from patch_scout.report.text import scope_text
 from patch_scout.store import IconStore
@@ -77,6 +77,14 @@ def test_the_full_plain_text_export_matches_its_golden_file(
     change_set, _ = prepared
     produced = render_text(change_set, catalog, Filters(low_priority=True))
     check_golden("comparison-all.txt", produced, update_golden)
+
+
+def test_the_patch_notes_match_their_golden_file(
+    prepared: tuple[ChangeSet, IconStore], catalog: Catalog, update_golden: bool
+) -> None:
+    change_set, _ = prepared
+    produced = notes.render(notes.build(change_set, catalog))
+    check_golden("patch-notes.txt", produced, update_golden)
 
 
 def test_the_change_set_json_matches_its_golden_file(
