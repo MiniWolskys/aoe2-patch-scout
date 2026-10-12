@@ -158,6 +158,7 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 
 ## After v0.1.0
 
+- [x] **Patch notes** (D-51), 2026-10-12: the comparison written like the official notes, in the app and as light Markdown to paste.
 - Apply to the SignPath Foundation; add the code signing policy page and the signing step to the release workflow (O-6). The first signed release is `v1.0.0` (D-48).
 - **Civ overview** (D-39): the rest of the overview beyond the tech tree, i.e. one civ's bonuses and stats in a version, with a comparison's changes highlighted. One unit, building or tech at a time is covered by the details drawer (D-49).
 

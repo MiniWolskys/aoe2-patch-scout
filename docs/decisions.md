@@ -56,6 +56,17 @@ Asked for by the maintainer on 2026-10-11; the agent proposed the design and the
 - **No value twice in the details drawer:** the Melee and Pierce classes carry the stat icons, and the game's displayed attack and armour are listed only where they differ from their class.
 - **Every armour class stays shown.** The maintainer first asked to hide class 31 as unused. It turned out that no unit attacks it on 101.103.54800.0 but the Achaemenids' Sagaris (Chronicles) does, and the maintainer preferred some noise to the risk of losing information.
 
+### D-51 Patch notes: Decided
+Asked for by the maintainer on 2026-10-12, after a Reddit user suggested patch notes "in the same style as the online ones"; the maintainer chose the audience, scope, format and structure, and the agent designed the rest under the autonomous workflow.
+- **What:** the comparison written the way the official patch notes are: "(Elite) Throwing Axeman range increased from 3 → 5, Elite 4 → 6", "Gain access to Treadmill Crane", "NEW: Ordonnance Companies:" with what it does and costs. Rules in [diff-rules.md](design/diff-rules.md#patch-notes-d-51).
+- **For:** reading in the app (e.g. on stream) and pasting into a video description, a Reddit post or Discord, equally.
+- **Structure:** like the official notes: General, then one block per civ with its crest, Chronicles apart; a change shared by several civs is repeated in each block.
+- **A curated summary:** headline changes of named objects, whatever the filters say. The comparison stays the reference: what the notes can't write as a clean sentence is counted in a closing line that says so, never guessed (rule 4). Techs known only by their internal name are kept in their own group.
+- **Words, not judgements:** "increased"/"decreased" state a number's direction only (D-34); multipliers read as percentages, as in the official notes.
+- **Format:** light Markdown (P-13, amended), copied or saved as `.txt`.
+- **In the app:** a Patch notes mode of the comparison, next to the tech tree ([ui.md](design/ui.md#patch-notes-d-51)).
+- **Not in it:** bug fixes, the developers' reasons, AI, map and interface changes: the game data doesn't hold them.
+
 ### D-15 GUI in v1: Decided
 v1 ships a pywebview desktop GUI.
 
@@ -78,7 +89,8 @@ v1 is distributed as a Windows build on GitHub Releases, so users don't need Pyt
   - **plain text** (Unicode bullets, no markup) for descriptions and chat;
   - **self-contained HTML**;
   - **PNG image** of the current view or a selected section.
-- **No Markdown export**: most users wouldn't know what to do with it.
+- **No Markdown export** of the comparison: most users wouldn't know what to do with it.
+- **Amended 2026-10-12 (D-51):** the patch notes are light Markdown (`-` bullets, plain heading lines, no `#` or `**`), chosen by the maintainer. They are pasted into Reddit and Discord, which read Markdown, and they still read as plain text in a video description.
 
 
 ### O-3 Languages: Decided

@@ -304,6 +304,7 @@ The details drawer lists the effect commands that touch one unit, building or te
   - A unit, tech tree node or building is named from the game's strings, the new build first.
   - A **tech with no display name** uses its internal `.dat` name. Civ bonuses are such techs, e.g. `C-Bonus, Military cost -20%`. The developers' prefix is spelled out from the catalog, for techs and effects alike: `C-Bonus, X` reads "Civ bonus: X" and `T-Bonus, X` reads "Team bonus: X" (345 and 1 such names on build 101.103.54800.0). The rest of the name is kept as written; it is never reworded or guessed. The scenario editor's placeholder, `New Research`, doesn't count as a name (seen on build 101.103.54800.0).
   - A **tech the `.dat` ties to a civ** (its `civ` slot, on either side; Gaia doesn't count) is that civ's bonus. Its changes go on that civ's page.
+  - A **tech known only by its internal name** in every build that has it, whose name isn't a civ or team bonus's, is marked `internal: true`, and so is an effect whose name isn't a bonus's. Such techs are plumbing players never see ("Disable Regionals", "Genitour (make avail)" on 101.103.54800.0). The comparison shows them as any other; the patch notes keep them apart (see Patch notes).
   - An entity still left with **no name** is marked `named: false` and shown as `#<id>`. Its changes are **hidden by default**: a notice gives their count, and "Show objects with no name" shows them, in the app and in the exports. They stay in the change set, so nothing is lost.
 - **Lists** (e.g. attack entries):
   - Keyed by class when the entries have one: added, removed and changed classes are reported separately.
@@ -331,10 +332,52 @@ The **comparison** in the app is the main output: icons, navigation by civilizat
 |---|---|---|
 | **Plain text** | Video descriptions, chat, forums | Unicode bullets and indentation, no markup. Copy to clipboard or save as `.txt`. Filters let users fit length limits. |
 | **HTML** | Sharing, archiving, showing on stream | One self-contained file: inline CSS, and icons as data URIs, each embedded once and shrunk to 80 px (twice the displayed size). |
+| **Patch notes** | Video descriptions, Reddit, Discord | The comparison written as the official notes are (D-51; see Patch notes below). Light Markdown, copied or saved as `.txt`. It doesn't follow the filters. |
 | **Image (PNG)** | Putting a page on screen in a video | The page on screen, with the filters on, drawn on a canvas by the frontend (`gui/web/js/image.js`): 1920 px wide, at most 1080 px tall, a long page in numbered parts that break between entries. Each part has the page title, both versions and the Microsoft notice; civ lists name every civ. No screenshot library. |
 
-There is no Markdown export.
+There is no Markdown export of the comparison; the patch notes are light Markdown (P-13, amended for them).
 
 **Sections of the text and HTML exports:** Overall, then **Several civilizations**, then each civ. The app shows a change shared by a few civs on each of their pages (D-44). An export prints it once, in Several civilizations, so a patch that gives three civs the same change doesn't print it three times. An export limited to some civs keeps each shared change in each civ's section instead.
 
 Every export starts with a header (snapshot labels, game builds unless the label already holds them, capture dates as YYYY-MM-DD, pre-release marks, tool version) and any notices: stats not compared, layout substituted, unusually many changes. Notices about filters are written for the export's readers, who can't change them: they count what **this export leaves out** (minor or technical changes, objects with no name), and are left out when it includes everything. The HTML export ends with the Microsoft notice ([legal.md](../legal.md)).
+
+## Patch notes (D-51)
+
+The comparison written the way the official patch notes are, for players who aren't developers: in the app (a mode of the comparison) and as text to paste (`report/notes/`). The examples are from 101.103.48987.0 → 101.103.54800.0.
+
+**What they hold.** A summary with a fixed meaning: the **headline** changes of **named** objects outside the low-priority categories (text, icons), whatever the comparison's filters say. They only reword the change set, never interpret it (rule 4). A change that can't be written cleanly is left out and counted in the closing line ("2228 more changes aren't in these notes … The comparison in Patch Scout lists them all"), never guessed:
+- a raw effect command (no sentence template);
+- a line that would show an unknown ID (`#123`), or bare building IDs ("Made at");
+- detail and technical levels, objects with no name, text and icon changes.
+
+**Structure:**
+- A title with both versions (label, build unless the label holds it, "(pre-release)"), the line "Written by Patch Scout from the game's data. These are not the official patch notes.", then the comparison's notices for readers (stats not compared, layout substituted, unusually many changes). The filter notices are replaced by the closing line.
+- **General:** the Overall entries, one group per category in the change set's order, then **Techs with no name in the game** (entities marked `internal`).
+- **Civilizations:** one group per civ with notes, alphabetical, headed by the civ's name and crest; then **Chronicles** with the `antiquity` civs (D-38). A change shared by several civs is repeated in each of their blocks, as the official notes do. Inside a civ's block: whether it is new or removed, its description, its bonuses, unit stats, techs, what it gains, what it loses, other effects, then its internal techs.
+
+**Sentences** (every word from the catalog's `notes.*` keys):
+
+| Change | Sentence |
+|---|---|
+| Fields of a unit, tech or resource | "Onager pierce armour increased from 7 → 8, melee attack increased from 50 → 55." A value that appears: "bonus vs Camels added: 3"; disappears: "… removed (was 2)". |
+| A change every civ but some shares | "… (except Athenians, Spartans and Thracians)." |
+| A new unit or tech (entry Added) | "NEW: Ordonnance Companies:" with a bullet per value; costs as one ("Cost: 400 food, 250 gold"); for a tech, what its effect does first. |
+| A unit or tech removed | "Bearded Axe removed." |
+| A node gained, or its status leaving Not available | "Gain access to Treadmill Crane." Left out where a NEW item about the same unit or tech says it. |
+| A node lost, or its status becoming Not available | "Lose access to (Heavy) Cavalry Archer." |
+| A renamed node | "Longboat renamed to Longship." |
+| A new civ | "New civilization.", its description, and "Tech tree:" with a bullet per building. |
+| The civ's description (bonus text) | "Civilization description:" with a bullet per line that changed: "old → new", "New: …", "Removed: …". A text that only wraps differently says nothing (Byzantines). |
+| What an effect now gives targets | "Gambesons now affects (Elite) Varangian Guard, Eastern Swordsman and Norse Warrior: +1 pierce armour." When targets get different things, one bullet per group of targets. "… no longer affects …" for what it gives no longer. |
+| An effect value that changed | "Wagenburg Tactics: Hand Cannoneer, Bombard Cannon, … movement speed decreased from +15% → +10%." |
+| An effect sentence with no value | "Kasbah: new effect: Runs the scripted effect: …"; several under one tech as bullets. |
+
+- **Field labels** are the comparison's, with the first letter lowered mid-sentence (`notes.field_case`; a label whose second letter is a capital is left alone). Attribute names from `Constants.xs`, in title case, are lowered whole ("line of sight").
+- **Values:** a leading `=` is dropped; a multiplier reads as a percentage, computed in decimal ("×0.6" → "-40%", "×1.0835" → "+8.35%"); `+N`/`-N` keep their sign.
+- **Direction:** "increased" or "decreased" only when both values are numbers of the same form (plain, set, added, or multiplied); otherwise "changed". It states the number's direction only, never a buff or nerf (D-34).
+- **Pairs:** "Throwing Axeman" and "Elite Throwing Axeman" with the same fields read "(Elite) Throwing Axeman"; when their values differ, "… from 3 → 5, Elite 4 → 6". The prefix is one word and the pairing is textual: it is a contraction of the two names, true whatever the upgrade line, and never guesses one. So "Archer" and "Cavalry Archer" given the same thing read "(Cavalry) Archer". Two subjects that moved in opposite directions read "changed".
+- **Unit names:** the tech tree's labels shorten some names ("H. Mounted Crossbowman"); when the comparison's Unit stats have the same unit ID, its own name is used, so the pair reads "(Heavy) Mounted Crossbowman".
+- **Merging:** within a group, sentences that say the same about different subjects become one ("Battering Ram, Capped Ram and Siege Ram line of sight increased from 3 → 5"; "Bodkin Arrow, Bracer and Fletching now affect …"). Gaining and losing access are one line per item, as in the official notes.
+- **Moved commands:** the same sentence removed and added for one target (a command that only moved in the effect's list; Fabric Shields, Incas) cancels out and counts as said.
+
+**Text form:** light Markdown, so it reads as plain text in a video description and as lists on Reddit and Discord: section titles in capitals, group titles as plain lines, `- ` bullets, nested bullets indented four spaces (CommonMark and old Reddit both read that as a nested list). Names are not escaped. Copied, or saved as `patch-notes.txt`.

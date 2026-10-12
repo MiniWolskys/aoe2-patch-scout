@@ -68,7 +68,7 @@ There is **no CLI** (P-08, rejected). The GUI is the only interface; what a `ver
 | `patch_scout.snapshot` | Snapshot schema, (de)serialization, validation, migrations | stdlib | No |
 | `patch_scout.store` | Snapshot files, library index, icon store, raw backups, export/import archives | `snapshot` | No |
 | `patch_scout.diff` | `diff(old, new, rules) → ChangeSet`: matching, allowlist, per-civ collapse, effect sentences, change-volume check | `snapshot`, `i18n` | No |
-| `patch_scout.report` | `ChangeSet → plain text / self-contained HTML` | `diff`, `store` (icons), `i18n` | No |
+| `patch_scout.report` | `ChangeSet → plain text / self-contained HTML / patch notes` | `diff`, `store` (icons), `i18n` | No |
 | `patch_scout.tree` | One civ's tech tree as the page draws it (D-39): layout in age rows and building lanes, change marks, the game's tooltip template with the civ's own values | `snapshot`, `diff`, `i18n` | No |
 | `patch_scout.entity` | One unit, building or tech in detail, in both versions (D-49): its stats, cost and research, and for a civ the bonuses and techs whose effect commands affect it, as effect sentences, never applied | `snapshot`, `diff`, `tree` (tooltip template), `i18n` | No |
 | `patch_scout.i18n` | Message catalogs for UI labels and report sentences; language fallback to English | stdlib | No |
@@ -184,6 +184,7 @@ flowchart TD
 6. **Export** (P-13):
    - Plain text: copy to clipboard or save as `.txt`.
    - Self-contained HTML.
+   - Patch notes (D-51): the comparison written like the official notes, as light Markdown to copy or save as `.txt`; also a mode of the comparison.
    - PNG image of the current view or a selected section. Rendered by a vendored MIT library (modern-screenshot or html-to-image, chosen in M4) and saved through Python. Very tall views are exported in parts because of browser canvas size limits.
 
    If either snapshot is ticked pre-release, the user gets an embargo reminder first.
@@ -231,7 +232,7 @@ src/patch_scout/
 ├── snapshot/    schema.py, io.py, migrations.py
 ├── store/       snapshots.py, library.py, icons.py, backups.py, archive.py
 ├── diff/        engine.py, allowlist.py, collapse.py, effects.py, volume.py
-├── report/      text.py, html.py
+├── report/      text.py, html.py, notes/ (patch notes, D-51)
 ├── i18n/        catalog.py, en.json
 └── gui/         app.py, api.py, webview2.py, window.py, web_files.py, diagnostics.py,
                  web/ (index.html, js/, styles/, vendor/)
