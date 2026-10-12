@@ -66,7 +66,8 @@ class Draft:
     fields: list[Field] = field(default_factory=list)
     children: list[Child] = field(default_factory=list)
     # A "line" draft's sentence, written already; for "affects" and "no_longer", what every target
-    # gets when they all get the same; for a new unit, where it is trained.
+    # gets when they all get the same; for a new unit, where it is trained; for a new tech, what
+    # it does.
     text: str = ""
     # An "affects" draft's targets, after pairing: what the sentence names.
     targets: list[str] = field(default_factory=list)
@@ -200,6 +201,12 @@ def render(draft: Draft, words: Words) -> Item:
     if draft.form == "new":
         if children:
             return Item(words.text("notes.new", subject=subjects, scope=draft.scope), children)
+        if draft.text and draft.entity is not None and draft.entity[0] == "tech":
+            # A new tech, with what it does.
+            does = draft.text
+            return Item(
+                words.text("notes.new_does", subject=subjects, does=does, scope=draft.scope)
+            )
         if draft.text:  # a new unit, with where it is trained
             where = draft.text
             return Item(

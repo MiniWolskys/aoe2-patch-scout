@@ -365,13 +365,13 @@ The comparison written the way the official patch notes are, for players who are
 | A change every civ but some shares | "… (except Athenians, Spartans and Thracians)", whatever the kind of sentence: a field, gaining or losing access, NEW, removed, what an effect gives. |
 | Something added or removed with no value | "Stable building offer added.", "Effect of Kasbah removed." Never a bare label. |
 | A new unit (entry Added) | One line with where it is trained: "NEW: (Elite) Varangian Guard (Barracks)." Its stats are in the detailed changes and the tech tree; the line says the unit is new, so its values count as said. |
-| A new tech (entry Added) | "NEW: Ordonnance Companies:" with a bullet per value; costs as one ("Cost: 400 food, 250 gold"); what its effect does first. Only what the bullets say counts as said: anything else of the entry, such as an effect sentence it lost, is counted in the closing line. |
+| A new tech (entry Added) | One line with what it does: "NEW: Ordonnance Companies: (Heavy) Mounted Crossbowman -40% gold cost." (maintainer, 2026-10-12). Its cost, research time and requirements are in the detailed changes and the tech tree; the line says the tech is new, so they count as said. An effect sentence the line doesn't write, such as one the tech lost, is counted in the closing line. |
 | A unit or tech removed | "Bearded Axe removed." |
 | A node gained, or its status leaving Not available | "Gain access to Treadmill Crane." Left out where a NEW item about the same unit or tech says it. |
 | A node lost, or its status becoming Not available | "Lose access to (Heavy) Cavalry Archer." |
 | A renamed node | "Longboat renamed to Longship." |
 | A new civ | A few lines: see above. |
-| The civ's description (bonus text) | "Civilization description:" with a bullet per line that changed: "old → new", "New: …", "Removed: …". A text that only wraps differently says nothing (Byzantines). |
+| The civ's description (bonus text) | One bullet per line that changed, in the game's words, with the heading it sits under: "Unique Techs: Bearded Axe (…) → Ordonnance Companies (…)", "New in Team Bonus: …", "Removed: Docks +5 garrison capacity". When most of a line stays, only what changed: "Wagenburg Tactics (Gunpowder Units move +15% → +10% faster)"; a line that only gains or loses words reads whole both ways. A text that only wraps differently says nothing (Byzantines). |
 | What an effect now gives targets | "Gambesons now affects (Elite) Varangian Guard, Eastern Swordsman and Norse Warrior: +1 pierce armour." When targets get different things, one bullet per group of targets. "… no longer affects …" for what it gives no longer. |
 | An effect value that changed | "Wagenburg Tactics: Hand Cannoneer, Bombard Cannon, … movement speed decreased from +15% → +10%." |
 | An effect sentence with no value | "Kasbah: new effect: Runs the scripted effect: …"; several under one tech as bullets. |

@@ -295,8 +295,10 @@ def _drafts(entry: Entry, context: _Context, civ: CivRef | None) -> list[Draft]:
     rest: list[Change] = []
     for change in entry.changes:
         if change.field is not None and change.field.key == "field.civ_bonus_text":
-            description = _description(change, context, subject)
-            drafts.append(description or Draft("silent", rank, [subject], [change]))
+            # Only spacing or line breaks moved: nothing to say (Byzantines on 54800).
+            drafts += _description(change, context, subject) or [
+                Draft("silent", rank, [subject], [change])
+            ]
         else:
             rest.append(change)
     drafts += _effects(
@@ -426,11 +428,14 @@ def _tech(entry: Entry, context: _Context, rank: int, subject: str, scope: str) 
     effects = [change for change in changes if _is_sentence(change)]
     fields = [change for change in changes if not _is_sentence(change)]
     if entry.kind == "added":
-        # Only what the bullets say counts as said; the rest is counted in the closing line.
-        said: list[Change] = []
-        children = _effect_children(effects, context, said) + _new_children(fields, context, said)
+        # One line with what it does, as a player first wants it: "NEW: Ordonnance Companies:
+        # (Heavy) Mounted Crossbowman -40% gold cost". Its cost, research time and requirements
+        # are in the detailed changes and the tech tree; the line says the tech is new, so they
+        # count as said. An effect sentence it doesn't write is counted in the closing line.
+        said: list[Change] = list(fields)
+        does = "; ".join(_what_it_does(effects, context, said))
         entity = ("tech", entry.entity.id)
-        return [Draft("new", rank, [subject], said, entity, scope, children=children)]
+        return [Draft("new", rank, [subject], said, entity, scope, text=does)]
     if entry.kind == "removed":
         return [_removed(changes, context, rank, subject, scope)]
     drafts = [_stats(fields, context, rank, subject, scope)] if fields else []
@@ -479,32 +484,6 @@ def _word(change: Change, value: str, context: _Context, civ: CivRef | None) -> 
     if change.field.key == "field.age" and (civ is None or civ.era != _CHRONICLES):
         return context.messages.get(f"tree.age.{value}", value)
     return value
-
-
-def _new_children(changes: Sequence[Change], context: _Context, said: list[Change]) -> list[Child]:
-    """A new unit's or tech's values, one bullet each; its costs as one: "Cost: 40 wood, 65 gold".
-
-    The cost bullet sits where the first cost was. The changes it says are added to `said`.
-    """
-    words = context.words
-    costs: list[str] = []
-    cost_at: int | None = None
-    children: list[Child] = []
-    for change in changes:
-        if change.field is None or not change.new:
-            continue
-        said.append(change)
-        if change.field.key == "field.cost":
-            resource = words.value(change.field.args.get("resource"))
-            costs.append(words.text("notes.cost_part", amount=shown(change.new), resource=resource))
-            if cost_at is None:
-                cost_at = len(children)
-            continue
-        children.append(Child(words.message(change.field), shown(change.new)))
-    if cost_at is not None:
-        cost = Child(words.text("notes.cost"), words.text("notes.list_separator").join(costs))
-        children.insert(cost_at, cost)
-    return children
 
 
 # --- effects ------------------------------------------------------------------------------------
@@ -655,16 +634,12 @@ def _cancel(gained: _Given, lost: _Given) -> list[Change]:
     return cancelled
 
 
-def _effect_children(
-    changes: Sequence[Change], context: _Context, said: list[Change]
-) -> list[Child]:
-    """What a new tech does, one bullet per target or sentence: "(Heavy) Mounted Crossbowman: …".
-
-    Only what it now does is said; the changes said are added to `said`.
-    """
+def _what_it_does(changes: Sequence[Change], context: _Context, said: list[Change]) -> list[str]:
+    """What a new tech does, one phrase per target or sentence: "(Heavy) Mounted Crossbowman
+    -40% gold cost". Only what it now does is said; the changes said are added to `said`."""
     words = context.words
     gained = _Given()
-    children: list[Child] = []
+    sentences: list[str] = []
     for change in changes:
         if change.field is None:
             continue
@@ -673,17 +648,20 @@ def _effect_children(
             target, attribute = aimed
             gained.add(target, _part(attribute, change.new, words), change)
         elif change.field.key == "effect.added":
-            children.append(Child(words.value(change.field.args.get("effect"))))
+            sentences.append(words.value(change.field.args.get("effect")))
             said.append(change)
         elif change.new and not change.old:
-            children.append(Child(words.message(change.field), shown(change.new)))
+            label = words.message(change.field)
+            sentences.append(
+                words.text("notes.target_inline", target=label, parts=shown(change.new))
+            )
             said.append(change)
     said.extend(gained.used())
     targets = [
-        Child(words.text("notes.target", target=name, parts=", ".join(parts)))
+        words.text("notes.target_inline", target=name, parts=", ".join(parts))
         for name, parts in _paired(gained.parts, words)
     ]
-    return targets + children
+    return targets + sentences
 
 
 def _target_attribute(field: Message, words: Words) -> tuple[str, str] | None:
@@ -740,45 +718,77 @@ def _paired(parts: dict[str, list[str]], words: Words) -> list[tuple[str, list[s
 # --- the civ's description ----------------------------------------------------------------------
 
 
-def _description(change: Change, context: _Context, subject: str) -> Draft | None:
-    """The civ's description (its bonus text), line by line: what was added, removed or edited.
-
-    None when only spacing or line breaks moved (Byzantines on 101.103.54800.0 wrap a line
-    differently).
+def _description(change: Change, context: _Context, subject: str) -> list[Draft]:
+    """The civ's description (its bonus text): one bullet per line that changed, in the game's
+    own words, under the game's own heading ("Unique Techs: Bearded Axe (…) → Ordonnance
+    Companies (…)"), and only the part that changed when the rest stays ("Wagenburg Tactics
+    (Gunpowder Units move +15% → +10% faster)"). Empty when only spacing or line breaks moved.
     """
     old_text = "".join(word.text for word in change.words if word.kind != "added")
-    new_text = _new_text(change)
-    old_lines, new_lines = _lines(old_text), _lines(new_text)
+    old_lines, new_lines = _headed(old_text), _headed(_new_text(change))
     words = context.words
-    if not old_lines:
-        children = [Child(line) for line in new_lines]  # a new civ: every line is new
-    else:
-        children = []
-        matcher = difflib.SequenceMatcher(a=old_lines, b=new_lines, autojunk=False)
-        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            before, after = old_lines[i1:i2], new_lines[j1:j2]
-            if tag == "equal" or _squeezed(before) == _squeezed(after):
-                continue
-            paired = min(len(before), len(after)) if tag == "replace" else 0
-            children += [
-                Child(words.text("notes.line_changed", old=old, new=new))
-                for old, new in zip(before[:paired], after[:paired], strict=True)
-            ]
-            children += [
-                Child(words.text("notes.line_removed", line=line)) for line in before[paired:]
-            ]
-            children += [
-                Child(words.text("notes.line_added", line=line)) for line in after[paired:]
-            ]
-    if not children:
-        return None
-    text = words.text("notes.description")
-    return Draft("line", _DESCRIPTION_RANK, [subject], [change], text=text, children=children)
+    texts: list[str] = []
+    olds, news = [line for _, line in old_lines], [line for _, line in new_lines]
+    matcher = difflib.SequenceMatcher(a=olds, b=news, autojunk=False)
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal" or _squeezed(olds[i1:i2]) == _squeezed(news[j1:j2]):
+            continue
+        before, after = old_lines[i1:i2], new_lines[j1:j2]
+        paired = min(len(before), len(after)) if tag == "replace" else 0
+        for (heading, old), (_, new) in zip(before[:paired], after[:paired], strict=True):
+            texts.append(_in(heading, _compact(old, new, words), "notes.line_in", words))
+        for heading, line in before[paired:]:
+            texts.append(_in(heading, line, "notes.line_removed", words))
+        for heading, line in after[paired:]:
+            texts.append(_in(heading, line, "notes.line_added", words))
+    return [Draft("line", _DESCRIPTION_RANK, [subject], [change], text=text) for text in texts]
+
+
+def _in(heading: str, line: str, key: str, words: Words) -> str:
+    """A description line, said with the heading it sits under, if any: "New in Team Bonus: …"."""
+    if key == "notes.line_in":
+        return words.text(key, heading=heading, line=line) if heading else line
+    return words.text(f"{key}_in" if heading else key, heading=heading, line=line)
+
+
+def _compact(old: str, new: str, words: Words) -> str:
+    """A changed line with only what changed: "Foragers +15% → +20%", when most of it stays.
+
+    Otherwise, or when the change only adds or removes words, the whole line both ways.
+    """
+    before, after = old.split(), new.split()
+    shortest = min(len(before), len(after))
+    head = 0
+    while head < shortest and before[head] == after[head]:
+        head += 1
+    tail = 0
+    while tail < shortest - head and before[-1 - tail] == after[-1 - tail]:
+        tail += 1
+    old_middle = before[head : len(before) - tail]
+    new_middle = after[head : len(after) - tail]
+    if not old_middle or not new_middle or (head + tail) * 2 < max(len(before), len(after)):
+        return words.text("notes.line_changed", old=old, new=new)
+    middle = words.text("notes.line_changed", old=" ".join(old_middle), new=" ".join(new_middle))
+    return " ".join([*before[:head], middle, *before[len(before) - tail :]])
 
 
 def _new_text(change: Change) -> str:
     """A text change's new text, rebuilt from its word diff."""
     return "".join(word.text for word in change.words if word.kind != "removed")
+
+
+def _headed(text: str) -> list[tuple[str, str]]:
+    """A description's lines, each with the heading it sits under ("Unique Techs"), if any.
+
+    A heading is a line of the game's text ending with a colon; it is a line too.
+    """
+    headed: list[tuple[str, str]] = []
+    heading = ""
+    for line in _lines(text):
+        headed.append((heading, line))
+        if line.endswith(":"):
+            heading = line.removesuffix(":").strip()
+    return headed
 
 
 def _lines(text: str) -> list[str]:

@@ -375,12 +375,13 @@ def test_a_new_tech_says_what_it_does_and_its_gain_is_not_repeated(catalog: Cata
         ),
     ]
 
-    assert lines(notes(catalog, *changes)) == [
-        "NEW: Ordonnance Companies:",
-        "  (Heavy) Mounted Crossbowman: -40% gold cost",
-        "  Cost: 400 food, 250 gold",
-        "  Research time at Castle: 40",
+    result = notes(catalog, *changes)
+
+    # What it does, in one line; its cost and research are in the detailed changes and the tree.
+    assert lines(result) == [
+        "NEW: Ordonnance Companies: (Heavy) Mounted Crossbowman -40% gold cost."
     ]
+    assert result.closing is None
 
 
 def test_a_removed_unit_is_one_line(catalog: Catalog) -> None:
@@ -497,10 +498,20 @@ def test_the_civ_description_lists_its_lines_that_changed(catalog: Catalog) -> N
     old = "Cavalry civilization\n• Foragers +15%\nUnique Techs:\n• Bearded Axe (+2 range)"
     new = "Cavalry civilization\n• Foragers +20%\nUnique Techs:\n• Chivalry (Stables faster)"
 
+    # One bullet per line, only the part that changed, under the game's own heading.
     assert lines(notes(catalog, _description(old, new))) == [
-        "Civilization description:",
-        "  Foragers +15% → Foragers +20%",
-        "  Bearded Axe (+2 range) → Chivalry (Stables faster)",
+        "Foragers +15% → +20%",
+        "Unique Techs: Bearded Axe (+2 range) → Chivalry (Stables faster)",
+    ]
+
+
+def test_a_description_line_added_or_removed_says_where(catalog: Catalog) -> None:
+    old = "Cavalry civilization\n• Mill technologies free\nTeam Bonus:\n• Knights +2 line of sight"
+    new = "Cavalry civilization\nTeam Bonus:\n• Knights +2 line of sight\n• Scouts +1 speed"
+
+    assert lines(notes(catalog, _description(old, new))) == [
+        "Removed: Mill technologies free",
+        "New in Team Bonus: Scouts +1 speed",
     ]
 
 
@@ -523,7 +534,7 @@ def test_a_civ_block_reads_in_the_official_order(catalog: Catalog) -> None:
     ]
 
     assert groups(notes(catalog, *changes))["Civilizations/Franks"] == [
-        "Civilization description:",
+        "Foragers +15% → +20%",
         "Throwing Axeman maximum range increased from 3 → 5.",
         "Gain access to Treadmill Crane.",
     ]
@@ -712,9 +723,7 @@ def test_the_text_is_light_markdown(catalog: Catalog) -> None:
         "\n"
         "Technologies\n"
         "\n"
-        "- NEW: Treadmill Crane:\n"
-        "    - Research time at University: 40\n"
-        "    - Cost: 200 wood\n"
+        "- NEW: Treadmill Crane.\n"
         "\n"
         "CIVILIZATIONS\n"
         "\n"
@@ -814,5 +823,5 @@ def test_what_a_new_tech_doesnt_say_is_counted(catalog: Catalog) -> None:
 
     result = notes(catalog, *changes)
 
-    assert lines(result) == ["NEW: Hamask:", "  Research time at Castle: 35"]
+    assert lines(result) == ["NEW: Hamask."]
     assert result.closing is not None and result.closing.startswith("1 more change")
