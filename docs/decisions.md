@@ -182,6 +182,7 @@ Chosen by the maintainer on 2026-09-15, from the M0 link spike ([game-files.md �
 - **Seeds:** a civ's tech tree nodes and building offers, in either snapshot.
   - **Amended 2026-10-10** (patch-note coverage check, to be confirmed by the maintainer): nodes the civ's tree marks `NotAvailable`, and offered units its tree marks `NotAvailable`, are not seeds. The rule's intent is the units a civ can actually get; counting them made the new Heavy Mounted Crossbowman read "all 15 civilizations that have it" when 10 can get it.
 - **Also reachable:** transform forms, and named dismount-style forms (`blood_unit_id`). These links are followed until nothing new is added.
+  - **Amended 2026-10-12** (maintainer): task forms too, the units sharing a `task_swap_group` with a reachable unit (Villager → Gold Miner, Forager; Fishing Ship → Oystering Ship).
 - **Projectiles** are reported on the unit that fires them, not as units of their own.
 - **Not followed:** corpses and rubble, tracking units, drop sites, annexes, stack units, and the reverse train-location link.
 - **Object swaps** (`objreplacement.json`, added 2026-09-15): not followed.

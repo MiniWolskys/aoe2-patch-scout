@@ -106,6 +106,7 @@ For each civ, the diff reports only the units that civ can actually get. Reachab
 2. **Linked forms.** From every reachable unit, follow these links, and repeat until no unit is added:
    - `Building.transform_unit`: the other form of a transforming unit, e.g. Trebuchet ↔ Trebuchet (Packed);
    - `Unit.blood_unit_id`, only when the target's `language_dll_name` resolves to a string, e.g. Konnik → Konnik (Dismounted).
+   - `Bird.task_swap_group`: every unit in the same group (other than 0), the forms the game swaps a unit into by its task, e.g. Villager → Gold Miner, Forager, Builder; Fishing Ship → Oystering Ship (maintainer, 2026-10-12). *Before, a change to the Gold Miner was hidden, and the Malians' bonus "no longer affects Gold Miner" was too.*
 3. **Projectiles aren't units in the report.** They are linked through `Type50.projectile_unit_id`, `Creatable.secondary_projectile_unit` and `Creatable.charge_projectile_unit`. A change to a projectile's allowlisted fields is shown on the entry of each reachable unit that fires it, labelled `Projectile: <field>` (e.g. `Arbalester · Projectile: Pierce attack · 6 → 7`), with the civs where that unit fires it.
 4. **Not followed:**
    - `Unit.dead_unit_id` (corpses, rubble);
