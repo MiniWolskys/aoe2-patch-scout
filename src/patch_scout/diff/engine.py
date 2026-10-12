@@ -156,7 +156,15 @@ def compare(
         _side(new, new_info or SideInfo()),
     )
     if old.sources and old.sources == new.sources:
-        return ChangeSet(old=sides[0], new=sides[1], identical=True)
+        # Nothing changed, but the civs and stat icons still serve the tech tree: a version on
+        # its own is the version compared with itself (D-52).
+        return ChangeSet(
+            old=sides[0],
+            new=sides[1],
+            identical=True,
+            civs=_civ_list(run, _civilizations(run), {}),
+            stat_icons=_stat_icons(run),
+        )
 
     run.old_index = _civ_indices(old)
     run.new_index = _civ_indices(new)
@@ -196,31 +204,12 @@ def compare(
     for entry in entries:
         if entry.civ is not None:
             counts[entry.civ] = counts.get(entry.civ, 0) + 1
-    civs = tuple(
-        CivRef(
-            internal_name=ref.internal_name,
-            name=ref.name,
-            era=ref.era,
-            icon=ref.icon,
-            added=ref.added,
-            count=counts.get(ref.internal_name, 0),
-        )
-        # Every civ with a tech tree, with or without changes: the tech tree view lets any civ
-        # be chosen (D-39). The change list leaves out those with nothing to show. Gaia has none.
-        for ref in civ_refs
-        if ref.added
-        or counts.get(ref.internal_name, 0)
-        or ref.internal_name in run.new.tech_trees
-        or ref.internal_name in run.old.tech_trees
-    )
-    # Alphabetical, as the game lists them (by name in the chosen language).
-    civs = tuple(sorted(civs, key=lambda civ: civ.name.casefold()))
     return ChangeSet(
         old=sides[0],
         new=sides[1],
         changes=changes,
         notices=tuple(run.notices),
-        civs=civs,
+        civs=_civ_list(run, civ_refs, counts),
         entries=entries,
         stat_icons=_stat_icons(run),
         unit_lines=_unit_lines(run),
@@ -250,6 +239,21 @@ def _civ_icon(civ: JsonObject) -> JsonObject | None:
     if isinstance(emblem, dict) and isinstance(emblem.get("hash"), str):
         return emblem | {"kind": "silhouette"}
     return None
+
+
+def _civ_list(run: _Run, civ_refs: list[CivRef], counts: dict[str, int]) -> tuple[CivRef, ...]:
+    """The civ list, alphabetical as the game lists them (by name in the chosen language)."""
+    civs = (
+        replace(ref, count=counts.get(ref.internal_name, 0))
+        # Every civ with a tech tree, with or without changes: the tech tree view lets any civ
+        # be chosen (D-39). The change list leaves out those with nothing to show. Gaia has none.
+        for ref in civ_refs
+        if ref.added
+        or counts.get(ref.internal_name, 0)
+        or ref.internal_name in run.new.tech_trees
+        or ref.internal_name in run.old.tech_trees
+    )
+    return tuple(sorted(civs, key=lambda civ: civ.name.casefold()))
 
 
 def _stat_icons(run: _Run) -> JsonObject:

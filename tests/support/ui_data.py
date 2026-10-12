@@ -266,6 +266,7 @@ def fixture_data(**overrides: Any) -> dict[str, Any]:
         "validation": {"valid": True, "path": "D:/Games/AoE2DE", "game_build": "101.103.48987.0"},
         "captureStatuses": [],
         "changeSet": change_set(),
+        "techTree": tech_tree(),
         "entity": entity_details(),
         "icons": {},
         "exportText": "Patch Scout - what changed\n",
@@ -285,6 +286,14 @@ def show_changes(page: Page) -> None:
     expect(page.locator("#comparison-notes")).to_have_attribute("aria-pressed", "true")
     page.locator("#comparison-notes").click()
     expect(page.locator("#comparison-page")).to_be_visible()
+
+
+def open_details(page: Page, index: int = 0) -> None:
+    """Open a version's details page with the gear button on its row (D-52)."""
+    row = page.locator(".version-row").nth(index)
+    row.hover()
+    row.locator(".version-row__details").click()
+    expect(page.locator("#details-view")).to_be_visible()
 
 
 def calls(page: Page, name: str) -> list[list[Any]]:

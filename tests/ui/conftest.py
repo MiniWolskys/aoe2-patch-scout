@@ -91,7 +91,25 @@ FAKE_BRIDGE = """
     }),
     cancel_capture: answer("cancel_capture", { cancelled: true }),
     clear_capture: answer("clear_capture", { cleared: true }),
-    compare_versions: answer("compare_versions", data.changeSet),
+    // A version compared with itself is that version alone (D-52): no changes, every civ.
+    compare_versions: answer("compare_versions", (first, second) => {
+      if (first !== second) {
+        return data.changeSet;
+      }
+      const side =
+        (data.startup.versions ?? []).find((row) => row.capture_id === first) ??
+        { capture_id: first, label: first };
+      return {
+        ...data.changeSet,
+        old: side,
+        new: side,
+        identical: true,
+        notices: [],
+        changes: [],
+        entries: [],
+        civs: (data.changeSet.civs ?? []).map((civ) => ({ ...civ, added: false, count: 0 })),
+      };
+    }),
     get_icons: answer("get_icons", data.icons ?? {}),
     get_tech_tree: answer("get_tech_tree", (oldId, newId, civ) =>
       data.techTreeError ? null : { ...(data.techTree ?? {}), civ },

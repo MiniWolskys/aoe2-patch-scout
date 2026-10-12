@@ -15,18 +15,25 @@ import { byId, clear, el, formatDate, input, show } from "./dom.js";
  *   onDiagnostics: (captureId: string) => void,
  *   onBack: () => void,
  * }} deps
- * @returns {{show: (captureId: string, hasComparison: boolean) => Promise<void>}}
+ * @returns {{show: (captureId: string, back: "comparison" | "tree" | null) => Promise<void>}}
  */
 export function initDetails(deps) {
   /** @type {string | null} */
   let openId = null;
 
-  async function showVersion(captureId, hasComparison) {
+  /**
+   * @param {string} captureId
+   * @param {"comparison" | "tree" | null} back Where the back link returns to, if anywhere.
+   */
+  async function showVersion(captureId, back) {
     openId = captureId;
     const version = await deps.api.get_version(captureId);
     byId("details-title").textContent = String(version.label ?? "");
     show(byId("details-prerelease-badge"), version.prerelease === true);
-    show(byId("details-back"), hasComparison);
+    show(byId("details-back"), back !== null);
+    byId("details-back").textContent = deps.t(
+      back === "tree" ? "details.back_to_tree" : "details.back_to_comparison",
+    );
     const build = version.game_build ?? deps.t("version_list.unknown_build");
     byId("details-meta").textContent =
       `${build} · ${formatDate(String(version.captured_at ?? ""))}`;

@@ -194,11 +194,14 @@
             <span class="version-picker__build" id="picker-new-build"></span>
           </button>
           <div class="comparison-header__spacer"></div>
+          <button type="button" class="button button--accent" id="version-compare" hidden data-i18n="details.compare_with"></button>
           <button type="button" class="button button--ghost" id="comparison-tree" aria-pressed="false" data-i18n="tree.open"></button>
           <button type="button" class="button button--ghost" id="comparison-notes" aria-pressed="false" data-i18n="notes.open"></button>
           <button type="button" class="button button--ghost" id="comparison-filters" aria-expanded="false" data-i18n="comparison.filters"></button>
           <button type="button" class="button button--accent" id="comparison-export" data-i18n="comparison.export"></button>
         </header>
+
+        <p class="version-hint" id="version-hint" hidden></p>
 
         <div class="filters" id="filters-panel" hidden>
           <label class="field-row">

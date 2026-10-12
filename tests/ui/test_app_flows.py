@@ -12,6 +12,7 @@ from support.ui_data import (
     change_set,
     entry,
     fixture_data,
+    open_details,
     show_changes,
     startup_data,
     version,
@@ -47,8 +48,9 @@ def test_a_version_without_stats_says_so(open_shell: OpenShell) -> None:
     expect(page.locator(".version-row__marks .tag--muted")).to_have_text("NO STATS")
 
 
-def test_opening_a_version_shows_its_details(open_shell: OpenShell) -> None:
+def test_the_gear_shows_a_versions_details(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("one", "Live build")))
+    open_details(page)
 
     expect(page.locator("#details-view")).to_be_visible()
     expect(page.locator("#details-title")).to_have_text("Live build")
@@ -57,6 +59,7 @@ def test_opening_a_version_shows_its_details(open_shell: OpenShell) -> None:
 
 def test_the_details_list_the_source_and_the_stats_status(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("one", "Live build")))
+    open_details(page)
 
     expect(page.locator("#details-fields")).to_contain_text("D:/Games/AoE2DE")
     expect(page.locator("#details-fields")).to_contain_text("Unit and tech stats are available.")
@@ -64,6 +67,7 @@ def test_the_details_list_the_source_and_the_stats_status(open_shell: OpenShell)
 
 def test_the_prerelease_tickbox_saves_straight_away(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("one", "Live build")))
+    open_details(page)
 
     page.locator("#details-prerelease").check()
 
@@ -73,6 +77,7 @@ def test_the_prerelease_tickbox_saves_straight_away(open_shell: OpenShell) -> No
 
 def test_deleting_a_version_asks_first(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("one", "Live build")))
+    open_details(page)
 
     page.locator("#details-delete").click()
 
@@ -386,7 +391,9 @@ def test_importing_a_version_opens_it(open_shell: OpenShell) -> None:
     page.locator("#import-button").click()
 
     expect(page.locator("#toast")).to_contain_text("Version imported.")
-    expect(page.locator("#details-view")).to_be_visible()
+    # An imported version opens on its own, in its tech tree (D-52).
+    expect(page.locator("#tree-view")).to_be_visible()
+    assert calls(page, "compare_versions")[-1][:2] == ["old", "old"]
     assert calls(page, "import_version") == [["C:/tmp/live.aoe2snap"]]
 
 
@@ -407,7 +414,7 @@ def test_exporting_a_pre_release_version_asks_first(open_shell: OpenShell) -> No
         "prerelease": True,
     }
     page = open_shell(data=data)
-    page.locator(".version-row").first.click()
+    open_details(page)
 
     page.locator("#details-export").click()
     expect(page.locator("#confirm-title")).to_have_text("Export a pre-release version?")
@@ -453,7 +460,7 @@ def test_a_version_that_cant_be_deleted_stays_and_says_why(open_shell: OpenShell
     data = with_versions(version("old", "Live build"))
     data["deleteResult"] = {"deleted": False, "error": "locked", "versions": []}
     page = open_shell(data=data)
-    page.locator(".version-row").first.click()
+    open_details(page)
     page.locator("#details-delete").click()
     page.locator("#confirm-yes").click()
 
@@ -805,6 +812,7 @@ def test_a_capture_that_produced_nothing_keeps_its_row(open_shell: OpenShell) ->
 
 def test_a_version_can_be_renamed_twice_from_the_keyboard(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("one", "Live build")))
+    open_details(page)
     title = page.locator("#details-title")
 
     for name in ("First", "Second"):

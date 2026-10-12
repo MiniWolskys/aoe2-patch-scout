@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-/** The version list: rows, the collapse toggle, and the ways to start a comparison (D-32). */
+/**
+ * The version list: rows, the collapse toggle, the ways to start a comparison (D-32), and each
+ * version's details behind its gear button (D-52).
+ */
 
 import { byId, clear, el, formatDate, show } from "./dom.js";
 
@@ -27,6 +30,7 @@ export function initVersionList(element, { t }) {
  *   comparison: {oldId: string, newId: string} | null,
  *   onOpen: (captureId: string) => void,
  *   onCompare: (captureId: string) => void,
+ *   onDetails: (captureId: string) => void,
  *   onOpenCapture: () => void,
  * }} view
  */
@@ -80,7 +84,8 @@ function captureRow(view) {
 }
 
 /**
- * One version row: label, build and date, flags, and a Compare button on hover.
+ * One version row: label, build and date, flags, and on hover a Compare button and a gear
+ * button for the version's details.
  * @param {import("./api.js").Version} version
  * @param {Parameters<typeof render>[0]} view
  * @returns {HTMLElement}
@@ -132,23 +137,22 @@ function versionRow(version, view) {
   }
   row.append(marks);
 
+  const actions = el("span", { class: "version-row__actions" });
   const compare = el("span", {
     class: "version-row__compare button button--ghost button--small",
     text: view.t("version_list.compare"),
     attrs: { role: "button", tabindex: "0" },
   });
-  compare.addEventListener("click", (event) => {
-    event.stopPropagation();
-    view.onCompare(version.capture_id);
+  inRowButton(compare, () => view.onCompare(version.capture_id));
+  const label = view.t("version_list.details");
+  const gear = el("span", {
+    class: "version-row__details button button--ghost button--small",
+    attrs: { role: "button", tabindex: "0", "aria-label": label, title: label },
   });
-  compare.addEventListener("keydown", (event) => {
-    if (event instanceof KeyboardEvent && (event.key === "Enter" || event.key === " ")) {
-      event.preventDefault();
-      event.stopPropagation();
-      view.onCompare(version.capture_id);
-    }
-  });
-  row.append(compare);
+  gear.append(el("span", { class: "icon icon--settings", attrs: { "aria-hidden": "true" } }));
+  inRowButton(gear, () => view.onDetails(version.capture_id));
+  actions.append(compare, gear);
+  row.append(actions);
 
   row.addEventListener("click", (event) => {
     if (event instanceof MouseEvent && event.ctrlKey) {
@@ -159,6 +163,25 @@ function versionRow(version, view) {
   });
   item.append(row);
   return item;
+}
+
+/**
+ * Make a span inside a row act as its own button, by mouse and keyboard, without opening the row.
+ * @param {HTMLElement} element
+ * @param {() => void} action
+ */
+function inRowButton(element, action) {
+  element.addEventListener("click", (event) => {
+    event.stopPropagation();
+    action();
+  });
+  element.addEventListener("keydown", (event) => {
+    if (event instanceof KeyboardEvent && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      event.stopPropagation();
+      action();
+    }
+  });
 }
 
 /**

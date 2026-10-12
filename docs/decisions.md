@@ -69,6 +69,14 @@ Asked for by the maintainer on 2026-10-12, after a Reddit user suggested patch n
 - **New things in short:** a new civ reads in a few lines (its kind, its unique and regional units and techs), a new unit in one line. Players see the stats and exact bonuses in the detailed changes or the tech tree.
 - **Not in it:** bug fixes, the developers' reasons, AI, map and interface changes: the game data doesn't hold them.
 
+### D-52 A version on its own: Decided
+Asked for by the maintainer on 2026-10-12: a new user with one capture has nothing to look at until the next patch. The maintainer chose the behaviour; the agent designed the rest under the autonomous workflow.
+- **Clicking a version opens its tech tree**, with the details panel on any tile. Comparing stays as it was: a row's **Compare** button, Ctrl+click, or **Compare with…**.
+- **The version details page** (rename, pre-release, notes, export, delete) moves behind a **gear button** on each row, next to Compare.
+- **A version alone is the version compared with itself.** The identical change set lists every civ and the stat icons (diff-rules.md, rule 4), so the tree, the civ list and the details panel need nothing new. It is remembered and reopened at launch like a comparison.
+- **Nothing to compare, so nothing marked:** no OLD/NEW, patch notes, change list, filters, export or tree legend. A line says how to compare, or that a second version is needed.
+- **Values** are the version's own, before civ bonuses and techs, as everywhere in the app.
+
 ### D-15 GUI in v1: Decided
 v1 ships a pywebview desktop GUI.
 
@@ -311,7 +319,7 @@ Chosen by the maintainer on 2026-09-15 after three rounds of mockups. Details: [
 ### D-32 One window with a version list: Decided
 The window has no navigation rail. A **version list** on the left replaces the separate Library, Capture and Compare screens.
 - **Top:** **Capture new version** and **Import**. **Bottom:** Diagnostics and Settings. The list can collapse to a narrow strip.
-- **Click a version** to open its details: rename, pre-release tickbox, notes, export, delete.
+- **Click a version** to open it on its own, in its tech tree (D-52). Its **gear button** opens its details: rename, pre-release tickbox, notes, export, delete.
 - **To compare two versions:**
   - hover another version and click its **Compare** button;
   - or Ctrl+click it;

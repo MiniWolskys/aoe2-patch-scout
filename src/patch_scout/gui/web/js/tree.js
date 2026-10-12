@@ -35,6 +35,7 @@ const MARKS = ["gained", "lost", "changed", "renamed"];
  *   civIcon: Record<string, any> | null,
  *   ageIcons?: Record<string, any>,
  *   fit: boolean,
+ *   marks?: boolean,
  *   onFit: () => void,
  *   onNode?: (node: Record<string, any>, tile: HTMLElement, shown: boolean) => void,
  *   onOpen?: (node: Record<string, any>) => void,
@@ -194,14 +195,17 @@ function header(view) {
   const { t } = view;
   const bar = el("div", { class: "tree__header" });
   bar.append(el("h1", { class: "page__title", text: t("tree.title", { civ: view.civName }) }));
-  const legend = el("ul", { class: "tree__legend" });
-  for (const mark of ["gained", "lost", "changed"]) {
-    const item = el("li", { class: `tree__legend-item mark-${mark}` });
-    item.append(el("span", { class: "tree__swatch", attrs: { "aria-hidden": "true" } }));
-    item.append(el("span", { text: t(`tree.legend.${mark}`) }));
-    legend.append(item);
+  // A version alone has nothing to mark (D-52): no legend.
+  if (view.marks !== false) {
+    const legend = el("ul", { class: "tree__legend" });
+    for (const mark of ["gained", "lost", "changed"]) {
+      const item = el("li", { class: `tree__legend-item mark-${mark}` });
+      item.append(el("span", { class: "tree__swatch", attrs: { "aria-hidden": "true" } }));
+      item.append(el("span", { text: t(`tree.legend.${mark}`) }));
+      legend.append(item);
+    }
+    bar.append(legend);
   }
-  bar.append(legend);
   const fit = el("button", {
     class: "button button--ghost",
     text: t("tree.fit"),

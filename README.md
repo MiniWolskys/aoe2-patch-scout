@@ -24,6 +24,7 @@ Content creators often get early builds (pre-release, PUP) before any patch note
   - text and icon changes.
 - **What matters first:** changes that matter to players are shown by default. Minor and technical ones (AI search ranges, interface plumbing, rounding) wait behind two filters, and a note says how many are hidden.
 - **Tech tree:** a civ's tree laid out like the game's, with what it gained, lost or had changed marked on it, and its bonuses on the side. Hover a unit or tech for the game's own tooltip, with changed values old → new.
+- **Look around before a patch:** click a version to see its tech tree on its own, with every unit's stats.
 - **Details:** click a unit, building or tech, in the tree or the change list, for all its stats in both versions and, for a civ, every bonus and technology that affects it.
 - **Export** as plain text (for video descriptions), a single HTML page, or 1920 × 1080 images for videos, with only the changes you chose to show.
 - **Patch notes** written like the official ones ("(Elite) Throwing Axeman range increased from 3 → 5, Elite 4 → 6", "Gain access to Treadmill Crane"), ready to paste into a video description, a Reddit post or Discord.
@@ -78,7 +79,7 @@ More detail in [docs/design/architecture.md](docs/design/architecture.md).
 
 **Where things are:** your versions, icons and the log live in `%LOCALAPPDATA%\PatchScout`. To uninstall, delete the extracted folder, and that data folder if you don't want to keep your versions.
 
-**Sharing a version:** open it and click **Export**. The other person clicks **Import**. Versions marked pre-release ask before they are exported.
+**Sharing a version:** click the gear next to it, then **Export**. The other person clicks **Import**. Versions marked pre-release ask before they are exported.
 
 ## Documentation
 
