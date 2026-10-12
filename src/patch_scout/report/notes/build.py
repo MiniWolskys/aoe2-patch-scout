@@ -190,8 +190,8 @@ def _holders_in_general(entries: Sequence[Entry]) -> tuple[list[Entry], dict[int
     The engine names the civs when a few have the object, and puts a copy of the change on each
     civ's page; the official notes say such a change once, in General (Lou Chuan, Armored
     Elephant, Fortified Church on 101.103.54800.0). Gaining access stays with each civ, as the
-    official notes write it, and one civ's own unit stays in its block. Returns the entries, the
-    first copy of each moved to General in its place, and each kept change's other copies.
+    official notes write it, and one civ's own unit stays in its block. Returns the entries, with
+    the first copy of each moved to General in name order, and each kept change's other copies.
     """
     kept: list[Entry] = []
     firsts: dict[tuple[object, ...], Entry] = {}
