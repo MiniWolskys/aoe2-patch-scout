@@ -30,6 +30,7 @@ const CATEGORIES = [
  *   changeSet: Record<string, any>,
  *   civ: string | null,
  *   treeMode?: boolean,
+ *   alone?: boolean,
  *   notesCounts?: Map<string | null, number> | null,
  *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, details: boolean,
  *     technical: boolean, search: string},
@@ -192,15 +193,18 @@ function renderCivList(view, changes) {
         view.t("comparison.chronicles"),
         inChronicles,
         () => view.onCiv(chronicles[0].internal_name),
-        // What waits behind the tab: NEW for a new civ, else its number of changes.
-        chronicles.some((civ) => civ.added)
-          ? el("span", { class: "tag tag--new", text: view.t("comparison.new_civ") })
-          : el("span", {
-              class: "civ-row__count num",
-              text: String(
-                chronicles.reduce((sum, civ) => sum + (counts.get(civ.internal_name) ?? 0), 0),
-              ),
-            }),
+        // What waits behind the tab: NEW for a new civ, else its number of changes. A version
+        // alone has no changes to count (D-52).
+        view.alone
+          ? undefined
+          : chronicles.some((civ) => civ.added)
+            ? el("span", { class: "tag tag--new", text: view.t("comparison.new_civ") })
+            : el("span", {
+                class: "civ-row__count num",
+                text: String(
+                  chronicles.reduce((sum, civ) => sum + (counts.get(civ.internal_name) ?? 0), 0),
+                ),
+              }),
       ),
     );
     list.append(tabs);
@@ -269,9 +273,10 @@ function civRow(view, civ) {
     row.append(image);
   }
   row.append(el("span", { class: "civ-row__name", text: civ.name }));
-  if (civ.added) {
+  // A version alone has nothing new and no changes to count (D-52).
+  if (civ.added && !view.alone) {
     row.append(el("span", { class: "tag tag--new", text: view.t("comparison.new_civ") }));
-  } else {
+  } else if (!view.alone) {
     row.append(el("span", { class: "civ-row__count num", text: String(civ.count) }));
   }
   row.addEventListener("click", () => view.onCiv(civ.internal_name));

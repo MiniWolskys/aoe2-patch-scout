@@ -35,6 +35,7 @@ async function start() {
    *   versions: import("./api.js").Version[],
    *   openId: string | null,
    *   comparison: {oldId: string, newId: string, changeSet: Record<string, any>,
+   *     alone: boolean,
    *     civ: string | null, view: "changes" | "tree" | "notes", treeCiv: string | null,
    *     from: "changes" | "notes",
    *     trees: Map<string, Record<string, any>>,
@@ -43,6 +44,7 @@ async function start() {
    *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, details: boolean,
    *     technical: boolean, search: string},
    *   view: string,
+   *   listView: "changes" | "notes",
    *   treeFit: boolean,
    * }} */
   const state = {
@@ -59,6 +61,8 @@ async function start() {
       search: "",
     },
     view: "first-launch",
+    // What a comparison opens on: the patch notes (D-51), or the changes once a reader chose them.
+    listView: "notes",
     treeFit: false,
   };
 
@@ -69,15 +73,22 @@ async function start() {
     }
   }
 
+  /** The version shown alone (D-52), if that is what is open. */
+  function aloneId() {
+    return state.comparison?.alone ? state.comparison.oldId : null;
+  }
+
   function drawVersionList() {
     renderVersions({
       t,
       versions: state.versions,
       capture: state.capture,
-      openId: state.openId,
-      comparison: state.comparison,
+      // A version alone is the open row, not a side of a comparison.
+      openId: state.openId ?? aloneId(),
+      comparison: state.comparison?.alone ? null : state.comparison,
       onOpen: (captureId) => void openVersion(captureId),
       onCompare: (captureId) => void compareWith(captureId),
+      onDetails: (captureId) => void openDetails(captureId),
       onOpenCapture: () => {
         if (state.capture !== null) {
           capture.showProgress(state.capture);
@@ -90,6 +101,7 @@ async function start() {
   async function refreshVersions() {
     state.versions = await api.get_versions();
     drawVersionList();
+    drawHint();
   }
 
   /** Add a version from an archive or the baseline pack (P-21), then open it. */
@@ -124,21 +136,35 @@ async function start() {
     dialogs.toast(t(result.added ? "import.added" : "import.already"));
   }
 
+  /**
+   * Open a version on its own: its tech tree (D-52). It is the version compared with itself.
+   * @param {string} captureId
+   */
   async function openVersion(captureId) {
+    await openComparison(captureId, captureId);
+  }
+
+  /**
+   * Open a version's details page, from its gear button (D-52).
+   * @param {string} captureId
+   */
+  async function openDetails(captureId) {
     state.openId = captureId;
-    await detailsView.show(captureId, state.comparison !== null);
+    const back = state.comparison === null ? null : state.comparison.alone ? "tree" : "comparison";
+    await detailsView.show(captureId, back);
     showView("details-view");
     drawVersionList();
   }
 
   /**
-   * Compare a version with whatever is open: the open version, or the newest other one.
+   * Compare a version with whatever is open: the open version, else the newest other one.
    * @param {string} captureId
    */
   async function compareWith(captureId) {
+    const open = state.openId ?? aloneId();
     const other =
-      state.openId !== null && state.openId !== captureId
-        ? state.openId
+      open !== null && open !== captureId
+        ? open
         : state.versions.find((version) => version.capture_id !== captureId)?.capture_id;
     if (other === undefined) {
       dialogs.toast(t("comparison.needs_two"));
@@ -153,12 +179,12 @@ async function start() {
   async function openComparison(firstId, secondId) {
     const request = ++comparisonRequest;
     const previous = state.view;
-    byId("comparing-title").textContent = t("comparison.loading");
     const label = (id) => state.versions.find((version) => version.capture_id === id)?.label ?? "";
-    byId("comparing-meta").textContent = t("comparison.loading_meta", {
-      first: label(firstId),
-      second: label(secondId),
-    });
+    const alone = firstId === secondId;
+    byId("comparing-title").textContent = t(alone ? "version.loading" : "comparison.loading");
+    byId("comparing-meta").textContent = alone
+      ? label(firstId)
+      : t("comparison.loading_meta", { first: label(firstId), second: label(secondId) });
     showView("comparing-view");
     let changeSet;
     try {
@@ -187,12 +213,17 @@ async function start() {
       oldId: changeSet.old.capture_id,
       newId: changeSet.new.capture_id,
       changeSet,
+      alone,
       civ: same?.civ ?? null,
-      // The patch notes come first (D-51); a reader who chose the detailed changes keeps them.
-      view: same?.view ?? (before?.view === "changes" ? "changes" : "notes"),
+      // A version alone shows its tree (D-52). A comparison opens on the patch notes (D-51); a
+      // reader who chose the detailed changes keeps them.
+      view: alone ? "tree" : (same?.view ?? state.listView),
       // Where the tree goes back to.
-      from: same?.from ?? (before?.view === "changes" ? "changes" : "notes"),
-      treeCiv: same?.treeCiv ?? null,
+      from: same?.from ?? state.listView,
+      // Going from one version alone to another keeps the civ on screen.
+      treeCiv:
+        same?.treeCiv ??
+        (alone ? ((before?.alone ? before.treeCiv : null) ?? firstCiv(changeSet, false)) : null),
       // The tree and the patch notes ignore unreachable units, so what was drawn still holds.
       trees: same?.trees ?? new Map(),
       notes: same?.notes ?? null,
@@ -210,12 +241,14 @@ async function start() {
     }
     const inTree = current.view === "tree";
     const inNotes = current.view === "notes";
+    const alone = current.alone;
     comparison.render({
       t,
       changeSet: current.changeSet,
       // The tree and the changes share one civ list (D-39): the tree shows the civ chosen last.
       civ: inTree ? current.treeCiv : current.civ,
       treeMode: inTree,
+      alone,
       // The patch notes list their own civs, once they are written.
       notesCounts: inNotes && current.notes !== null ? notesCounts(current.notes) : null,
       filters: state.filters,
@@ -236,8 +269,15 @@ async function start() {
     show(byId("notes-view"), inNotes);
     show(byId("comparison-export"), !inTree);
     // The patch notes don't follow the filters (D-51): neither the filters nor their notices show.
-    show(byId("comparison-filters"), !inNotes);
-    if (inNotes) {
+    show(byId("comparison-filters"), !inNotes && !alone);
+    // A version alone (D-52): its name in the header, a way to compare, and nothing else.
+    byId("comparison-view").toggleAttribute("data-alone", alone);
+    for (const id of ["picker-old", "comparison-swap", "comparison-tree", "comparison-notes"]) {
+      show(byId(id), !alone);
+    }
+    show(byId("version-compare"), alone);
+    drawHint();
+    if (inNotes || alone) {
       show(byId("filters-panel"), false);
       byId("comparison-filters").setAttribute("aria-expanded", "false");
       show(byId("comparison-notice"), false);
@@ -257,6 +297,13 @@ async function start() {
     if (inNotes) {
       void drawNotes();
     }
+  }
+
+  /** How to compare, under a version alone: with another version, or after getting one. */
+  function drawHint() {
+    const hint = byId("version-hint");
+    show(hint, state.comparison?.alone === true);
+    hint.textContent = t(state.versions.length > 1 ? "version.hint" : "version.hint_one");
   }
 
   /**
@@ -319,6 +366,7 @@ async function start() {
     }
     current.view = current.view === "notes" ? "changes" : "notes";
     current.from = current.view;
+    state.listView = current.view;
     drawComparison();
   }
 
@@ -425,6 +473,12 @@ async function start() {
         return; // another civ or comparison was asked for meanwhile
       }
       if (answer === null) {
+        if (current.alone) {
+          // A version alone has no change list to go back to: say so in place.
+          clear(container);
+          container.append(el("p", { class: "help", text: t("tree.failed_alone") }));
+          return;
+        }
         dialogs.toast(t("tree.failed"));
         current.view = "changes";
         drawComparison();
@@ -455,6 +509,7 @@ async function start() {
       // The age shields travel with the stat icons, and were fetched with the comparison.
       ageIcons: current.changeSet.stat_icons ?? {},
       fit: state.treeFit,
+      marks: !current.alone,
       onFit: () => {
         state.treeFit = !state.treeFit;
         void drawTree();
@@ -542,14 +597,19 @@ async function start() {
       state.openId = null;
       state.comparison = null;
       await refreshVersions();
-      showView(state.versions.length === 0 ? "first-launch" : "details-view");
-      if (state.versions.length > 0) {
+      if (state.versions.length === 0) {
+        showView("first-launch");
+      } else {
         await openVersion(state.versions[0].capture_id);
       }
     },
     onCompare: (captureId) => picker.open(captureId),
     onDiagnostics: (captureId) => void diagnostics.open(captureId),
-    onBack: () => showView("comparison-view"),
+    onBack: () => {
+      state.openId = null;
+      showView("comparison-view");
+      drawVersionList();
+    },
   });
 
   const picker = initPicker({
@@ -613,10 +673,16 @@ async function start() {
   onClick("import-button", () => void importVersion());
   onClick("first-launch-import", () => void importVersion());
   onClick("settings-button", () => void settings.open());
-  onClick("diagnostics-button", () => void diagnostics.open(state.openId));
+  onClick("diagnostics-button", () => void diagnostics.open(state.openId ?? aloneId()));
   onClick("comparison-export", () => void exporter.open());
   onClick("comparison-tree", toggleTree);
   onClick("comparison-notes", toggleNotes);
+  onClick("version-compare", () => {
+    const captureId = aloneId();
+    if (captureId !== null) {
+      picker.open(captureId);
+    }
+  });
   onClick("comparison-swap", () => {
     if (state.comparison !== null) {
       void openComparison(state.comparison.newId, state.comparison.oldId);

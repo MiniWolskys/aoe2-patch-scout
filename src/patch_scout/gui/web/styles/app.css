@@ -403,7 +403,7 @@ body[data-failed] > :not(.startup-error, script) {
   font-weight: 400;
 }
 
-/* Version rows: the Compare button replaces the marks on hover (ui.md) */
+/* Version rows: the Compare and details buttons replace the marks on hover (ui.md) */
 
 .version-list__rows {
   display: flex;
@@ -441,17 +441,29 @@ body[data-failed] > :not(.startup-error, script) {
   color: var(--warn);
 }
 
-.version-row__compare {
+.version-row__actions {
   display: none;
   position: absolute;
   top: 50%;
   right: 10px;
+  align-items: center;
+  gap: 4px;
   transform: translateY(-50%);
 }
 
-.version-row:hover .version-row__compare,
-.version-row:focus-within .version-row__compare {
+.version-row:hover .version-row__actions,
+.version-row:focus-within .version-row__actions {
   display: inline-flex;
+}
+
+.version-row__details {
+  width: var(--control-height-sm);
+  padding: 0;
+}
+
+.version-row__details .icon {
+  width: 16px;
+  height: 16px;
 }
 
 .version-row:hover .version-row__marks,
@@ -1562,4 +1574,19 @@ body[data-failed] > :not(.startup-error, script) {
   min-height: 120px;
   max-height: 260px;
   resize: vertical;
+}
+
+/* A version alone (D-52): one version in the header, and how to compare */
+
+.comparison[data-alone] #picker-new .legend-dot,
+.comparison[data-alone] #picker-new .tag {
+  display: none;
+}
+
+.version-hint {
+  margin: 0;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--line-subtle);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
 }
