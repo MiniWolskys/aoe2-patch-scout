@@ -65,12 +65,13 @@ class Draft:
     scope: str = ""
     fields: list[Field] = field(default_factory=list)
     children: list[Child] = field(default_factory=list)
-    # A "line" draft's sentence, written already; for "affects" and "no_longer", what every target
-    # gets when they all get the same; for a new unit, where it is trained; for a new tech, what
-    # it does.
+    # A "line" draft's sentence, written already; for a new unit, where it is trained; for a new
+    # tech, what it does.
     text: str = ""
     # An "affects" draft's targets, after pairing: what the sentence names.
     targets: list[str] = field(default_factory=list)
+    # Said by an effect (a tech's or bonus's): a changed civ description may say it already.
+    effect: bool = False
 
 
 def pair(drafts: list[Draft], words: Words) -> list[Draft]:
@@ -215,14 +216,9 @@ def render(draft: Draft, words: Words) -> Item:
         return Item(words.text("notes.new_bare", subject=subjects, scope=draft.scope))
     if draft.form in ("affects", "no_longer"):
         key = "notes.affects" if draft.form == "affects" else "notes.no_longer_affects"
-        # Every target given the same: one line, with what they get ("…: +1 armour.").
-        key += "_all" if draft.text else ""
         key += "_many" if len(draft.subjects) > 1 else ""
         targets = words.listed(draft.targets)
-        text = words.text(
-            key, subjects=subjects, targets=targets, parts=draft.text, scope=draft.scope
-        )
-        return Item(text, children)
+        return Item(words.text(key, subjects=subjects, targets=targets, scope=draft.scope))
     return Item(draft.text, children)
 
 

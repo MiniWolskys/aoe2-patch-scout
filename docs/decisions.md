@@ -61,10 +61,11 @@ Asked for by the maintainer on 2026-10-12, after a Reddit user suggested patch n
 - **What:** the comparison written the way the official patch notes are: "(Elite) Throwing Axeman range increased from 3 → 5, Elite 4 → 6", "Gain access to Treadmill Crane", "NEW: Ordonnance Companies:" with what it does and costs. Rules in [diff-rules.md](design/diff-rules.md#patch-notes-d-51).
 - **For:** reading in the app (e.g. on stream) and pasting into a video description, a Reddit post or Discord, equally.
 - **Structure:** like the official notes: General, then one block per civ with its crest, Chronicles apart; a change shared by several civs is repeated in each block.
-- **A curated summary:** headline changes of named objects, whatever the filters say. The comparison stays the reference: what the notes can't write as a clean sentence is counted in a closing line that says so, never guessed (rule 4). Techs known only by their internal name are kept in their own group.
+- **A curated summary:** headline changes of named objects, whatever the filters say. The comparison stays the reference: what the notes can't write as a clean sentence is counted in a closing line that says so, never guessed (rule 4). Techs known only by their internal name are left out: plumbing players never see (maintainer, 2026-10-12).
 - **Words, not judgements:** "increased"/"decreased" state a number's direction only (D-34); multipliers read as percentages, as in the official notes.
 - **Format:** light Markdown (P-13, amended), copied or saved as `.txt`.
 - **In the app:** the comparison's first screen, with the detailed changes and the tech tree a click away ([ui.md](design/ui.md#patch-notes-d-51)). Chosen by the maintainer on 2026-10-12, with the next point.
+- **No repeats, no details players know:** a civ's changed description isn't repeated by the effects of its bonuses; a tech that now affects more units names them, not what it gives them (players know what Bodkin Arrow does). Maintainer, 2026-10-12.
 - **New things in short:** a new civ reads in a few lines (its kind, its unique and regional units and techs), a new unit in one line. Players see the stats and exact bonuses in the detailed changes or the tech tree.
 - **Not in it:** bug fixes, the developers' reasons, AI, map and interface changes: the game data doesn't hold them.
 

@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Classes, buildings and techs named in unit and tech changes (game-files.md §11)."""
 
+import pytest
 from support.snapshots import make_snapshot
 
 from patch_scout.diff import compare
 from patch_scout.diff.model import Change, ChangeSet
+from patch_scout.diff.names import Names
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
 
 SWORDSMAN = 77
@@ -184,3 +186,20 @@ def test_required_techs_are_separated_so_names_with_commas_stay_whole() -> None:
     changes = _compare(required=[FEUDAL, CASTLE]).changes
     [change] = [c for c in changes if c.entity.name == "Crossbowman"]
     assert change.new == "Feudal Age; Castle Age"
+
+
+@pytest.mark.parametrize(
+    ("internal", "shown"),
+    [
+        ("C-Bonus, Inf Cav +1 armor Age3", "Civ bonus: Inf Cav +1 armor Castle Age"),
+        ("Upgrade Eagle in Age3", "Upgrade Eagle in Castle Age"),
+        ("Flemish Militia Age4", "Flemish Militia Imperial Age"),
+        ("Age1 bonus", "Dark Age bonus"),
+        ("Feudal Age 2", "Feudal Age 2"),  # not the developers' shorthand: kept as written
+        ("Page3", "Page3"),
+    ],
+)
+def test_the_developers_age_numbers_read_as_ages(internal: str, shown: str) -> None:
+    # "Age3" in internal names is the Castle Age (maintainer, 2026-10-12).
+
+    assert Names(make_snapshot()).internal_name(internal) == shown

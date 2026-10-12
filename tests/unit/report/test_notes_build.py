@@ -401,11 +401,11 @@ def test_techs_that_give_the_same_to_new_units_are_one_sentence(catalog: Catalog
     ]
 
     assert lines(notes(catalog, *changes)) == [
-        "Bodkin Arrow and Bracer now affect Leif Erikson and Dreki: +1 pierce attack."
+        "Bodkin Arrow and Bracer now affect Leif Erikson and Dreki."
     ]
 
 
-def test_targets_given_different_things_get_a_bullet_each(catalog: Catalog) -> None:
+def test_what_a_tech_gives_each_target_is_left_to_the_details(catalog: Catalog) -> None:
     bodkin = tech("Bodkin Arrow")
     changes = [
         effect(bodkin, "Hearth Troop", "Line Of Sight", "", "+1"),
@@ -414,17 +414,16 @@ def test_targets_given_different_things_get_a_bullet_each(catalog: Catalog) -> N
         effect(bodkin, "Dreki", "Max Range", "", "+1"),
     ]
 
+    # Players know what Bodkin Arrow does: the notes say whom it now affects.
     assert lines(notes(catalog, *changes)) == [
-        "Bodkin Arrow now affects (Elite) Hearth Troop and Dreki:",
-        "  (Elite) Hearth Troop: +1 line of sight",
-        "  Dreki: +1 line of sight, +1 max range",
+        "Bodkin Arrow now affects (Elite) Hearth Troop and Dreki."
     ]
 
 
 def test_what_an_effect_gives_no_longer_says_so(catalog: Catalog) -> None:
     change = effect(tech("Logistica"), "Cataphract", "Attack", "+6", "")
 
-    assert lines(notes(catalog, change)) == ["Logistica no longer affects Cataphract: +6 attack."]
+    assert lines(notes(catalog, change)) == ["Logistica no longer affects Cataphract."]
 
 
 def test_a_command_that_only_moved_says_nothing(catalog: Catalog) -> None:
@@ -657,10 +656,14 @@ def test_one_change_left_out_reads_in_the_singular(catalog: Catalog) -> None:
     assert result.closing is not None and result.closing.startswith("1 more change isn't")
 
 
-def test_techs_known_only_by_their_internal_name_are_grouped_apart(catalog: Catalog) -> None:
+def test_techs_known_only_by_their_internal_name_are_left_out(catalog: Catalog) -> None:
+    # Plumbing players never see (maintainer, 2026-10-12): counted, never written.
     change = cost(tech("Disable Regionals", internal=True), "food", "1", "", category="techs")
 
-    assert list(groups(notes(catalog, change))) == ["General/Techs with no name in the game"]
+    result = notes(catalog, change)
+
+    assert result.sections == ()
+    assert result.closing is not None and result.closing.startswith("1 more change")
 
 
 # --- header -------------------------------------------------------------------------------------
@@ -766,7 +769,7 @@ def test_every_kind_of_sentence_names_the_civs_that_dont_share_it(catalog: Catal
     assert lines(notes(catalog, gained, gone, given)) == [
         "Gain access to Treadmill Crane (except Franks).",
         "Bearded Axe removed (except Franks).",
-        "Gambesons now affects Dreki (except Franks): +1 pierce armour.",
+        "Gambesons now affects Dreki (except Franks).",
     ]
 
 
@@ -825,3 +828,42 @@ def test_what_a_new_tech_doesnt_say_is_counted(catalog: Catalog) -> None:
 
     assert lines(result) == ["NEW: Hamask."]
     assert result.closing is not None and result.closing.startswith("1 more change")
+
+
+def test_a_description_line_that_only_changed_punctuation_says_nothing(catalog: Catalog) -> None:
+    # Mapuche on 101.103.54800.0: "Slingers and" became "Slingers, and".
+    old = "• Malon (Bolas Riders, Slingers and Skirmishers deal pass through damage)"
+    new = "• Malon (Bolas Riders, Slingers, and Skirmishers deal pass through damage)"
+
+    result = notes(catalog, _description(old, new))
+
+    assert lines(result) == []
+    assert result.closing is None
+
+
+def test_a_changed_description_isnt_repeated_by_its_bonus_effects(catalog: Catalog) -> None:
+    # Teutons on 101.103.54800.0: the description says it; its bonuses' effects said it again.
+    teutons = {"scope": Scope("some", ("Franks",)), "civ": "Franks"}
+    bonus = tech("Civ bonus: Inf Cav +1 armor Castle Age", "1")
+    tactics = tech("Wagenburg Tactics", "2")
+    shields = tech("Fabric Shields", "3")
+    changes = [
+        _description(
+            "• Barracks units +1 armor", "• Infantry +1 armor\n• Wagenburg Tactics (+10%)"
+        ),
+        effect(bonus, "Infantry class", "Melee armour", "", "+1", **teutons),
+        effect(
+            tactics, "Hand Cannoneer", "Movement Speed", f"{TIMES}1.15", f"{TIMES}1.1", **teutons
+        ),
+        effect(shields, "Kamayuk", "Pierce armour", "", "+1", **teutons),
+    ]
+
+    result = notes(catalog, *changes)
+
+    # Fabric Shields isn't in the description: it stays.
+    assert lines(result) == [
+        "Barracks units → Infantry +1 armor",
+        "New: Wagenburg Tactics (+10%)",
+        "Fabric Shields now affects Kamayuk.",
+    ]
+    assert result.closing is not None and result.closing.startswith("2 more changes")

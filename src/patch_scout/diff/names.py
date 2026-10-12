@@ -25,6 +25,9 @@ _LINE_BREAK: Final = "\\n"
 # (345 civ bonuses and 1 team bonus on 101.103.54800.0), and the catalog message that says it.
 _BONUS_PREFIX: Final = re.compile(r"^([CT])-Bonus\s*[,:]\s*(?P<name>\S.*)$", re.IGNORECASE)
 _BONUS_MESSAGES: Final = {"C": "name.civ_bonus", "T": "name.team_bonus"}
+# The developers' shorthand for an age in internal names, "Age3" (Castle Age); 1 to 4 are the
+# ages of game-files.md §5. "Age 3" with a space, or "Page3", are left as written.
+_AGE_NUMBER: Final = re.compile(r"\bAge([1-4])\b")
 
 
 class Names:
@@ -117,6 +120,8 @@ class Names:
 
         Only the prefix is spelled out; the rest is the developers' own wording, kept as is.
         """
+        # The developers number the ages: "Inf Cav +1 armor Age3" is the Castle Age.
+        name = _AGE_NUMBER.sub(lambda age: self._catalog.text(f"tree.age.{age.group(1)}"), name)
         match = _BONUS_PREFIX.match(name)
         if match is None:
             return name

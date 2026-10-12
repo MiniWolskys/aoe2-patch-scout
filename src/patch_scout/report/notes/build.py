@@ -42,8 +42,7 @@ _BULLET: Final = "\N{BULLET}"
 _CHRONICLES: Final = "antiquity"
 
 # Where each kind of sentence goes in a civ's block, as in the official notes: what the civ is,
-# its description, its bonuses, then units, techs, what it gains, then what it loses. Techs known
-# only by their developers' name come last: they are plumbing.
+# its description, its bonuses, then units, techs, what it gains, then what it loses.
 _RANKS: Final = {
     "civilizations": 0,
     "bonuses": 2,
@@ -55,7 +54,6 @@ _RANKS: Final = {
 _DESCRIPTION_RANK: Final = 1
 _LOSS_RANK: Final = 6
 _OTHER_RANK: Final = 8
-_INTERNAL_RANK: Final = 9
 
 type Access = Literal["gain", "lose"]
 
@@ -131,8 +129,12 @@ def _closing(left_out: int, words: Words) -> str | None:
 
 
 def _curated(entry: Entry, words: Words) -> Entry | None:
-    """The entry with only what the notes can say; None when nothing is left."""
-    if entry.low_priority or not entry.entity.named:
+    """The entry with only what the notes can say; None when nothing is left.
+
+    Techs known only by their developers' name are plumbing players never see (maintainer,
+    2026-10-12): they are counted, never written.
+    """
+    if entry.low_priority or not entry.entity.named or entry.entity.internal:
         return None
     changes = tuple(change for change in entry.changes if _sayable(change, words))
     if not changes:
@@ -155,21 +157,15 @@ def _sayable(change: Change, words: Words) -> bool:
 
 
 def _general(kept: Sequence[Entry], context: _Context, used: set[int]) -> Section | None:
-    """Changes to every civ: one group per category, then the techs with no name in the game."""
+    """Changes to every civ: one group per category."""
     words = context.words
     overall = [entry for entry in kept if entry.civ is None]
     groups: list[Group] = []
     for category in CATEGORIES:
-        mine = [
-            entry for entry in overall if entry.category == category and not entry.entity.internal
-        ]
+        mine = [entry for entry in overall if entry.category == category]
         items = _items(mine, context, used, civ=None)
         if items:
             groups.append(Group(words.text(f"category.{category}"), items))
-    internal = [entry for entry in overall if entry.entity.internal]
-    items = _items(internal, context, used, civ=None)
-    if items:
-        groups.append(Group(words.text("notes.group.internal"), items))
     if not groups:
         return None
     return Section("general", words.text("notes.section.general"), tuple(groups))
@@ -252,6 +248,8 @@ def _items(
     for entry in entries:
         drafts += _drafts(entry, context, civ)
     drafts = _without_gains_said_by_new(drafts)
+    if civ is not None:
+        drafts = _without_repeats(drafts, civ, context.words)
     drafts = drafting.merge(drafting.pair(drafts, context.words), context.words)
     if civ is not None:
         drafts = drafting.ordered(drafts)
@@ -260,6 +258,31 @@ def _items(
     return tuple(
         drafting.render(draft, context.words) for draft in drafts if draft.form != "silent"
     )
+
+
+def _without_repeats(drafts: list[Draft], civ: CivRef, words: Words) -> list[Draft]:
+    """Leave out effect lines a civ's changed description already says, in the game's words.
+
+    Teutons on 101.103.54800.0: "Infantry and Mounted Units +1/+2 melee armor" in the description,
+    then twice more as what their bonus techs affect. The effects of the civ's bonuses (its own
+    entity, and techs named "Civ bonus: …" or "Team bonus: …") and of a tech the changed lines
+    name ("Wagenburg Tactics (…)") are left out; the closing line counts them, and the detailed
+    changes list them. A civ whose description didn't change keeps them.
+    """
+    said = [draft.text for draft in drafts if draft.rank == _DESCRIPTION_RANK and draft.text]
+    if not said:
+        return drafts
+    bonuses = tuple(words.text(key, name="") for key in ("name.civ_bonus", "name.team_bonus"))
+
+    def repeats(draft: Draft) -> bool:
+        subject = draft.subjects[0]
+        return (
+            subject == civ.name
+            or subject.startswith(bonuses)
+            or any(subject in line for line in said)
+        )
+
+    return [draft for draft in drafts if not (draft.effect and repeats(draft))]
 
 
 def _without_gains_said_by_new(drafts: list[Draft]) -> list[Draft]:
@@ -279,7 +302,7 @@ def _without_gains_said_by_new(drafts: list[Draft]) -> list[Draft]:
 
 
 def _drafts(entry: Entry, context: _Context, civ: CivRef | None) -> list[Draft]:
-    rank = _INTERNAL_RANK if entry.entity.internal else _RANKS.get(entry.category, _OTHER_RANK)
+    rank = _RANKS.get(entry.category, _OTHER_RANK)
     subject = _subject(entry, context)
     scope = _scope(entry, context)
     if entry.category == "civilizations":
@@ -558,7 +581,9 @@ def _effects(
         label = words.text("notes.effect_target", target=named, attribute=attribute)
         fields.append(Field(label, old, new))
     if fields:
-        drafts.append(Draft("effect", rank, [subject], moved_changes, scope=scope, fields=fields))
+        drafts.append(
+            Draft("effect", rank, [subject], moved_changes, scope=scope, fields=fields, effect=True)
+        )
     for found, one, several in (
         (came, "notes.effect_new", "notes.effects_new"),
         (went, "notes.effect_gone", "notes.effects_gone"),
@@ -576,25 +601,13 @@ def _given(
     subject: str,
     scope: str,
 ) -> Draft:
-    """What an effect now gives, or no longer gives, its targets.
+    """Whom an effect now affects, or no longer affects: "Bodkin Arrow now affects Dreki."
 
-    One line when every target gets the same ("X now affects A and B: +1 armour."), otherwise one
-    bullet per group of targets that get the same ("A and B: +1 armour").
+    Not what it gives them: players know what Bodkin Arrow does (maintainer, 2026-10-12), and the
+    detailed changes have the values. Names pair as usual: "(Elite) Hearth Troop".
     """
-    targets = _paired(given.parts, words)
-    groups: dict[tuple[str, ...], list[str]] = {}
-    for name, parts in targets:
-        groups.setdefault(tuple(parts), []).append(name)
-    names = [name for name, _ in targets]
-    if len(groups) == 1:
-        [shared] = groups
-        text = ", ".join(shared)
-        return Draft(form, rank, [subject], given.used(), scope=scope, targets=names, text=text)
-    children = [
-        Child(words.text("notes.target", target=words.listed(group), parts=", ".join(parts)))
-        for parts, group in groups.items()
-    ]
-    return Draft(form, rank, [subject], given.used(), scope=scope, targets=names, children=children)
+    names = [name for name, _ in _paired({name: [] for name in given.parts}, words)]
+    return Draft(form, rank, [subject], given.used(), scope=scope, targets=names, effect=True)
 
 
 def _valueless(
@@ -604,10 +617,10 @@ def _valueless(
     effects = [words.value(change.field.args.get("effect")) for change in changes if change.field]
     if len(effects) == 1:
         text = words.text(one, subjects=subject, effect=effects[0])
-        return Draft("line", rank, [subject], changes, text=text)
+        return Draft("line", rank, [subject], changes, text=text, effect=True)
     text = words.text(several, subjects=subject)
     children = [Child(effect) for effect in effects]
-    return Draft("line", rank, [subject], changes, text=text, children=children)
+    return Draft("line", rank, [subject], changes, text=text, children=children, effect=True)
 
 
 def _cancel(gained: _Given, lost: _Given) -> list[Change]:
@@ -736,6 +749,10 @@ def _description(change: Change, context: _Context, subject: str) -> list[Draft]
         before, after = old_lines[i1:i2], new_lines[j1:j2]
         paired = min(len(before), len(after)) if tag == "replace" else 0
         for (heading, old), (_, new) in zip(before[:paired], after[:paired], strict=True):
+            if _plain(old) == _plain(new):
+                # Only punctuation or capitals changed: an arrow would read as a change of
+                # meaning (Mapuche on 101.103.54800.0, "Slingers and" → "Slingers, and").
+                continue
             texts.append(_in(heading, _compact(old, new, words), "notes.line_in", words))
         for heading, line in before[paired:]:
             texts.append(_in(heading, line, "notes.line_removed", words))
@@ -795,6 +812,11 @@ def _lines(text: str) -> list[str]:
     """A description's lines, without their bullets and spacing; empty lines dropped."""
     lines = (line.strip().removeprefix(_BULLET).strip() for line in text.split("\n"))
     return [line for line in lines if line]
+
+
+def _plain(line: str) -> str:
+    """A line's letters and digits only, lowered: equal for two lines that differ in punctuation."""
+    return "".join(char.lower() for char in line if char.isalnum())
 
 
 def _squeezed(lines: Sequence[str]) -> str:
