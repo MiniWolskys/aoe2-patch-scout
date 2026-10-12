@@ -867,3 +867,53 @@ def test_a_changed_description_isnt_repeated_by_its_bonus_effects(catalog: Catal
         "Fabric Shields now affects Kamayuk.",
     ]
     assert result.closing is not None and result.closing.startswith("2 more changes")
+
+
+def _tech_cost_effect(owner: Entity, target: str, old: str, new: str, **overrides: Any) -> Change:
+    """A bonus setting a tech's food cost, as `diff.effects` writes it."""
+    sentence = Message("effect.tech_resource_cost", {"tech": target, "resource": "Food"})
+    return effect(owner, "", "", old, new, field=sentence, **overrides)
+
+
+def test_an_effect_on_a_techs_cost_keeps_its_numbers(catalog: Catalog) -> None:
+    # "Incas no longer affects Team bonus: …" read as if the Incas lost their team bonus.
+    incas = Entity("civ", "Inca", "Incas")
+    owned: dict[str, Any] = {"scope": Scope("some", ("Franks",)), "civ": "Franks"}
+    change = _tech_cost_effect(incas, "Team bonus: Start w/ Llama", "=0", "", **owned)
+
+    assert lines(notes(catalog, change)) == [
+        "Incas: Team bonus: Start w/ Llama food cost removed (was 0)."
+    ]
+
+
+def test_a_free_tech_effect_gone_with_the_techs_cost_says_nothing(catalog: Catalog) -> None:
+    # Incas, Berbers and Italians on 101.103.54800.0: a tech cost 1 food and a civ's effect made
+    # it free; the patch dropped both, so the civ still gets it for nothing.
+    llama = tech("Team bonus: Start w/ Llama", "730")
+    incas = Entity("civ", "Inca", "Incas")
+    owned: dict[str, Any] = {"scope": Scope("some", ("Franks",)), "civ": "Franks"}
+    changes = [
+        cost(llama, "food", "1", "", category="techs"),
+        _tech_cost_effect(incas, "Team bonus: Start w/ Llama", "=0", "", **owned),
+    ]
+
+    result = notes(catalog, *changes)
+
+    assert lines(result) == []
+    # The tech's own cost is left to the detailed changes: no other civ is known not to pay it.
+    assert result.closing is not None and result.closing.startswith("1 more change")
+
+
+def test_a_tech_cost_effect_with_no_matching_cost_change_stays(catalog: Catalog) -> None:
+    llama = tech("Team bonus: Start w/ Llama", "730")
+    incas = Entity("civ", "Inca", "Incas")
+    owned: dict[str, Any] = {"scope": Scope("some", ("Franks",)), "civ": "Franks"}
+    changes = [
+        cost(llama, "gold", "1", "", category="techs"),  # another resource
+        _tech_cost_effect(incas, "Team bonus: Start w/ Llama", "=0", "", **owned),
+    ]
+
+    assert lines(notes(catalog, *changes)) == [
+        "Team bonus: Start w/ Llama cost in gold removed (was 1).",
+        "Incas: Team bonus: Start w/ Llama food cost removed (was 0).",
+    ]

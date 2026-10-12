@@ -92,10 +92,14 @@ def build(change_set: ChangeSet, catalog: Catalog) -> Notes:
             if entry.category == "unit_stats" and entry.entity.kind == "unit"
         },
     )
+    redundant, explained = _free_made_redundant(change_set.entries, words)
     kept = [
-        curated for entry in change_set.entries if (curated := _curated(entry, words)) is not None
+        curated
+        for entry in change_set.entries
+        if (curated := _curated(entry, words, redundant | explained)) is not None
     ]
-    used: set[int] = set()
+    # Changes that cancel out for players count as said.
+    used: set[int] = set(redundant)
     sections = [
         section
         for section in (
@@ -128,7 +132,48 @@ def _closing(left_out: int, words: Words) -> str | None:
     return words.text("notes.closing", count=left_out)
 
 
-def _curated(entry: Entry, words: Words) -> Entry | None:
+def _free_made_redundant(entries: Iterable[Entry], words: Words) -> tuple[set[int], set[int]]:
+    """Effects that made a tech free, gone along with the tech's own cost: nothing changed.
+
+    A tech cost 1 food, and a civ's effect set that cost to 0; the patch drops both, so the civ
+    still gets the tech for nothing (Incas' "Team bonus: Start w/ Llama", Berbers' Genitour and
+    Italians' Condottiero on 101.103.54800.0). Matched by tech name and resource, whatever the
+    tech. Returns the effects' changes, which count as said, and the techs' cost changes, which
+    are left to the detailed changes and counted: no other civ is known not to have paid them.
+    """
+    lost_costs: dict[tuple[str, str], list[Change]] = {}
+    for entry in entries:
+        if entry.category != "techs":
+            continue
+        for change in entry.changes:
+            field = change.field
+            if field is not None and field.key == "field.cost" and change.old and not change.new:
+                resource = words.value(field.args.get("resource")).casefold()
+                lost_costs.setdefault((entry.entity.name, resource), []).append(change)
+    redundant: set[int] = set()
+    explained: set[int] = set()
+    for entry in entries:
+        for change in entry.changes:
+            field = change.field
+            old = change.old or ""
+            if (
+                field is None
+                or field.key != "effect.tech_resource_cost"
+                or change.new
+                or not old.startswith("=")
+                or shown(old) != "0"
+            ):
+                continue
+            tech = words.value(field.args.get("tech"))
+            resource = words.value(field.args.get("resource")).casefold()
+            matched = lost_costs.get((tech, resource))
+            if matched:
+                redundant.add(id(change))
+                explained.update(id(cost) for cost in matched)
+    return redundant, explained
+
+
+def _curated(entry: Entry, words: Words, dropped: set[int]) -> Entry | None:
     """The entry with only what the notes can say; None when nothing is left.
 
     Techs known only by their developers' name are plumbing players never see (maintainer,
@@ -136,7 +181,9 @@ def _curated(entry: Entry, words: Words) -> Entry | None:
     """
     if entry.low_priority or not entry.entity.named or entry.entity.internal:
         return None
-    changes = tuple(change for change in entry.changes if _sayable(change, words))
+    changes = tuple(
+        change for change in entry.changes if id(change) not in dropped and _sayable(change, words)
+    )
     if not changes:
         return None
     return entry if len(changes) == len(entry.changes) else replace(entry, changes=changes)
@@ -554,10 +601,14 @@ def _effects(
             continue
         old, new = change.old or "", change.new or ""
         aimed = _target_attribute(change.field, words)
-        if aimed is not None and bool(old) != bool(new):
+        # "X now affects Archer" says enough for a unit; for a tech's cost or research time it
+        # would read as if the tech itself came or went ("Incas no longer affects Team bonus:
+        # Start w/ Llama"), so those keep their numbers, as a clause.
+        on_unit = change.field.key == "effect.attribute"
+        if aimed is not None and on_unit and bool(old) != bool(new):
             target, attribute = aimed
             (gained if new else lost).add(target, _part(attribute, new or old, words), change)
-        elif aimed is not None and old and new:
+        elif aimed is not None:
             target, attribute = aimed
             moved.setdefault((attribute, old, new), []).append(target)
             moved_changes.append(change)
