@@ -24,7 +24,7 @@ from patch_scout.entity import details as entity_details
 from patch_scout.errors import PatchScoutError
 from patch_scout.gui.logs import RecentProblems
 from patch_scout.i18n.catalog import Catalog
-from patch_scout.report import Filters, render_html, render_text
+from patch_scout.report import Filters, notes, render_html, render_text
 from patch_scout.report.present import present
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
 from patch_scout.store import (
@@ -408,6 +408,28 @@ class Api:
                 Path(chosen).write_text(content, encoding="utf-8")
             except OSError as exc:
                 return _not_saved("save_export", chosen, exc)
+            return {"saved": True, "path": chosen}
+
+    def get_patch_notes(self, old_id: str, new_id: str) -> JsonObject:
+        """The comparison written as patch notes: the document the page draws, and its text.
+
+        The notes have a fixed meaning and don't follow the comparison's filters (D-51).
+        """
+        with _Guard("get_patch_notes"):
+            document = notes.build(self._for_export(old_id, new_id), self._catalog)
+            return document.to_json() | {"text": notes.render(document)}
+
+    def save_patch_notes(self, old_id: str, new_id: str, path: str | None = None) -> JsonObject:
+        """Write the patch notes' text where the user chooses; asks where unless `path`."""
+        with _Guard("save_patch_notes"):
+            document = notes.build(self._for_export(old_id, new_id), self._catalog)
+            chosen = path or self._ask_where_to_save("patch-notes.txt", ".txt")
+            if chosen is None:
+                return {"saved": False}
+            try:
+                Path(chosen).write_text(notes.render(document), encoding="utf-8")
+            except OSError as exc:
+                return _not_saved("save_patch_notes", chosen, exc)
             return {"saved": True, "path": chosen}
 
     def save_images(self, images: Sequence[str], name: str, path: str | None = None) -> JsonObject:

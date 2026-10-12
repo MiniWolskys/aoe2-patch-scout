@@ -118,7 +118,9 @@ def test_an_import_that_cant_be_written_says_why(
     assert other.import_version(str(path)) == {"imported": False, "error": "write_failed"}
 
 
-@pytest.mark.parametrize("method", ["export_version", "save_export", "save_images"])
+@pytest.mark.parametrize(
+    "method", ["export_version", "save_export", "save_patch_notes", "save_images"]
+)
 def test_an_export_to_a_place_that_cant_be_written_says_why(
     api: Api, tmp_path: Path, method: str
 ) -> None:
@@ -128,6 +130,8 @@ def test_an_export_to_a_place_that_cant_be_written_says_why(
         answer = api.export_version(capture_id, str(target))
     elif method == "save_export":
         answer = api.save_export(capture_id, capture_id, "text", path=str(target))
+    elif method == "save_patch_notes":
+        answer = api.save_patch_notes(capture_id, capture_id, path=str(target))
     else:
         answer = api.save_images([_png()], "Overall", str(target))
     assert answer["saved"] is False

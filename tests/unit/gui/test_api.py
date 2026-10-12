@@ -237,6 +237,53 @@ def test_a_cancelled_save_writes_nothing(
     assert api.save_export(first, second)["saved"] is False
 
 
+def test_the_patch_notes_come_as_a_document_and_its_text(
+    api: Api, install: Path, tmp_path: Path
+) -> None:
+    first = capture(api, install, "Live")
+    other = game_tree.write(tmp_path / "new6", dat_bytes=sample_dat.sample_bytes(archer_hp=45))
+    second = capture(api, other, "PUP")
+
+    notes = api.get_patch_notes(first, second)
+
+    text = notes["text"]
+    assert isinstance(text, str) and text.startswith("Patch notes: Live")
+    assert "Archer hit points increased" in text
+    sections = notes["sections"]
+    assert isinstance(sections, list) and sections
+    # The page draws the same sentences the text holds.
+    assert notes["title"] == text.splitlines()[0]
+
+
+def test_saving_the_patch_notes_writes_their_text(
+    api: Api, install: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    first = capture(api, install, "Live")
+    other = game_tree.write(tmp_path / "new7", dat_bytes=sample_dat.sample_bytes(archer_hp=46))
+    second = capture(api, other, "PUP")
+    target = tmp_path / "notes.txt"
+    asked: list[tuple[str, str]] = []
+
+    def where(_api: Api, name: str, suffix: str) -> str:
+        asked.append((name, suffix))
+        return str(target)
+
+    monkeypatch.setattr(Api, "_ask_where_to_save", where)
+    saved = api.save_patch_notes(first, second)
+
+    assert saved == {"saved": True, "path": str(target)}
+    assert asked == [("patch-notes.txt", ".txt")]
+    assert target.read_text(encoding="utf-8") == api.get_patch_notes(first, second)["text"]
+
+
+def test_a_cancelled_patch_notes_save_writes_nothing(
+    api: Api, install: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    first = capture(api, install, "Live")
+    monkeypatch.setattr(Api, "_ask_where_to_save", lambda *args, **kwargs: None)
+    assert api.save_patch_notes(first, first) == {"saved": False}
+
+
 def test_icons_come_back_as_data_uris(api: Api, install: Path) -> None:
     capture_id = capture(api, install)
     result = api.compare_versions(capture_id, capture_id)
