@@ -9,15 +9,20 @@ read like the official ones:
   whatever the upgrade line; it never guesses one.
 - **Merging:** sentences that say the same thing about different subjects become one sentence
   naming them all: "Battering Ram, Capped Ram and Siege Ram line of sight increased from 3 → 5".
+
+Before both, **lines**: one field that changed differently for several units of a game unit line
+becomes one sentence listing them, as the official notes do: "Militia line bonus vs Shock
+Infantry increased: Man-at-Arms 2 → 3, Long Swordsman 6 → 8, …".
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Final, Literal
 
 from patch_scout.diff.model import Change
 from patch_scout.report.notes.model import Item
 from patch_scout.report.notes.phrases import Also, Words
+from patch_scout.report.notes.values import direction, shown
 
 # "silent" says nothing: it holds changes that cancel out, such as an effect command removed and
 # added back unchanged, so they count as said.
@@ -72,6 +77,104 @@ class Draft:
     targets: list[str] = field(default_factory=list)
     # Said by an effect (a tech's or bonus's): a changed civ description may say it already.
     effect: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class LineSlot:
+    """Where a unit sits in a game unit line: the line's name, and the unit's place in it."""
+
+    line: str
+    position: int
+
+
+def by_line(drafts: list[Draft], lines: Mapping[str, LineSlot], words: Words) -> list[Draft]:
+    """One sentence for a field that changed differently for several units of one line.
+
+    The units' other fields stay in their own sentences. A field that changed alike for all of
+    them is left to merging ("Battering Ram and Capped Ram line of sight …"), and two units that
+    pair ("Hulk", "War Hulk") to pairing ("(War) Hulk … War 115 → 110").
+    """
+    groups: dict[tuple[str, int, str], list[tuple[int, int, int]]] = {}
+    for at, draft in enumerate(drafts):
+        if draft.form != "stats" or len(draft.subjects) != 1 or draft.entity is None:
+            continue
+        slot = lines.get(draft.entity[1]) if draft.entity[0] == "unit" else None
+        if slot is None:
+            continue
+        for index, item in enumerate(draft.fields):
+            if item.old and item.new:
+                key = (slot.line, draft.rank, item.label)
+                groups.setdefault(key, []).append((slot.position, at, index))
+    taken: dict[int, set[int]] = {}
+    sentences: list[Draft] = []
+    for (line, rank, label), members in groups.items():
+        members.sort()
+        if not _worth_a_line([(drafts[at], index) for _, at, index in members]):
+            continue
+        parts: list[str] = []
+        ways: set[str | None] = set()
+        used: list[Change] = []
+        for _, at, index in members:
+            draft, item = drafts[at], drafts[at].fields[index]
+            parts.append(
+                words.text(
+                    "notes.by_line.member",
+                    unit=draft.subjects[0],
+                    old=shown(item.old),
+                    new=shown(item.new),
+                    scope=draft.scope,
+                )
+            )
+            ways.add(direction(item.old, item.new))
+            used.append(draft.used[index])
+            taken.setdefault(at, set()).add(index)
+        way = next(iter(ways)) if len(ways) == 1 else None
+        sentence = {"up": "notes.by_line.up", "down": "notes.by_line.down"}.get(
+            way or "", "notes.by_line.changed"
+        )
+        name = words.text("notes.unit_line", unit=line)
+        text = words.text(sentence, line=name, field=label, members=words.listed(parts))
+        sentences.append(Draft("line", rank, [name], used, text=text))
+    kept: list[Draft] = []
+    for at, draft in enumerate(drafts):
+        gone = taken.get(at)
+        if not gone:
+            kept.append(draft)
+            continue
+        fields = [item for index, item in enumerate(draft.fields) if index not in gone]
+        if fields:
+            used = [change for index, change in enumerate(draft.used) if index not in gone]
+            kept.append(replace(draft, fields=fields, used=used))
+    for line_sentence in sentences:
+        _insert_by_name(kept, line_sentence)
+    return kept
+
+
+def _insert_by_name(drafts: list[Draft], sentence: Draft) -> None:
+    """Put a line's sentence where its name puts it among the sentences of its rank, which are
+    in name order: "Militia line" between "Long Swordsman" and "Onager"."""
+    name = sentence.subjects[0].casefold()
+    for position, draft in enumerate(drafts):
+        if draft.rank == sentence.rank and draft.subjects[0].casefold() > name:
+            drafts.insert(position, sentence)
+            return
+    after = [position for position, draft in enumerate(drafts) if draft.rank <= sentence.rank]
+    drafts.insert(after[-1] + 1 if after else len(drafts), sentence)
+
+
+def _worth_a_line(members: Sequence[tuple[Draft, int]]) -> bool:
+    """Several units, not all changed alike, and not just a unit and its upgrade that pair."""
+    subjects = [draft.subjects[0] for draft, _ in members]
+    if len(set(subjects)) < 2 or len(subjects) != len(set(subjects)):
+        return False
+    values = {(draft.fields[index].old, draft.fields[index].new) for draft, index in members}
+    if len(values) == 1:
+        return False
+    if len(subjects) == 2:
+        first, second = sorted(subjects, key=len)
+        if second.partition(" ")[2] == first:
+            return False
+    return True
 
 
 def pair(drafts: list[Draft], words: Words) -> list[Draft]:

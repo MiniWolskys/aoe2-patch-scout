@@ -35,6 +35,7 @@ from patch_scout.diff.model import (
     Notice,
     Scope,
     Side,
+    UnitLine,
     sorted_changes,
 )
 from patch_scout.diff.names import Names, is_bonus_name, string_table
@@ -222,7 +223,22 @@ def compare(
         civs=civs,
         entries=entries,
         stat_icons=_stat_icons(run),
+        unit_lines=_unit_lines(run),
     )
+
+
+def _unit_lines(run: _Run) -> tuple[UnitLine, ...]:
+    """The game's unit lines, from the newer build (the older one when it has none), each named
+    after its first unit as the players read it: "Militia" for the Militia line."""
+    found = run.new.unit_lines or run.old.unit_lines
+    lines: list[UnitLine] = []
+    for line in found:
+        chain = line.get("id_chain") if isinstance(line, dict) else None
+        units = [unit for unit in chain if isinstance(unit, int)] if isinstance(chain, list) else []
+        name = _unit_name(run, units[0]) if len(units) >= 2 else None
+        if name:
+            lines.append(UnitLine(name, tuple(str(unit) for unit in units)))
+    return tuple(lines)
 
 
 def _civ_icon(civ: JsonObject) -> JsonObject | None:

@@ -76,6 +76,8 @@ class _Context:
     # A unit's own name by ID, from the comparison's Unit stats: the tech tree's labels shorten
     # some ("H. Mounted Crossbowman"), which would keep "(Heavy) Mounted Crossbowman" from pairing.
     unit_names: dict[str, str]
+    # Each unit's place in the game's unit lines, by unit ID.
+    lines: dict[str, drafting.LineSlot]
 
 
 def build(change_set: ChangeSet, catalog: Catalog) -> Notes:
@@ -101,6 +103,7 @@ def build(change_set: ChangeSet, catalog: Catalog) -> Notes:
             for entry in change_set.entries
             if entry.category == "unit_stats" and entry.entity.kind == "unit"
         },
+        lines=_lines_by_unit(change_set),
     )
     redundant, explained = _free_made_redundant(change_set.entries, words)
     kept = [
@@ -126,6 +129,15 @@ def build(change_set: ChangeSet, catalog: Catalog) -> Notes:
     closing = _closing(left_out, words)
     empty = None if sections else words.text("notes.empty")
     return Notes(title, disclaimer, notices, tuple(sections), closing, empty)
+
+
+def _lines_by_unit(change_set: ChangeSet) -> dict[str, drafting.LineSlot]:
+    """Each unit's line and place in it; a unit in several lines keeps the first."""
+    slots: dict[str, drafting.LineSlot] = {}
+    for line in change_set.unit_lines:
+        for position, unit_id in enumerate(line.units):
+            slots.setdefault(unit_id, drafting.LineSlot(line.name, position))
+    return slots
 
 
 def _side(side: Side, words: Words) -> str:
@@ -385,6 +397,7 @@ def _items(
     drafts = _without_gains_said_by_new(drafts)
     if civ is not None:
         drafts = _without_repeats(drafts, civ, context.words)
+    drafts = drafting.by_line(drafts, context.lines, context.words)
     drafts = drafting.merge(drafting.pair(drafts, context.words), context.words)
     if civ is not None:
         drafts = drafting.ordered(drafts)
@@ -570,7 +583,9 @@ def _unit(entry: Entry, context: _Context, subject: str, scope: str) -> list[Dra
         return [Draft("new", rank, [subject], changes, entity, scope, text=where)]
     if entry.kind == "removed":
         return [_removed(changes, context, rank, subject, scope)]
-    return [_stats(changes, context, rank, subject, scope)]
+    draft = _stats(changes, context, rank, subject, scope)
+    draft.entity = ("unit", entry.entity.id)  # for its unit line
+    return [draft]
 
 
 def _trained_at(changes: Sequence[Change], words: Words) -> str:

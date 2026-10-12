@@ -21,6 +21,7 @@ from patch_scout.diff.model import (
     Notice,
     Scope,
     Side,
+    UnitLine,
     WordDiff,
 )
 from patch_scout.i18n.catalog import Catalog, load_catalog
@@ -169,6 +170,56 @@ def test_a_value_that_appears_or_goes_says_so(catalog: Catalog) -> None:
     )
 
     assert lines(result) == ["Knight bonus vs Camels added: 3, ships armour class removed (was 2)."]
+
+
+MILITIA_LINE = UnitLine("Militia", ("74", "75", "77", "473", "567"))
+
+
+def test_a_field_that_changed_differently_along_a_unit_line_is_one_sentence(
+    catalog: Catalog,
+) -> None:
+    """The Militia line on 101.103.54800.0 gained 0/1/2/1/1 bonus vs Shock Infantry: four
+    sentences, where the official notes have one. Each unit keeps its values and its scope."""
+    shock = Message("field.attacks", {"class": "Shock Infantry"})
+    chronicles = Scope("all_except", ("Spartans",))
+    changes = [
+        stat(unit("Champion", "567"), "field.attacks", "8", "9", field=shock, scope=chronicles),
+        stat(unit("Long Swordsman", "77"), "field.attacks", "6", "8", field=shock),
+        stat(unit("Long Swordsman", "77"), "field.hit_points", "55", "60"),
+        stat(unit("Man-at-Arms", "75"), "field.attacks", "2", "3", field=shock),
+        stat(unit("Two-Handed Swordsman", "473"), "field.attacks", "8", "9", field=shock),
+    ]
+
+    result = notes(catalog, *changes, unit_lines=(MILITIA_LINE,))
+
+    # The line's sentence reads where its name puts it, in name order.
+    assert lines(result) == [
+        "Long Swordsman hit points increased from 55 → 60.",
+        "Militia line bonus vs Shock Infantry increased: Man-at-Arms 2 → 3, Long Swordsman"
+        " 6 → 8, Two-Handed Swordsman 8 → 9 and Champion 8 → 9 (except Spartans).",
+    ]
+    assert result.closing is None
+
+
+def test_a_line_whose_units_changed_alike_or_pair_keeps_its_sentences(catalog: Catalog) -> None:
+    """Rams that changed alike already read as one sentence, and "(War) Hulk" pairs."""
+    hulk_line = UnitLine("Hulk", ("2626", "2627", "2628"))
+    ram_line = UnitLine("Battering Ram", ("35", "422", "548"))
+    changes = [
+        stat(unit("Hulk", "2626"), "field.hit_points", "90", "85"),
+        stat(unit("War Hulk", "2627"), "field.hit_points", "115", "110"),
+        *(
+            stat(unit(name, number), "field.line_of_sight", "3", "5")
+            for number, name in (("35", "Battering Ram"), ("422", "Capped Ram"))
+        ),
+    ]
+
+    result = notes(catalog, *changes, unit_lines=(hulk_line, ram_line))
+
+    assert lines(result) == [
+        "(War) Hulk hit points decreased from 90 → 85, War 115 → 110.",
+        "Battering Ram and Capped Ram line of sight increased from 3 → 5.",
+    ]
 
 
 def test_the_same_change_to_several_units_is_one_sentence(catalog: Catalog) -> None:

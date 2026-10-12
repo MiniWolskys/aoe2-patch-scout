@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Classes, buildings and techs named in unit and tech changes (game-files.md §11)."""
 
+from dataclasses import replace
+
 import pytest
 from support.snapshots import make_snapshot
 
 from patch_scout.diff import compare
-from patch_scout.diff.model import Change, ChangeSet
+from patch_scout.diff.model import Change, ChangeSet, UnitLine
 from patch_scout.diff.names import Names
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
 
@@ -152,6 +154,18 @@ def test_a_buildings_train_time_is_its_build_time() -> None:
     assert change.field is not None
     assert change.field.key == "field.build_time"
     assert (change.old, change.new) == ("40", "50")
+
+
+def test_the_unit_lines_are_named_after_their_first_unit() -> None:
+    """The patch notes say a line's changes in one sentence ("Militia line …")."""
+    old = _build(shock=6, pierce=0, train_time=21, required=[FEUDAL])
+    new = _build(shock=8, pierce=0, train_time=21, required=[FEUDAL])
+    lines: list[JsonValue] = [
+        {"name": "Archery Line", "id_chain": [4, SWORDSMAN], "line_id": -299},
+        {"name": "Empty", "id_chain": [], "line_id": -1},
+    ]
+    change_set = compare(replace(old, unit_lines=lines), replace(new, unit_lines=lines))
+    assert change_set.unit_lines == (UnitLine("Archer", ("4", str(SWORDSMAN))),)
 
 
 def test_required_techs_are_named_and_empty_slots_left_out() -> None:
