@@ -1079,10 +1079,12 @@ def _techs(run: _Run) -> None:
         owners = _tech_civs(run, before, after)
         scope = Scope("some", owners) if owners else Scope()
         sort = (_CIV_FIRST, "", "") if owners else (_GLOBAL, "", "")
-        if before is None or after is None:
-            kind: Kind = "added" if before is None else "removed"
-            run.spread(Change("techs", kind, entity, scope, sort_key=sort), scope)
+        if after is None:
+            run.spread(Change("techs", "removed", entity, scope, sort_key=sort), scope)
             continue
+        # A new tech is compared with nothing, like a new unit, so its entry lists what it costs
+        # and does (diff-rules.md, One entry per entity).
+        before = before if before is not None else {}
         for allow in TECH_FIELDS:
             if allow.key == "effect_id":
                 continue  # reported with the effect's commands, just below

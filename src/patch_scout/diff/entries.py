@@ -32,6 +32,10 @@ MAIN_FIELDS: Final = frozenset(
 )
 # Values that say "nothing here" for a new entity, e.g. a garrison capacity of 0.
 DEFAULT_VALUES: Final = frozenset({"", "0", "-1"})
+# Tech fields that are bookkeeping, not something players compare (diff-rules.md, Levels).
+TECH_BOOKKEEPING: Final = frozenset(
+    {"field.required_tech_count", "field.repeatable", "field.tech_type"}
+)
 
 type _Key = tuple[object, ...]
 
@@ -76,6 +80,8 @@ def _entry(members: list[Change]) -> Entry:
     elif stats and len(members) > 1 and all(_is_gone(change) for change in members):
         kind = "removed"
         shown = []
+    elif first.category == "techs" and _is_new_tech(members):
+        kind = "added"
     return Entry(
         category=first.category,
         kind=kind,
@@ -118,6 +124,42 @@ def _trivial(change: Change) -> bool:
         # 54800.0): it has no value because it needs none, and it is never trivial.
         return False
     return (not old and new in DEFAULT_VALUES) or (not new and old in DEFAULT_VALUES)
+
+
+def _is_new_tech(members: list[Change]) -> bool:
+    """A tech that only gains values, a place to research it among them, is new to players.
+
+    A tech players could research always has a research location, so gaining one means it wasn't
+    researchable before: either a new record, or a placeholder the patch fills in (Ordonnance
+    Companies and Cranequins on 101.103.54800.0). A tech that only gains an effect is not new.
+    An effect sentence without a value ("New: Enables X") is new too. Bookkeeping fields, such as
+    a placeholder's effect ID of -1, and default values, such as its research time of 0, say
+    nothing either way (diff-rules.md, Levels).
+    """
+    located = any(
+        change.field is not None
+        and change.field.key == "field.research_locations"
+        and _is_new(change)
+        and not _trivial(change)
+        for change in members
+    )
+    return located and all(
+        _is_new(change)
+        or _bookkeeping(change)
+        or _trivial(change)
+        or (change.kind == "modified" and not change.old and not change.new)
+        for change in members
+    )
+
+
+def _bookkeeping(change: Change) -> bool:
+    """A tech field players never see: its flags, required count, or which effect it points at."""
+    if change.field is None:
+        return False
+    if change.field.key == "field.tech_effect":
+        # The effect ID itself; its commands carry a detail naming the command.
+        return change.detail is None
+    return change.field.key in TECH_BOOKKEEPING
 
 
 def _is_gone(change: Change) -> bool:
