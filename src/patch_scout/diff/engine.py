@@ -344,6 +344,15 @@ def _civilizations(run: _Run) -> list[CivRef]:
     return refs
 
 
+# Tech tree node types that set a civ apart, and the summary line each gets (game-files.md §5).
+SPECIAL_NODES: Final = {
+    "UniqueUnit": "unique_units",
+    "UniqueTech": "unique_techs",
+    "RegionalUnit": "regional_units",
+    "RegionalTech": "regional_techs",
+}
+
+
 def _new_civ_summary(run: _Run, internal_name: str, entity: Entity, civ: JsonObject) -> None:
     """A new civ has nothing to compare with: show its bonus text and its tech tree instead.
 
@@ -368,15 +377,34 @@ def _new_civ_summary(run: _Run, internal_name: str, entity: Entity, civ: JsonObj
         )
     nodes = run.new.tech_trees.get(internal_name)
     lines: dict[JsonValue, list[str]] = {}
+    special: dict[str, list[str]] = {}  # the tree's own unique and regional marks
     for node in nodes if isinstance(nodes, list) else []:
         if not isinstance(node, dict) or node.get("node_status") == "NotAvailable":
             continue
         label = run.new_names.one_line(node.get("name_string_id"))
         if not label:
             continue
+        kind = SPECIAL_NODES.get(str(node.get("node_type")))
+        if kind is not None:
+            special.setdefault(kind, []).append(label)
         # Buildings get a line of their own; units and techs go under where they are made.
         where = "buildings" if node.get("use_type") == "Building" else node.get("building_id")
         lines.setdefault(where, []).append(label)
+    # What sets the civ apart, as the game's tree marks it: its unique and regional units and techs.
+    for position, kind in enumerate(SPECIAL_NODES.values()):
+        if kind in special:
+            run.add(
+                Change(
+                    category="civilizations",
+                    kind="added",
+                    entity=entity,
+                    scope=scope,
+                    field=Message(f"field.{kind}"),
+                    new=", ".join(special[kind]),
+                    civ=internal_name,
+                    sort_key=(_CIV_FIRST, "", f"{position:04d}"),
+                )
+            )
     for position, (where, labels) in enumerate(lines.items()):
         building = _building_name(run, internal_name, where) if where != "buildings" else None
         if where != "buildings" and building is None:

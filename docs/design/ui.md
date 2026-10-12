@@ -188,7 +188,8 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
 
 The comparison written the way the official patch notes are, for players who aren't developers. The sentences come from Python ([diff-rules.md](diff-rules.md#patch-notes-d-51)); the page only lays them out, so it reads exactly like the exported text.
 
-- **Opening it:** a **Patch notes** button in the comparison header, next to **Tech tree**, swaps the change list for the notes; it then reads **Back to changes**. The notes are asked for once per comparison, with "Writing the patch notes…" meanwhile. If they can't be written, a toast says so and the change list comes back.
+- **The first screen** (maintainer, 2026-10-12): a comparison opens on its patch notes, the easiest to read. A **Detailed changes** button in the header, next to **Tech tree**, swaps them for the change list; it then reads **Patch notes**. A reader who chose the detailed changes keeps them for the next comparison of the session. The tree's back button returns to the view it came from ("Back to patch notes" or "Back to changes").
+- The notes are asked for once per comparison, with "Writing the patch notes…" meanwhile. If they can't be written, a toast says so and the change list comes back.
 - **Layout:** the title with both versions and the line saying they aren't the official notes; the notices for readers; **General** with one heading per category; **Civilizations**, one block per civ headed by its crest (48 px) and name in the label font, as in the official notes; **Chronicles**; the closing line, in small grey text. Bullets in the accent colour, nested bullets smaller and in secondary text. The text column is at most 960 px wide.
 - **Civ list:** it stays, with its tabs. Choosing a civ scrolls to its block; Overall goes back to the top.
 - **Filters:** the notes don't follow them (D-51), so the Filters button and the filter notices are hidden in this mode.

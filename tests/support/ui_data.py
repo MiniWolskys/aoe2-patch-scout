@@ -3,7 +3,7 @@
 
 from typing import Any
 
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
 
 from patch_scout.i18n.catalog import load_catalog
 
@@ -266,6 +266,13 @@ def fixture_data(**overrides: Any) -> dict[str, Any]:
         },
     }
     return data | overrides
+
+
+def show_changes(page: Page) -> None:
+    """Switch an open comparison from the patch notes, where it opens (D-51), to its changes."""
+    expect(page.locator("#comparison-notes")).to_have_attribute("aria-pressed", "true")
+    page.locator("#comparison-notes").click()
+    expect(page.locator("#comparison-page")).to_be_visible()
 
 
 def calls(page: Page, name: str) -> list[list[Any]]:

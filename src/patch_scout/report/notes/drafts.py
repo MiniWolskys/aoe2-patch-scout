@@ -66,7 +66,7 @@ class Draft:
     fields: list[Field] = field(default_factory=list)
     children: list[Child] = field(default_factory=list)
     # A "line" draft's sentence, written already; for "affects" and "no_longer", what every target
-    # gets when they all get the same.
+    # gets when they all get the same; for a new unit, where it is trained.
     text: str = ""
     # An "affects" draft's targets, after pairing: what the sentence names.
     targets: list[str] = field(default_factory=list)
@@ -112,7 +112,9 @@ def _compatible(first: Draft, second: Draft) -> bool:
         # the other can't share a clause.
         return [_shape(item) for item in first.fields] == [_shape(item) for item in second.fields]
     if first.form == "new":
-        return [item.label for item in first.children] == [item.label for item in second.children]
+        # Trained in the same place (a new unit), and the same bullets (a new tech).
+        labels = [item.label for item in first.children]
+        return first.text == second.text and labels == [item.label for item in second.children]
     return True
 
 
@@ -196,8 +198,14 @@ def render(draft: Draft, words: Words) -> Item:
     if draft.form == "lose":
         return Item(words.text("notes.lose", subject=subjects, scope=draft.scope))
     if draft.form == "new":
-        key = "notes.new" if children else "notes.new_bare"
-        return Item(words.text(key, subject=subjects, scope=draft.scope), children)
+        if children:
+            return Item(words.text("notes.new", subject=subjects, scope=draft.scope), children)
+        if draft.text:  # a new unit, with where it is trained
+            where = draft.text
+            return Item(
+                words.text("notes.new_at", subject=subjects, where=where, scope=draft.scope)
+            )
+        return Item(words.text("notes.new_bare", subject=subjects, scope=draft.scope))
     if draft.form in ("affects", "no_longer"):
         key = "notes.affects" if draft.form == "affects" else "notes.no_longer_affects"
         # Every target given the same: one line, with what they get ("…: +1 armour.").

@@ -31,6 +31,10 @@ _SENTENCE: Final = "detail.effect_command_raw"
 _ID_FIELDS: Final = frozenset({"field.building"})
 # A new civ's tech tree, one line per building.
 _TREE_FIELDS: Final = frozenset({"field.tech_tree_at", "field.tech_tree_buildings"})
+# A new civ's summary lines: its unique and regional units and techs.
+_SPECIAL_LISTS: Final = frozenset(
+    {"field.unique_units", "field.unique_techs", "field.regional_units", "field.regional_techs"}
+)
 # Notices the closing line replaces: the notes have no filters to turn on.
 _FILTER_NOTICES: Final = frozenset({"levels_hidden", "unnamed_hidden"})
 _NOT_AVAILABLE: Final = "NotAvailable"
@@ -184,15 +188,60 @@ def _civs(
     for civ in civs:
         if (civ.era == _CHRONICLES) != chronicles:
             continue
-        items = _items(
-            (entry for entry in kept if entry.civ == civ.internal_name), context, used, civ
-        )
+        mine = [entry for entry in kept if entry.civ == civ.internal_name]
+        items = _new_civ(mine, context, used) if civ.added else _items(mine, context, used, civ)
         if items:
             groups.append(Group(civ.name, items, civ=civ.internal_name, icon=civ.icon))
     if not groups:
         return None
     kind: Literal["civs", "chronicles"] = "chronicles" if chronicles else "civs"
     return Section(kind, context.words.text(f"notes.section.{kind}"), tuple(groups))
+
+
+def _new_civ(entries: Sequence[Entry], context: _Context, used: set[int]) -> tuple[Item, ...]:
+    """A new civ in a few lines, as a player first wants it: what kind of civ it is, and what
+    sets it apart ("Unique units: Jomsviking", "Regional units: Varangian Guard").
+
+    Its bonuses' exact effects, its units' stats and its whole tech tree are in the detailed
+    changes and the tech tree; the closing line counts them.
+    """
+    if not entries:
+        return ()
+    words = context.words
+    kind = ""
+    lists: list[Change] = []
+    said: list[Change] = []
+    for entry in entries:
+        for change in entry.changes:
+            key = change.field.key if change.field is not None else None
+            if entry.category == "civilizations" and change.field is None:
+                said.append(change)  # the civ itself, added
+            elif key == "field.civ_bonus_text":
+                kind = next(iter(_lines(_new_text(change))), "")
+                said.append(change)
+            elif entry.category == "civilizations" and key in _SPECIAL_LISTS and change.new:
+                lists.append(change)
+    first = words.text("notes.civ_added_as", kind=kind) if kind else words.text("notes.civ_added")
+    items = [Item(first)]
+    for change in lists:
+        label = words.message(change.field) if change.field is not None else ""
+        names = _line_heads(change.new or "", words)
+        items.append(Item(words.text("notes.list", field=label, names=names)))
+        said.append(change)
+    used.update(id(change) for change in said)
+    return tuple(items)
+
+
+def _line_heads(names: str, words: Words) -> str:
+    """Names without their upgrades: "Jomsviking, Elite Jomsviking" reads "Jomsviking".
+
+    A name that is another name of the list with one word before it ("Elite Jomsviking", or
+    "E. Varangian Guard" as the tree shortens it) is that unit's upgrade: the line is named once.
+    """
+    listed = [name.strip() for name in names.split(", ") if name.strip()]
+    present = set(listed)
+    heads = [name for name in listed if name.partition(" ")[2] not in present]
+    return words.listed(heads)
 
 
 def _items(
@@ -354,13 +403,22 @@ def _unit(entry: Entry, context: _Context, subject: str, scope: str) -> list[Dra
     rank = _RANKS["unit_stats"]
     changes = list(entry.changes)
     if entry.kind == "added":
-        said: list[Change] = []
-        children = _new_children(changes, context, said)
+        # One line, as the official notes introduce a unit; its stats are in the detailed changes
+        # and the tech tree. The line says the unit is new, so its values count as said.
         entity = ("unit", entry.entity.id)
-        return [Draft("new", rank, [subject], said, entity, scope, children=children)]
+        where = _trained_at(changes, context.words)
+        return [Draft("new", rank, [subject], changes, entity, scope, text=where)]
     if entry.kind == "removed":
         return [_removed(changes, context, rank, subject, scope)]
     return [_stats(changes, context, rank, subject, scope)]
+
+
+def _trained_at(changes: Sequence[Change], words: Words) -> str:
+    """Where a new unit is trained: the building of its first train time, else nothing."""
+    for change in changes:
+        if change.field is not None and change.field.key == "field.train_locations":
+            return words.value(change.field.args.get("location"))
+    return ""
 
 
 def _tech(entry: Entry, context: _Context, rank: int, subject: str, scope: str) -> list[Draft]:
@@ -689,7 +747,7 @@ def _description(change: Change, context: _Context, subject: str) -> Draft | Non
     differently).
     """
     old_text = "".join(word.text for word in change.words if word.kind != "added")
-    new_text = "".join(word.text for word in change.words if word.kind != "removed")
+    new_text = _new_text(change)
     old_lines, new_lines = _lines(old_text), _lines(new_text)
     words = context.words
     if not old_lines:
@@ -716,6 +774,11 @@ def _description(change: Change, context: _Context, subject: str) -> Draft | Non
         return None
     text = words.text("notes.description")
     return Draft("line", _DESCRIPTION_RANK, [subject], [change], text=text, children=children)
+
+
+def _new_text(change: Change) -> str:
+    """A text change's new text, rebuilt from its word diff."""
+    return "".join(word.text for word in change.words if word.kind != "removed")
 
 
 def _lines(text: str) -> list[str]:

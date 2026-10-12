@@ -20,4 +20,4 @@ Bluelanders
 - Gain access to Archer.
 - Gain access to Fletching.
 
-8 more changes aren't in these notes: minor and technical ones, and the ones that can't be written as a sentence. The comparison in Patch Scout lists them all.
+8 more changes aren't in these notes: minor and technical ones, the details of new civilizations, and the ones that can't be written as a sentence. The detailed changes list them all.

@@ -328,24 +328,25 @@ def test_a_renamed_node_says_both_names(catalog: Catalog) -> None:
 # --- new units and techs ------------------------------------------------------------------------
 
 
-def test_a_new_unit_lists_its_stats_with_its_costs_together(catalog: Catalog) -> None:
+def test_a_new_unit_is_one_line_with_where_it_is_trained(catalog: Catalog) -> None:
     rider = unit("Mounted Crossbowman", "1")
     heavy = unit("Heavy Mounted Crossbowman", "2")
+    trained = Message("field.train_locations", {"location": "Archery Range"})
     changes = [
         change
         for entity, hp in ((rider, "45"), (heavy, "55"))
         for change in (
             stat(entity, "field.hit_points", "", hp),
             cost(entity, "wood", "", "40"),
-            cost(entity, "gold", "", "65"),
+            stat(entity, "field.train_locations", "", "40", field=trained),
         )
     ]
 
-    assert lines(notes(catalog, *changes)) == [
-        "NEW: (Heavy) Mounted Crossbowman:",
-        "  Hit points: 45; Heavy: 55",
-        "  Cost: 40 wood, 65 gold",
-    ]
+    result = notes(catalog, *changes)
+
+    # Its stats are in the detailed changes and the tech tree; the line says it is new.
+    assert lines(result) == ["NEW: (Heavy) Mounted Crossbowman (Archery Range)."]
+    assert result.closing is None
 
 
 def test_a_new_tech_says_what_it_does_and_its_gain_is_not_repeated(catalog: Catalog) -> None:
@@ -528,37 +529,47 @@ def test_a_civ_block_reads_in_the_official_order(catalog: Catalog) -> None:
     ]
 
 
-def test_a_new_civ_says_so_and_lists_its_tech_tree(catalog: Catalog) -> None:
+def test_a_new_civ_reads_in_a_few_lines(catalog: Catalog) -> None:
     danes = Entity("civ", "Danes", "Danes")
     scope = Scope("some", ("Danes",))
+    owned: dict[str, Any] = {"scope": scope, "civ": "Danes"}
+
+    def summary(key: str, names: str) -> Change:
+        return Change("civilizations", "added", danes, field=Message(key), new=names, **owned)
+
+    description = WordDiff("added", "Infantry and Siege civilization\n• Loot 25% of buildings")
     changes = [
-        Change("civilizations", "added", danes, scope, civ="Danes"),
+        Change("civilizations", "added", danes, **owned),
+        Change(
+            "bonuses",
+            "text_changed",
+            danes,
+            field=Message("field.civ_bonus_text"),
+            words=(description,),
+            **owned,
+        ),
+        summary("field.unique_units", "Jomsviking, Elite Jomsviking"),
+        summary("field.regional_units", "Varangian Guard, E. Varangian Guard, Longship"),
         Change(
             "civ_availability",
             "added",
             danes,
-            scope,
             field=Message("field.tech_tree_at", {"building": "Barracks"}),
             new="Militia, Spearman",
-            civ="Danes",
+            **owned,
         ),
-        Change(
-            "civ_availability",
-            "added",
-            danes,
-            scope,
-            field=Message("field.tech_tree_buildings"),
-            new="Barracks, Castle",
-            civ="Danes",
-        ),
+        stat(unit("Jomsviking", "9"), "field.hit_points", "", "70", **owned),
     ]
 
-    assert lines(notes(catalog, *changes)) == [
-        "New civilization.",
-        "Tech tree:",
-        "  Barracks: Militia, Spearman",
-        "  Buildings: Barracks, Castle",
+    result = notes(catalog, *changes)
+
+    assert lines(result) == [
+        "New civilization: Infantry and Siege civilization.",
+        "Unique units: Jomsviking.",
+        "Regional units: Varangian Guard and Longship.",
     ]
+    # Its tree and its units' stats are in the detailed changes: counted, not lost.
+    assert result.closing is not None and result.closing.startswith("2 more changes")
 
 
 def test_the_chronicles_civs_have_their_own_section(catalog: Catalog) -> None:
@@ -676,11 +687,12 @@ def test_identical_versions_have_nothing_to_say(catalog: Catalog) -> None:
 
 
 def test_the_text_is_light_markdown(catalog: Catalog) -> None:
-    rider = unit("Mounted Crossbowman")
+    crane = tech("Treadmill Crane")
+    where = Message("field.research_locations", {"location": "University"})
     result = notes(
         catalog,
-        stat(rider, "field.hit_points", "", "45"),
-        cost(rider, "wood", "", "40"),
+        stat(crane, "field.research_locations", "", "40", category="techs", field=where),
+        cost(crane, "wood", "", "200", category="techs"),
         stat(
             unit("Onager", "2"),
             "field.hit_points",
@@ -698,11 +710,11 @@ def test_the_text_is_light_markdown(catalog: Catalog) -> None:
         "\n"
         "GENERAL\n"
         "\n"
-        "Unit stats\n"
+        "Technologies\n"
         "\n"
-        "- NEW: Mounted Crossbowman:\n"
-        "    - Hit points: 45\n"
-        "    - Cost: 40 wood\n"
+        "- NEW: Treadmill Crane:\n"
+        "    - Research time at University: 40\n"
+        "    - Cost: 200 wood\n"
         "\n"
         "CIVILIZATIONS\n"
         "\n"
@@ -710,8 +722,9 @@ def test_the_text_is_light_markdown(catalog: Catalog) -> None:
         "\n"
         "- Onager hit points increased from 60 → 65.\n"
         "\n"
-        "1 more change isn't in these notes: a minor or technical one, or one that can't be"
-        " written as a sentence. The comparison in Patch Scout lists it.\n"
+        "1 more change isn't in these notes: a minor or technical one, a detail of a new"
+        " civilization, or one that can't be written as a sentence. The detailed changes list"
+        " it.\n"
     )
 
 

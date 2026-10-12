@@ -179,6 +179,7 @@ The change set is field-level: one change per field and value group. The app and
 
 A civ added in the new build has no old values, so comparing it field by field would report everything as "added". Instead its page shows a summary:
 - **Added** (the civ itself) and its **bonus text**, all shown as new text;
+- what sets it apart, as its tech tree marks it: its **unique units**, **unique techs**, **regional units** and **regional techs** (node types `UniqueUnit`, `UniqueTech`, `RegionalUnit`, `RegionalTech`), one line each, in tree order;
 - its **tech tree** as one entry: one line per building with what is available there (every node that isn't `NotAvailable`), plus one line for its buildings. Building offers are not compared;
 - entities that are new everywhere (its unique units and techs) as usual, since they are brand new for every civ.
 
@@ -345,15 +346,16 @@ Every export starts with a header (snapshot labels, game builds unless the label
 
 The comparison written the way the official patch notes are, for players who aren't developers: in the app (a mode of the comparison) and as text to paste (`report/notes/`). The examples are from 101.103.48987.0 → 101.103.54800.0.
 
-**What they hold.** A summary with a fixed meaning: the **headline** changes of **named** objects outside the low-priority categories (text, icons), whatever the comparison's filters say. They only reword the change set, never interpret it (rule 4). A change that can't be written cleanly is left out and counted in the closing line ("2228 more changes aren't in these notes … The comparison in Patch Scout lists them all"), never guessed:
+**What they hold.** A summary with a fixed meaning: the **headline** changes of **named** objects outside the low-priority categories (text, icons), whatever the comparison's filters say. They only reword the change set, never interpret it (rule 4). A change that can't be written cleanly is left out and counted in the closing line ("2597 more changes aren't in these notes … The detailed changes list them all"), never guessed:
 - a raw effect command (no sentence template);
 - a line that would show an unknown ID (`#123`), or bare building IDs ("Made at");
-- detail and technical levels, objects with no name, text and icon changes.
+- detail and technical levels, objects with no name, text and icon changes;
+- the details of a new civ (see below).
 
 **Structure:**
 - A title with both versions (label, build unless the label holds it, "(pre-release)"), the line "Written by Patch Scout from the game's data. These are not the official patch notes.", then the comparison's notices for readers (stats not compared, layout substituted, unusually many changes). The filter notices are replaced by the closing line.
 - **General:** the Overall entries, one group per category in the change set's order, then **Techs with no name in the game** (entities marked `internal`).
-- **Civilizations:** one group per civ with notes, alphabetical, headed by the civ's name and crest; then **Chronicles** with the `antiquity` civs (D-38). A change shared by several civs is repeated in each of their blocks, as the official notes do. Inside a civ's block: whether it is new or removed, its description, its bonuses, unit stats, techs, what it gains, what it loses, other effects, then its internal techs.
+- **Civilizations:** one group per civ with notes, alphabetical, headed by the civ's name and crest; then **Chronicles** with the `antiquity` civs (D-38). A change shared by several civs is repeated in each of their blocks, as the official notes do. **A new civ** reads in a few lines, as a player first wants it (maintainer, 2026-10-12): "New civilization: Infantry and Siege civilization." (the first line of its description), then "Unique units: Jomsviking.", "Unique techs: …", "Regional units: …", "Regional techs: …" from the engine's summary. A unit's upgrades are named once: a name that is another of the list with one word before it ("Elite Jomsviking", "E. Varangian Guard") is left out. Its bonuses' exact effects, its units' stats and its whole tech tree are in the detailed changes and the tech tree, and counted in the closing line. Inside any other civ's block: whether it is removed, its description, its bonuses, unit stats, techs, what it gains, what it loses, other effects, then its internal techs.
 
 **Sentences** (every word from the catalog's `notes.*` keys):
 
@@ -362,12 +364,13 @@ The comparison written the way the official patch notes are, for players who are
 | Fields of a unit, tech or resource | "Onager pierce armour increased from 7 → 8, melee attack increased from 50 → 55." A value that appears: "bonus vs Camels added: 3"; disappears: "… removed (was 2)". |
 | A change every civ but some shares | "… (except Athenians, Spartans and Thracians)", whatever the kind of sentence: a field, gaining or losing access, NEW, removed, what an effect gives. |
 | Something added or removed with no value | "Stable building offer added.", "Effect of Kasbah removed." Never a bare label. |
-| A new unit or tech (entry Added) | "NEW: Ordonnance Companies:" with a bullet per value; costs as one ("Cost: 400 food, 250 gold"); for a tech, what its effect does first. Only what the bullets say counts as said: anything else of the entry, such as an effect sentence it lost, is counted in the closing line. |
+| A new unit (entry Added) | One line with where it is trained: "NEW: (Elite) Varangian Guard (Barracks)." Its stats are in the detailed changes and the tech tree; the line says the unit is new, so its values count as said. |
+| A new tech (entry Added) | "NEW: Ordonnance Companies:" with a bullet per value; costs as one ("Cost: 400 food, 250 gold"); what its effect does first. Only what the bullets say counts as said: anything else of the entry, such as an effect sentence it lost, is counted in the closing line. |
 | A unit or tech removed | "Bearded Axe removed." |
 | A node gained, or its status leaving Not available | "Gain access to Treadmill Crane." Left out where a NEW item about the same unit or tech says it. |
 | A node lost, or its status becoming Not available | "Lose access to (Heavy) Cavalry Archer." |
 | A renamed node | "Longboat renamed to Longship." |
-| A new civ | "New civilization.", its description, and "Tech tree:" with a bullet per building. |
+| A new civ | A few lines: see above. |
 | The civ's description (bonus text) | "Civilization description:" with a bullet per line that changed: "old → new", "New: …", "Removed: …". A text that only wraps differently says nothing (Byzantines). |
 | What an effect now gives targets | "Gambesons now affects (Elite) Varangian Guard, Eastern Swordsman and Norse Warrior: +1 pierce armour." When targets get different things, one bullet per group of targets. "… no longer affects …" for what it gives no longer. |
 | An effect value that changed | "Wagenburg Tactics: Hand Cannoneer, Bombard Cannon, … movement speed decreased from +15% → +10%." |

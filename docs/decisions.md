@@ -64,7 +64,8 @@ Asked for by the maintainer on 2026-10-12, after a Reddit user suggested patch n
 - **A curated summary:** headline changes of named objects, whatever the filters say. The comparison stays the reference: what the notes can't write as a clean sentence is counted in a closing line that says so, never guessed (rule 4). Techs known only by their internal name are kept in their own group.
 - **Words, not judgements:** "increased"/"decreased" state a number's direction only (D-34); multipliers read as percentages, as in the official notes.
 - **Format:** light Markdown (P-13, amended), copied or saved as `.txt`.
-- **In the app:** a Patch notes mode of the comparison, next to the tech tree ([ui.md](design/ui.md#patch-notes-d-51)).
+- **In the app:** the comparison's first screen, with the detailed changes and the tech tree a click away ([ui.md](design/ui.md#patch-notes-d-51)). Chosen by the maintainer on 2026-10-12, with the next point.
+- **New things in short:** a new civ reads in a few lines (its kind, its unique and regional units and techs), a new unit in one line. Players see the stats and exact bonuses in the detailed changes or the tech tree.
 - **Not in it:** bug fixes, the developers' reasons, AI, map and interface changes: the game data doesn't hold them.
 
 ### D-15 GUI in v1: Decided

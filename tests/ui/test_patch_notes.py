@@ -37,11 +37,45 @@ def _data(**overrides: Any) -> dict[str, Any]:
 
 
 def _open_notes(open_shell: OpenShell, **overrides: Any) -> Page:
+    """Open a comparison: it opens on the patch notes (D-51)."""
     page = open_shell(data=_data(**overrides))
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
     expect(page.locator("#comparison-view")).to_be_visible()
-    page.locator("#comparison-notes").click()
     return page
+
+
+def test_a_comparison_opens_on_the_patch_notes(open_shell: OpenShell) -> None:
+    page = _open_notes(open_shell)
+
+    expect(page.locator("#notes-view")).to_be_visible()
+    expect(page.locator("#comparison-page")).to_be_hidden()
+    # The detailed changes are one click away.
+    expect(page.locator("#comparison-notes")).to_have_text("Detailed changes")
+    expect(page.locator("#comparison-notes")).to_have_attribute("aria-pressed", "true")
+
+
+def test_a_reader_who_chose_the_detailed_changes_keeps_them(open_shell: OpenShell) -> None:
+    page = _open_notes(open_shell)
+    page.locator("#comparison-notes").click()
+    expect(page.locator("#comparison-page")).to_be_visible()
+
+    page.locator("#comparison-swap").click()
+
+    expect(page.locator("#comparison-page")).to_be_visible()
+    expect(page.locator("#notes-view")).to_be_hidden()
+
+
+def test_the_tree_goes_back_to_the_patch_notes_it_came_from(open_shell: OpenShell) -> None:
+    page = _open_notes(open_shell)
+    expect(page.locator(".notes__title")).to_be_visible()
+
+    page.locator("#comparison-tree").click()
+    expect(page.locator("#tree-view")).to_be_visible()
+    expect(page.locator("#comparison-tree")).to_have_text("Back to patch notes")
+    page.locator("#comparison-tree").click()
+
+    expect(page.locator("#notes-view")).to_be_visible()
+    expect(page.locator("#tree-view")).to_be_hidden()
 
 
 def test_the_patch_notes_read_like_the_official_ones(open_shell: OpenShell) -> None:
@@ -69,18 +103,18 @@ def test_the_patch_notes_dont_follow_the_filters(open_shell: OpenShell) -> None:
     notice = change_set()["notices"] + [
         {"kind": "levels_hidden", "message": {"key": "notice.levels_hidden", "args": {"count": 3}}}
     ]
-    page = open_shell(data=_data(changeSet=_data()["changeSet"] | {"notices": notice}))
-    page.locator(".version-row").nth(1).click(modifiers=["Control"])
-    expect(page.locator("#comparison-notice")).to_be_visible()
-
-    page.locator("#comparison-notes").click()
+    page = _open_notes(open_shell, changeSet=_data()["changeSet"] | {"notices": notice})
 
     expect(page.locator("#comparison-filters")).to_be_hidden()
     expect(page.locator("#comparison-notice")).to_be_hidden()
-    expect(page.locator("#comparison-notes")).to_have_attribute("aria-pressed", "true")
+
+    page.locator("#comparison-notes").click()
+
+    expect(page.locator("#comparison-filters")).to_be_visible()
+    expect(page.locator("#comparison-notice")).to_be_visible()
 
 
-def test_back_to_changes_shows_the_change_list_again(open_shell: OpenShell) -> None:
+def test_the_detailed_changes_and_back(open_shell: OpenShell) -> None:
     page = _open_notes(open_shell)
 
     page.locator("#comparison-notes").click()
@@ -89,6 +123,10 @@ def test_back_to_changes_shows_the_change_list_again(open_shell: OpenShell) -> N
     expect(page.locator("#comparison-page")).to_be_visible()
     expect(page.locator("#comparison-filters")).to_be_visible()
     expect(page.locator("#comparison-notes")).to_have_text("Patch notes")
+
+    page.locator("#comparison-notes").click()
+
+    expect(page.locator("#notes-view")).to_be_visible()
 
 
 def test_the_patch_notes_are_asked_for_once_per_comparison(open_shell: OpenShell) -> None:

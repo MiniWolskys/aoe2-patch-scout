@@ -36,6 +36,7 @@ async function start() {
    *   openId: string | null,
    *   comparison: {oldId: string, newId: string, changeSet: Record<string, any>,
    *     civ: string | null, view: "changes" | "tree" | "notes", treeCiv: string | null,
+   *     from: "changes" | "notes",
    *     trees: Map<string, Record<string, any>>,
    *     notes: import("./notes.js").Notes | null} | null,
    *   capture: import("./api.js").CaptureStatus | null,
@@ -187,7 +188,10 @@ async function start() {
       newId: changeSet.new.capture_id,
       changeSet,
       civ: same?.civ ?? null,
-      view: same?.view ?? "changes",
+      // The patch notes come first (D-51); a reader who chose the detailed changes keeps them.
+      view: same?.view ?? (before?.view === "changes" ? "changes" : "notes"),
+      // Where the tree goes back to.
+      from: same?.from ?? (before?.view === "changes" ? "changes" : "notes"),
       treeCiv: same?.treeCiv ?? null,
       // The tree and the patch notes ignore unreachable units, so what was drawn still holds.
       trees: same?.trees ?? new Map(),
@@ -238,7 +242,9 @@ async function start() {
     }
     treePanel.hide();
     const toggle = byId("comparison-tree");
-    toggle.textContent = t(inTree ? "tree.back" : "tree.open");
+    toggle.textContent = t(
+      inTree ? (current.from === "notes" ? "tree.back_notes" : "tree.back") : "tree.open",
+    );
     toggle.setAttribute("aria-pressed", String(inTree));
     const notesToggle = byId("comparison-notes");
     notesToggle.textContent = t(inNotes ? "notes.back" : "notes.open");
@@ -293,6 +299,7 @@ async function start() {
       return;
     }
     current.view = current.view === "notes" ? "changes" : "notes";
+    current.from = current.view;
     drawComparison();
   }
 
@@ -325,6 +332,7 @@ async function start() {
         // Back to the changes, unless the reader has moved on (to the tree) meanwhile.
         if (current.view === "notes") {
           current.view = "changes";
+          current.from = "changes";
           drawComparison();
         }
         return;
@@ -344,8 +352,9 @@ async function start() {
       return;
     }
     if (current.view === "tree") {
-      current.view = "changes";
+      current.view = current.from;
     } else {
+      current.from = current.view;
       // From Overall, the civ chosen last, as the game does; else the first civ.
       current.treeCiv = current.civ ?? current.treeCiv ?? firstCiv(current.changeSet, false);
       current.view = "tree";
