@@ -91,8 +91,14 @@ class Scope:
 
     kind: ScopeKind = "global"
     civs: tuple[str, ...] = ()
-    # How many civs have the entity; set for "having" and "having_except" only.
+    # How many civs have the entity; set for "having" and "having_except", and for "some" when
+    # the civs named are every civ that has it (Lou Chuan on 101.103.54800.0). 0 otherwise.
     count: int = 0
+
+    @property
+    def every_holder(self) -> bool:
+        """Whether the civs named are every civ that has the entity, and there are several."""
+        return self.kind == "some" and self.count >= 2 and len(self.civs) == self.count
 
     def to_json(self) -> JsonObject:
         """The form the GUI and the exports read."""

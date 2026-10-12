@@ -86,7 +86,8 @@ def _scope(
         # An entity only a few civs have: naming them says more than "all" (diff-rules.md).
         if len(in_scope) > MAX_NAMED_CIVS:
             return Scope("having", count=len(in_scope))
-        return Scope("some", tuple(civs))
+        # The count says the named civs are every civ that has it (diff-rules.md, Patch notes).
+        return Scope("some", tuple(civs), count=len(in_scope))
     missing = [name for name in in_scope if name not in set(civs)]
     # The "except" forms only when they really are shorter to read (diff-rules.md, Thresholds).
     if largest and missing and len(missing) < len(civs):

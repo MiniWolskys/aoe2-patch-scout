@@ -37,6 +37,8 @@ _SPECIAL_LISTS: Final = frozenset(
 )
 # Notices the closing line replaces: the notes have no filters to turn on.
 _FILTER_NOTICES: Final = frozenset({"levels_hidden", "unnamed_hidden"})
+# Categories whose changes every civ that has the object shares are said once, in General.
+_SHARED: Final = frozenset({"unit_stats", "techs"})
 _NOT_AVAILABLE: Final = "NotAvailable"
 _BULLET: Final = "\N{BULLET}"
 _CHRONICLES: Final = "antiquity"
@@ -98,6 +100,7 @@ def build(change_set: ChangeSet, catalog: Catalog) -> Notes:
         for entry in change_set.entries
         if (curated := _curated(entry, words, redundant | explained)) is not None
     ]
+    kept, copies = _holders_in_general(kept)
     # Changes that cancel out for players count as said.
     used: set[int] = set(redundant)
     sections = [
@@ -109,6 +112,8 @@ def build(change_set: ChangeSet, catalog: Catalog) -> Notes:
         )
         if section is not None
     ]
+    # A change said once in General is said for each civ that has a copy of it.
+    used.update(copy for change in list(used) for copy in copies.get(change, ()))
     left_out = len({id(change) for change in change_set.changes} - used)
     closing = _closing(left_out, words)
     empty = None if sections else words.text("notes.empty")
@@ -171,6 +176,42 @@ def _free_made_redundant(entries: Iterable[Entry], words: Words) -> tuple[set[in
                 redundant.add(id(change))
                 explained.update(id(cost) for cost in matched)
     return redundant, explained
+
+
+def _holders_in_general(entries: Sequence[Entry]) -> tuple[list[Entry], dict[int, list[int]]]:
+    """Move the unit and tech changes every civ that has the object shares to General, once.
+
+    The engine names the civs when a few have the object, and puts a copy of the change on each
+    civ's page; the official notes say such a change once, in General (Lou Chuan, Armored
+    Elephant, Fortified Church on 101.103.54800.0). Gaining access stays with each civ, as the
+    official notes write it, and one civ's own unit stays in its block. Returns the entries, the
+    first copy of each moved to General in its place, and each kept change's other copies.
+    """
+    kept: list[Entry] = []
+    firsts: dict[tuple[object, ...], Entry] = {}
+    copies: dict[int, list[int]] = {}
+    for entry in entries:
+        if entry.civ is None or entry.category not in _SHARED or not entry.scope.every_holder:
+            kept.append(entry)
+            continue
+        key = (entry.category, entry.kind, entry.entity.kind, entry.entity.id, entry.scope.civs)
+        first = firsts.get(key)
+        if first is None:
+            firsts[key] = replace(entry, civ=None)
+            kept.append(firsts[key])
+            continue
+        mine = {_said(change): change for change in entry.changes}
+        for change in first.changes:
+            copy = mine.get(_said(change))
+            if copy is not None:
+                copies.setdefault(id(change), []).append(id(copy))
+    return kept, copies
+
+
+def _said(change: Change) -> tuple[object, ...]:
+    """What a change says, whichever civ's page holds it."""
+    field = repr(change.field.to_json()) if change.field is not None else None
+    return (field, change.kind, change.old, change.new)
 
 
 def _curated(entry: Entry, words: Words, dropped: set[int]) -> Entry | None:

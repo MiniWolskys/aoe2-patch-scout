@@ -599,6 +599,39 @@ def test_the_chronicles_civs_have_their_own_section(catalog: Catalog) -> None:
     ]
 
 
+def test_a_change_every_civ_that_has_it_shares_is_said_once_in_general(
+    catalog: Catalog,
+) -> None:
+    """Lou Chuan on 101.103.54800.0 was repeated under its five civs; the official notes put it
+    in General. Gaining access stays with each civ, and a civ's own unit stays in its block."""
+    holders = Scope("some", ("Franks", "Persians"), count=2)
+    lou_chuan = unit("Lou Chuan", "1948")
+    attack = Message("field.attacks", {"class": "All Buildings"})
+    shared = [
+        stat(lou_chuan, "field.attacks", "230", "180", field=attack, scope=holders, civ=civ)
+        for civ in holders.civs
+    ]
+    gains = [
+        Change("civ_availability", "added", lou_chuan, holders, civ=civ) for civ in holders.civs
+    ]
+    franks_only = Scope("some", ("Franks",), count=1)
+    axeman = stat(
+        unit("Throwing Axeman", "281"), "field.max_range", "3", "5", scope=franks_only, civ="Franks"
+    )
+
+    result = notes(catalog, *shared, *gains, axeman)
+
+    assert groups(result) == {
+        "General/Unit stats": ["Lou Chuan bonus vs All Buildings decreased from 230 → 180."],
+        "Civilizations/Franks": [
+            "Throwing Axeman maximum range increased from 3 → 5.",
+            "Gain access to Lou Chuan.",
+        ],
+        "Civilizations/Persians": ["Gain access to Lou Chuan."],
+    }
+    assert result.closing is None  # every copy counts as said
+
+
 def test_a_civ_group_carries_its_crest(catalog: Catalog) -> None:
     result = notes(
         catalog, node(tech("Treadmill Crane"), "Franks", "NotAvailable", "ResearchedCompleted")
