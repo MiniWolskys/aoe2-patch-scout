@@ -53,6 +53,17 @@ def test_identical_inputs_stop_the_comparison(pair: pairs.Pair) -> None:
     assert result.changes == ()
 
 
+def test_identical_inputs_still_list_every_civ_with_a_tree(pair: pairs.Pair) -> None:
+    # A version on its own is the version compared with itself (D-52): its tree needs the civs.
+    result = compare(pair.old, pair.old)
+    assert {civ.internal_name for civ in result.civs} == set(pair.old.tech_trees)
+    names = [civ.name.casefold() for civ in result.civs]
+    assert names == sorted(names)
+    assert all(civ.count == 0 and not civ.added for civ in result.civs)
+    assert result.stat_icons
+    assert result.stat_icons == compare(pair.old, pair.new).stat_icons | result.stat_icons
+
+
 def test_a_stat_shared_by_every_civ_reads_as_all_civs(change_set: ChangeSet) -> None:
     changes = find(change_set, "unit_stats", "Archery Range", "field.hit_points")
     assert [change.scope.kind for change in changes] == ["all"]

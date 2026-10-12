@@ -10,7 +10,7 @@
 1. Both snapshots are migrated in memory to the current schema (P-15).
 2. **Stats sections** (`stats.*`) are compared only if **both** snapshots have `flags.stats_available = true`. Otherwise the change set carries a `stats_not_compared` notice naming the snapshot(s) and reasons.
 3. If either snapshot has `flags.format_verified = false`, the change set carries a mild `layout_substituted` notice. Example: *"The new build's data format is labelled VER 9.0, which this version of the tool doesn't know yet. It was read with the VER 8.9 layout and passed all checks."*
-4. If `sources` fingerprints are equal on both sides, the result is "identical" and nothing else is computed.
+4. If `sources` fingerprints are equal on both sides, the result is "identical" and no change is computed. It still lists every civ with a tech tree and the stat icons, which the tech tree needs: a version on its own is the version compared with itself (D-52).
 
 ## Identity (P-07)
 

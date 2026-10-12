@@ -284,6 +284,18 @@ def test_a_cancelled_patch_notes_save_writes_nothing(
     assert api.save_patch_notes(first, first) == {"saved": False}
 
 
+def test_a_version_alone_has_its_civs_and_its_tech_trees(api: Api, install: Path) -> None:
+    # A version on its own is the version compared with itself (D-52).
+    capture_id = capture(api, install)
+    result = api.compare_versions(capture_id, capture_id)
+    civs = result["civs"]
+    assert isinstance(civs, list) and civs
+    first = civs[0]
+    assert isinstance(first, dict)
+    tree = api.get_tech_tree(capture_id, capture_id, str(first["internal_name"]))
+    assert tree is not None and tree["nodes"]
+
+
 def test_icons_come_back_as_data_uris(api: Api, install: Path) -> None:
     capture_id = capture(api, install)
     result = api.compare_versions(capture_id, capture_id)
