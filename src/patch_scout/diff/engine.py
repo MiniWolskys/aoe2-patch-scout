@@ -37,7 +37,7 @@ from patch_scout.diff.model import (
     Side,
     sorted_changes,
 )
-from patch_scout.diff.names import Names, string_table
+from patch_scout.diff.names import Names, is_bonus_name, string_table
 from patch_scout.diff.reachability import Reachable, UnitLookup, all_civs
 from patch_scout.diff.values import at_path, pair, unknown_id, whitespace_only, words
 from patch_scout.diff.vocabulary import Vocabulary
@@ -1067,12 +1067,19 @@ def _techs(run: _Run) -> None:
         name = run.new_names.tech_name(after, _numeric_key(key)) or run.old_names.tech_name(
             before, _numeric_key(key)
         )
+        # Known only by its developers' name in every build that has it (diff-rules.md).
+        internal = name is not None and all(
+            names.internal_tech(record)
+            for names, record in ((run.new_names, after), (run.old_names, before))
+            if record is not None
+        )
         entity = Entity(
             "tech",
             key,
             name or unknown_id(key),
             icon=_node_icon(run, "Tech", _numeric_key(key)),
             named=name is not None,
+            internal=internal,
         )
         _remember_string(run, source.get("language_dll_name"))
         # A tech the .dat ties to a civ is that civ's bonus: it goes on the civ's page.
@@ -1154,7 +1161,9 @@ def _other_effects(run: _Run) -> None:
             continue
         name = _text(after.get("name"))
         shown = run.new_names.internal_name(name) if name else unknown_id(key)
-        entity = Entity("effect", key, shown, named=bool(name))
+        # An effect has only its developers' name; a bonus's says what it does.
+        internal = bool(name) and not is_bonus_name(name or "")
+        entity = Entity("effect", key, shown, named=bool(name), internal=internal)
         for change in _command_changes(
             run, entity, before, after, "other_effects", Message("field.effect_command")
         ):

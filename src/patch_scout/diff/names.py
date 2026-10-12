@@ -100,6 +100,18 @@ class Names:
             return self.internal_name(internal.strip())
         return None
 
+    def internal_tech(self, record: JsonObject | None) -> bool:
+        """Whether a tech is known only by its developers' name, and isn't a civ or team bonus.
+
+        Such techs are plumbing players never see, e.g. "Disable Regionals" or "Genitour (make
+        avail)" on 101.103.54800.0. A bonus's internal name says what it does, so it counts as
+        a name (diff-rules.md, Values and formatting).
+        """
+        if record is None or self.one_line(at_path(record, "language_dll_name")):
+            return False
+        internal = record.get("name")
+        return isinstance(internal, str) and not is_bonus_name(internal.strip())
+
     def internal_name(self, name: str) -> str:
         """An internal `.dat` name as players can read it: "C-Bonus, X" reads "Civ bonus: X".
 
@@ -110,6 +122,11 @@ class Names:
             return name
         key = _BONUS_MESSAGES[match.group(1).upper()]
         return self._catalog.text(key, name=match.group("name"))
+
+
+def is_bonus_name(name: str) -> bool:
+    """Whether an internal name is a civ or team bonus's: "C-Bonus, Pastures"."""
+    return _BONUS_PREFIX.match(name) is not None
 
 
 @cache

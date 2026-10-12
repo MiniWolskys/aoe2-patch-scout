@@ -68,6 +68,9 @@ class Entity:
     # False when the game gives the entity no usable name and `name` is only `#<id>`: such
     # changes are hidden unless the reader asks for them (diff-rules.md, Values and formatting).
     named: bool = True
+    # True when `name` is the developers' internal name of a tech or effect players never see,
+    # such as "Disable Regionals"; civ and team bonuses don't count (diff-rules.md, Patch notes).
+    internal: bool = False
 
     def to_json(self) -> JsonObject:
         """The form the GUI and the exports read."""
@@ -78,6 +81,7 @@ class Entity:
             "where": self.where,
             "icon": self.icon,
             "named": self.named,
+            "internal": self.internal,
         }
 
 
