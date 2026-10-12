@@ -87,7 +87,9 @@ def test_the_patch_notes_read_like_the_official_ones(open_shell: OpenShell) -> N
     expect(notes.locator(".notes__title")).to_have_text(
         "Patch notes: Live build → PUP build (pre-release)"
     )
-    expect(notes.locator(".notes__section-title")).to_have_text(["General", "Civilizations"])
+    expect(notes.locator(".notes__section-title")).to_have_text(
+        ["General", "Civilizations", "Chronicles"]
+    )
     franks = notes.locator("#notes-civ-Franks")
     expect(franks.locator(".notes__group-title")).to_have_text("Franks")
     expect(franks.locator("img.notes__crest")).to_have_count(1)
@@ -155,6 +157,31 @@ def test_choosing_a_civ_brings_its_block_into_view(open_shell: OpenShell) -> Non
     expect(franks).to_be_in_viewport()
     page.locator(".civ-row", has_text="Overall").click()
     expect(page.locator(".notes__title")).to_be_in_viewport()
+
+
+def test_the_civ_list_matches_the_patch_notes(open_shell: OpenShell) -> None:
+    """A civ with changes but no notes (Malians on 101.103.54800.0) led back to the top: in the
+    patch notes the list shows what they hold, and the detailed changes keep their own list."""
+    page = _open_notes(open_shell)
+    rows = page.locator("#civ-list .civ-row")
+    # Overall counts General's bullets; each civ, its own.
+    expect(rows).to_have_text(["Overall1", "Franks2"])
+    expect(page.locator(".civ-tab")).to_have_count(2)  # the Spartans have notes
+
+
+def test_a_civ_without_notes_is_not_listed_in_the_patch_notes(open_shell: OpenShell) -> None:
+    general_only = patch_notes()
+    general_only["sections"] = general_only["sections"][:1]
+    page = _open_notes(open_shell, patchNotes=general_only)
+
+    expect(page.locator("#civ-list .civ-row")).to_have_text(["Overall1"])
+    expect(page.locator(".civ-tab")).to_have_count(0)  # no Chronicles civ in the notes
+
+    # The detailed changes keep their own list.
+    page.locator("#comparison-notes").click()
+
+    expect(page.locator(".civ-row", has_text="Franks")).to_be_visible()
+    expect(page.locator(".civ-tab")).to_have_count(2)
 
 
 def test_patch_notes_that_cant_be_written_say_so_and_go_back(open_shell: OpenShell) -> None:

@@ -30,6 +30,7 @@ const CATEGORIES = [
  *   changeSet: Record<string, any>,
  *   civ: string | null,
  *   treeMode?: boolean,
+ *   notesCounts?: Map<string | null, number> | null,
  *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, details: boolean,
  *     technical: boolean, search: string},
  *   onCiv: (internalName: string | null) => void,
@@ -158,19 +159,26 @@ function keeps(entry, filters) {
 }
 
 /**
- * Overall first, then every civ with changes; a new civ shows NEW (D-33).
+ * Overall first, then every civ with changes; a new civ shows NEW (D-33). In the patch notes,
+ * the civs and counts are the notes' own: a civ with changes but no notes isn't listed.
  * @param {Parameters<typeof render>[0]} view
  * @param {Array<Record<string, any>>} changes
  */
 function renderCivList(view, changes) {
   const list = byId("civ-list");
   clear(list);
+  const notes = view.notesCounts ?? null;
   const counts = new Map();
-  for (const change of changes) {
+  for (const change of notes === null ? changes : []) {
     const key = change.civ ?? null;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
-  const civs = view.changeSet.civs ?? [];
+  for (const [key, count] of notes ?? []) {
+    counts.set(key, count);
+  }
+  const civs = (view.changeSet.civs ?? []).filter(
+    (/** @type {Record<string, any>} */ civ) => notes === null || notes.has(civ.internal_name),
+  );
   const base = civs.filter((civ) => civ.era !== "antiquity");
   const chronicles = civs.filter((civ) => civ.era === "antiquity");
   // The Chronicles civs have their own tab (D-38): a separate mode to players, like Return of
@@ -211,8 +219,8 @@ function renderCivList(view, changes) {
     );
   }
   for (const civ of shown) {
-    // The change list shows the civs with changes; the tree, every civ (D-39).
-    if (!view.treeMode && !civ.added && (civ.count ?? 0) === 0) {
+    // The change list shows the civs with changes; the tree, every civ (D-39); the notes, theirs.
+    if (!view.treeMode && notes === null && !civ.added && (civ.count ?? 0) === 0) {
       continue;
     }
     list.append(civRow(view, { ...civ, count: counts.get(civ.internal_name) ?? 0 }));

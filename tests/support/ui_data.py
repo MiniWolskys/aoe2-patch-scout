@@ -219,6 +219,18 @@ def patch_notes(**overrides: Any) -> dict[str, Any]:
                     }
                 ],
             },
+            {
+                "kind": "chronicles",
+                "title": "Chronicles",
+                "groups": [
+                    {
+                        "title": "Spartans",
+                        "civ": "Spartans",
+                        "icon": None,
+                        "items": [item("New civilization: Infantry civilization.")],
+                    }
+                ],
+            },
         ],
         "closing": "1 more change isn't in these notes.",
         "empty": None,

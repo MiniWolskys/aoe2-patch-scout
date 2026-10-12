@@ -216,6 +216,8 @@ async function start() {
       // The tree and the changes share one civ list (D-39): the tree shows the civ chosen last.
       civ: inTree ? current.treeCiv : current.civ,
       treeMode: inTree,
+      // The patch notes list their own civs, once they are written.
+      notesCounts: inNotes && current.notes !== null ? notesCounts(current.notes) : null,
       filters: state.filters,
       onCiv: selectCiv,
       onEntity: (entity) => {
@@ -293,6 +295,23 @@ async function start() {
     return found?.internal_name ?? civs[0]?.internal_name ?? null;
   }
 
+  /**
+   * How many bullets the patch notes hold for Overall (General) and for each civ.
+   * @param {import("./notes.js").Notes} notes
+   * @returns {Map<string | null, number>}
+   */
+  function notesCounts(notes) {
+    /** @type {Map<string | null, number>} */
+    const counts = new Map([[null, 0]]);
+    for (const section of notes.sections ?? []) {
+      for (const group of section.groups ?? []) {
+        const key = group.civ ?? null;
+        counts.set(key, (counts.get(key) ?? 0) + (group.items ?? []).length);
+      }
+    }
+    return counts;
+  }
+
   function toggleNotes() {
     const current = state.comparison;
     if (current === null) {
@@ -338,6 +357,8 @@ async function start() {
         return;
       }
       current.notes = answer;
+      drawComparison(); // the civ list now follows the notes; this draws them too
+      return;
     }
     if (notesShown !== current.notes) {
       notesView.render(container, current.notes);
