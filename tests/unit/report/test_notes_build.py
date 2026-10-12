@@ -429,6 +429,35 @@ def test_required_techs_are_left_to_the_detailed_changes(catalog: Catalog) -> No
     assert result.closing is not None
 
 
+def test_a_tech_whose_effect_moved_into_a_script_leaves_its_effects_out(catalog: Catalog) -> None:
+    """On 101.103.54800.0 Kasbah and four other techs gained a script that only shows a message,
+    and the Malians' gold bonus moved into a script: "Gold Bonus removed" read as a nerf. The
+    script says nothing a player can read; the detailed changes keep it all."""
+    owned: dict[str, Any] = {"scope": Scope("some", ("Franks",)), "civ": "Franks"}
+    bonus = tech("Civ bonus: Gold productivity", "800")
+    script = Message("effect.script", {"title": "Effect of Gold Miner bonus"}).to_json()
+    changes = [
+        effect(bonus, "", "", "", "", field=Message("effect.added", {"effect": script}), **owned),
+        effect(
+            bonus,
+            "",
+            "",
+            f"{TIMES}1.1",
+            "",
+            field=Message("effect.resource", {"resource": "Gold Bonus"}),
+            **owned,
+        ),
+        cost(bonus, "gold", "100", "120", category="techs", **owned),
+    ]
+
+    result = notes(catalog, *changes)
+
+    assert lines(result) == [
+        "Civ bonus: Gold productivity research cost in gold increased from 100 → 120."
+    ]
+    assert result.closing is not None  # the script and the effect it took over are counted
+
+
 def test_a_removed_unit_is_one_line(catalog: Catalog) -> None:
     gone = Change("techs", "removed", tech("Bearded Axe"), Scope("some", ("Franks",)), civ="Franks")
 

@@ -377,7 +377,8 @@ The comparison written the way the official patch notes are, for players who are
 | What an effect now gives units or classes | Whom, not what: "Gambesons now affects (Elite) Varangian Guard, Eastern Swordsman and Norse Warrior." Players know what the tech does; the detailed changes have the values. "… no longer affects …" for what it gives no longer. |
 | What an effect does to a tech's cost or research time | Always with its numbers, as a clause: "Incas: Team bonus: Start w/ Llama food cost removed (was 0)." Without them, "no longer affects Team bonus: …" read as if the civ lost the bonus. |
 | An effect value that changed | "Wagenburg Tactics: Hand Cannoneer, Bombard Cannon, … movement speed decreased from +15% → +10%." |
-| An effect sentence with no value | "Kasbah: new effect: Runs the scripted effect: …"; several under one tech as bullets. |
+| An effect sentence with no value | "Disable Regionals: new effect: Disables Cranequins"; several under one tech as bullets. |
+| A script an effect runs, or no longer runs | Left out, with the tech's other effect sentences: a function of Effects.xs says nothing a player can read. On 101.103.54800.0 five only showed a message (Kasbah, Cuman Mercenaries, First Crusade, Flemish Revolution, Atheism), and the others took over a bonus whose old effects read as removed ("Gold Bonus removed", Malians). The tech's other fields stay; the closing line counts the rest. |
 
 - **Left to the detailed changes:** required techs. On 101.103.54800.0 every change to them was plumbing ("Dupl. Imperial Age", "Civ bonus: Free Chemistry"); players read requirements as ages and availability, which the notes say from the tech tree. They are counted in the closing line.
 - **A tech's cost** reads "research cost in food", so an upgrade named after its unit isn't read as the unit's cost ("Elite Rattan Archer research cost in food decreased from 1000 → 800").

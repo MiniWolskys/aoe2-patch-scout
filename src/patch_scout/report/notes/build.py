@@ -46,6 +46,8 @@ _SHARED: Final = frozenset({"unit_stats", "techs"})
 _NOT_AVAILABLE: Final = "NotAvailable"
 _COST: Final = "field.cost"
 _UPGRADE: Final = "effect.upgrade"
+_SCRIPT: Final = "effect.script"
+_CAME_OR_WENT: Final = frozenset({"effect.added", "effect.removed"})
 _BULLET: Final = "\N{BULLET}"
 _CHRONICLES: Final = "antiquity"
 
@@ -247,12 +249,32 @@ def _curated(entry: Entry, words: Words, dropped: set[int]) -> Entry | None:
     """
     if entry.low_priority or not entry.entity.named or entry.entity.internal:
         return None
+    scripted = entry.category == "techs" and any(_runs_script(change) for change in entry.changes)
     changes = tuple(
-        change for change in entry.changes if id(change) not in dropped and _sayable(change, words)
+        change
+        for change in entry.changes
+        if id(change) not in dropped
+        and _sayable(change, words)
+        and not _runs_script(change)
+        and not (scripted and _is_sentence(change))
     )
     if not changes:
         return None
     return entry if len(changes) == len(entry.changes) else replace(entry, changes=changes)
+
+
+def _runs_script(change: Change) -> bool:
+    """A sentence saying an effect runs a function of Effects.xs, or no longer does.
+
+    It says nothing a player can read: on 101.103.54800.0 five such scripts only showed a
+    message (Kasbah, Cuman Mercenaries, First Crusade, Flemish Revolution, Atheism), and the
+    others took over a bonus whose old effects read as removed ("Gold Bonus removed", Malians).
+    A tech that gains or loses one leaves all its effect sentences to the detailed changes.
+    """
+    if change.field is None or change.field.key not in _CAME_OR_WENT:
+        return False
+    sentence = change.field.args.get("effect")
+    return isinstance(sentence, dict) and sentence.get("key") == _SCRIPT
 
 
 def _sayable(change: Change, words: Words) -> bool:
