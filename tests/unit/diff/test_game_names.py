@@ -50,9 +50,16 @@ def _tech(dll: int, required: list[JsonValue]) -> JsonValue:
 
 
 def _build(
-    *, shock: int, pierce: int, train_time: int, required: list[JsonValue], scripts: bool = True
+    *,
+    shock: int,
+    pierce: int,
+    train_time: int,
+    required: list[JsonValue],
+    scripts: bool = True,
+    unit_type: int = 70,
 ) -> Snapshot:
     swordsman: JsonObject = {
+        "type": unit_type,
         "hit_points": 60,
         "language_dll_name": 5077,
         "type_50": {"attacks": [{"class_": 29, "amount": shock}, {"class_": 4, "amount": 9}]},
@@ -135,6 +142,16 @@ def test_a_class_the_constants_dont_name_stays_an_id() -> None:
 def test_a_train_location_is_named_after_its_building() -> None:
     [change] = [c for c in _compare(train_time=18).changes if c.entity.name == "Long Swordsman"]
     assert _field_args(change) == {"location": "Archery Range"}
+
+
+def test_a_buildings_train_time_is_its_build_time() -> None:
+    """Fortified Church on 101.103.54800.0 read "train time at Builder": a building is built."""
+    old = _build(shock=6, pierce=0, train_time=40, required=[FEUDAL], unit_type=80)
+    new = _build(shock=6, pierce=0, train_time=50, required=[FEUDAL], unit_type=80)
+    [change] = [c for c in compare(old, new).changes if c.entity.name == "Long Swordsman"]
+    assert change.field is not None
+    assert change.field.key == "field.build_time"
+    assert (change.old, change.new) == ("40", "50")
 
 
 def test_required_techs_are_named_and_empty_slots_left_out() -> None:

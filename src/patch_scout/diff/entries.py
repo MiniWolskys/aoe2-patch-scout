@@ -28,6 +28,7 @@ MAIN_FIELDS: Final = frozenset(
         "field.reload_time",
         "field.cost",
         "field.train_locations",
+        "field.build_time",
     }
 )
 # Values that say "nothing here" for a new entity, e.g. a garrison capacity of 0.

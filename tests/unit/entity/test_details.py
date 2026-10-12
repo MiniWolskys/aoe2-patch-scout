@@ -250,13 +250,17 @@ def _snapshot(
     civ_dat = list(civ_dat)
     civ_dat[alpha] = {"tech_tree_effect_id": TREE_EFFECT, "team_bonus_effect_id": TEAM_EFFECT}
     town_center: JsonObject = {
+        "type": 80,
         "class_": 3,
         "hit_points": 2400,
         "line_of_sight": 8,
         "garrison_capacity": 15,
         "language_dll_name": 5109,
         "building": {"garrison_heal_rate": 0.0},
-        "creatable": {"resource_costs": [{"amount": 100, "flag": 1, "type": 2}]},
+        "creatable": {
+            "resource_costs": [{"amount": 100, "flag": 1, "type": 2}],
+            "train_locations": [{"unit_id": MILITIA, "train_time": 150}],
+        },
     }
     units: JsonObject = {str(MILITIA): _unit(militia), str(TOWN_CENTER): _unit(town_center)}
     if with_man_at_arms:
@@ -447,6 +451,8 @@ def test_a_building_shows_its_hit_points_garrison_and_cost() -> None:
     assert _row(stats, "field.hit_points")["new"] == "2400"
     assert _row(stats, "field.garrison_capacity")["new"] == "15"
     assert _row(_section(view, "cost"), "field.cost", resource="stone")["new"] == "100"
+    # Its train time at its builder is the time it takes to build.
+    assert _row(_section(view, "cost"), "field.build_time", location="Militia")["new"] == "150"
 
 
 # --- what affects it -----------------------------------------------------------------------

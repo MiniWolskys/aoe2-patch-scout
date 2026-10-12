@@ -8,6 +8,7 @@ from both snapshots, so a unit added or removed in one of them still counts.
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import Final
 
 from patch_scout.capture.stats_tier import apply_overrides
 from patch_scout.diff.values import at_path
@@ -22,6 +23,13 @@ PROJECTILE_LINKS = (
     "creatable.secondary_projectile_unit",
     "creatable.charge_projectile_unit",
 )
+# A unit record's type for a building.
+_BUILDING_TYPE: Final = 80
+
+
+def is_building(record: JsonObject | None) -> bool:
+    """Whether a unit record is a building's: its train time is then its build time."""
+    return record is not None and record.get("type") == _BUILDING_TYPE
 
 
 @dataclass(frozen=True, slots=True)

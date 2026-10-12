@@ -38,7 +38,7 @@ from patch_scout.diff.model import (
     sorted_changes,
 )
 from patch_scout.diff.names import Names, is_bonus_name, string_table
-from patch_scout.diff.reachability import Reachable, UnitLookup, all_civs
+from patch_scout.diff.reachability import Reachable, UnitLookup, all_civs, is_building
 from patch_scout.diff.values import at_path, pair, unknown_id, whitespace_only, words
 from patch_scout.diff.vocabulary import Vocabulary
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
@@ -1012,12 +1012,17 @@ def _sub_fields(
     if allow.kind == "resource_costs":
         return [(key, Message("field.cost", {"resource": _resource_name(key)})) for key in ordered]
     if allow.kind == "train_locations":
-        return [
-            (key, Message(f"field.{allow.key}", {"location": _location_name(run, key)}))
-            for key in ordered
-        ]
+        # A building's "train time" at its builder is the time it takes to build (Fortified
+        # Church on 101.103.54800.0 read "train time at Builder").
+        label = "field.build_time" if _is_building(records) else f"field.{allow.key}"
+        return [(key, Message(label, {"location": _location_name(run, key)})) for key in ordered]
     kind: ClassKind = "armours" if allow.key == "armours" else "attacks"
     return [(key, class_field(kind, key, run.vocabulary)) for key in ordered]
+
+
+def _is_building(records: Mapping[str, tuple[JsonObject | None, JsonObject | None]]) -> bool:
+    """Whether the unit records are a building's (unit type 80 in the .dat)."""
+    return any(is_building(record) for pair in records.values() for record in pair)
 
 
 def _location_name(run: _Run, location: JsonValue) -> str:

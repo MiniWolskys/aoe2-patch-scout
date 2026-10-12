@@ -188,6 +188,7 @@
   "field.blast_width": "Blast radius",
   "field.bonus_damage_resistance": "Bonus damage resistance",
   "field.building": "Made at",
+  "field.build_time": "Build time",
   "field.building_offer": "Building offer",
   "field.button_icon_id": "Button icon",
   "field.charge_event": "Charge event",
