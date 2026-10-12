@@ -113,10 +113,17 @@ FAKE_BRIDGE = """
     export_text: answer("export_text", { text: data.exportText ?? "" }),
     get_patch_notes: (...args) => {
       record("get_patch_notes", args);
-      if (data.patchNotesError) {
-        return Promise.reject(new Error(data.patchNotesError));
-      }
-      return Promise.resolve(data.patchNotes);
+      // `patchNotesDelay` makes the answer wait, so a test can move on before it arrives.
+      const delay = data.patchNotesDelay ?? 0;
+      return new Promise((resolve, reject) =>
+        setTimeout(
+          () =>
+            data.patchNotesError
+              ? reject(new Error(data.patchNotesError))
+              : resolve(data.patchNotes),
+          delay,
+        ),
+      );
     },
     save_patch_notes: answer(
       "save_patch_notes",

@@ -728,3 +728,78 @@ def test_the_page_gets_the_same_document(catalog: Catalog) -> None:
         "icon": {"hash": "crest"},
         "items": [{"text": "Gain access to Treadmill Crane.", "children": []}],
     }
+
+
+# --- review fixes -------------------------------------------------------------------------------
+
+
+def test_every_kind_of_sentence_names_the_civs_that_dont_share_it(catalog: Catalog) -> None:
+    others = Scope("having_except", ("Franks",), count=40)
+    crane = tech("Treadmill Crane", "1")
+    gained = Change("civ_availability", "added", crane, others)
+    gone = Change("techs", "removed", tech("Bearded Axe", "2"), others)
+    given = effect(tech("Gambesons", "3"), "Dreki", "Pierce armour", "", "+1", scope=others)
+
+    # General's groups follow the categories' order: availability, then techs.
+    assert lines(notes(catalog, gained, gone, given)) == [
+        "Gain access to Treadmill Crane (except Franks).",
+        "Bearded Axe removed (except Franks).",
+        "Gambesons now affects Dreki (except Franks): +1 pierce armour.",
+    ]
+
+
+def test_a_change_with_no_values_says_whether_it_came_or_went(catalog: Catalog) -> None:
+    stable = Entity("building", "101", "Stable")
+    franks = Scope("some", ("Franks",))
+    offer = Message("field.building_offer")
+    came = Change("civ_availability", "added", stable, franks, field=offer, civ="Franks")
+    script = Change(
+        "other_effects", "removed", Entity("script", "52", "Effect of Kasbah"), franks, civ="Franks"
+    )
+
+    assert lines(notes(catalog, came, script)) == [
+        "Stable building offer added.",
+        "Effect of Kasbah removed.",
+    ]
+
+
+def test_subjects_whose_field_changed_differently_are_not_paired(catalog: Catalog) -> None:
+    result = notes(
+        catalog,
+        stat(unit("Pikeman", "1"), "field.hit_points", "22", "25"),
+        stat(unit("Elite Pikeman", "2"), "field.hit_points", "30", ""),
+    )
+
+    assert lines(result) == [
+        "Pikeman hit points increased from 22 → 25.",
+        "Elite Pikeman hit points removed (was 30).",
+    ]
+
+
+def test_what_a_new_tech_doesnt_say_is_counted(catalog: Catalog) -> None:
+    placeholder = tech("Hamask", "9")
+    sentence = Message("effect.disable", {"unit": "Militia"}).to_json()
+    changes = [
+        stat(
+            placeholder,
+            "field.research_locations",
+            "",
+            "35",
+            category="techs",
+            field=Message("field.research_locations", {"location": "Castle"}),
+        ),
+        effect(
+            placeholder,
+            "",
+            "",
+            "",
+            "",
+            scope=ALL,
+            field=Message("effect.removed", {"effect": sentence}),
+        ),
+    ]
+
+    result = notes(catalog, *changes)
+
+    assert lines(result) == ["NEW: Hamask:", "  Research time at Castle: 35"]
+    assert result.closing is not None and result.closing.startswith("1 more change")

@@ -322,8 +322,11 @@ async function start() {
       }
       if (answer === null || typeof answer !== "object") {
         dialogs.toast(t("notes.failed"));
-        current.view = "changes";
-        drawComparison();
+        // Back to the changes, unless the reader has moved on (to the tree) meanwhile.
+        if (current.view === "notes") {
+          current.view = "changes";
+          drawComparison();
+        }
         return;
       }
       current.notes = answer;

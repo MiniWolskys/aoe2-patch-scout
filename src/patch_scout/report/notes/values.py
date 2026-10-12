@@ -48,7 +48,8 @@ def shown(value: str) -> str:
     if parsed is None:
         return value
     if parsed.form == "times":
-        return _percent(parsed.number)
+        # A factor of zero or below is no change in percent anyone would write ("-200%").
+        return _percent(parsed.number) if parsed.number > 0 else value
     return parsed.text
 
 

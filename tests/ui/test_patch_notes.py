@@ -164,3 +164,14 @@ def test_the_export_goes_back_to_the_changes_out_of_patch_notes_mode(
     expect(page.locator("#export-html")).to_be_visible()
     expect(page.locator("#export-image")).to_be_visible()
     expect(page.locator("#export-preview")).to_have_text("Patch Scout - what changed")
+
+
+def test_a_failure_after_moving_to_the_tree_leaves_the_tree(open_shell: OpenShell) -> None:
+    page = _open_notes(open_shell, patchNotesError="boom", patchNotesDelay=500)
+    expect(page.locator(".notes__loading")).to_be_visible()
+
+    page.locator("#comparison-tree").click()
+
+    expect(page.locator("#toast")).to_contain_text("The patch notes couldn't be written")
+    expect(page.locator("#tree-view")).to_be_visible()
+    expect(page.locator("#comparison-page")).to_be_hidden()

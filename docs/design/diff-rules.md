@@ -360,8 +360,9 @@ The comparison written the way the official patch notes are, for players who are
 | Change | Sentence |
 |---|---|
 | Fields of a unit, tech or resource | "Onager pierce armour increased from 7 → 8, melee attack increased from 50 → 55." A value that appears: "bonus vs Camels added: 3"; disappears: "… removed (was 2)". |
-| A change every civ but some shares | "… (except Athenians, Spartans and Thracians)." |
-| A new unit or tech (entry Added) | "NEW: Ordonnance Companies:" with a bullet per value; costs as one ("Cost: 400 food, 250 gold"); for a tech, what its effect does first. |
+| A change every civ but some shares | "… (except Athenians, Spartans and Thracians)", whatever the kind of sentence: a field, gaining or losing access, NEW, removed, what an effect gives. |
+| Something added or removed with no value | "Stable building offer added.", "Effect of Kasbah removed." Never a bare label. |
+| A new unit or tech (entry Added) | "NEW: Ordonnance Companies:" with a bullet per value; costs as one ("Cost: 400 food, 250 gold"); for a tech, what its effect does first. Only what the bullets say counts as said: anything else of the entry, such as an effect sentence it lost, is counted in the closing line. |
 | A unit or tech removed | "Bearded Axe removed." |
 | A node gained, or its status leaving Not available | "Gain access to Treadmill Crane." Left out where a NEW item about the same unit or tech says it. |
 | A node lost, or its status becoming Not available | "Lose access to (Heavy) Cavalry Archer." |
@@ -375,7 +376,7 @@ The comparison written the way the official patch notes are, for players who are
 - **Field labels** are the comparison's, with the first letter lowered mid-sentence (`notes.field_case`; a label whose second letter is a capital is left alone). Attribute names from `Constants.xs`, in title case, are lowered whole ("line of sight").
 - **Values:** a leading `=` is dropped; a multiplier reads as a percentage, computed in decimal ("×0.6" → "-40%", "×1.0835" → "+8.35%"); `+N`/`-N` keep their sign.
 - **Direction:** "increased" or "decreased" only when both values are numbers of the same form (plain, set, added, or multiplied); otherwise "changed". It states the number's direction only, never a buff or nerf (D-34).
-- **Pairs:** "Throwing Axeman" and "Elite Throwing Axeman" with the same fields read "(Elite) Throwing Axeman"; when their values differ, "… from 3 → 5, Elite 4 → 6". The prefix is one word and the pairing is textual: it is a contraction of the two names, true whatever the upgrade line, and never guesses one. So "Archer" and "Cavalry Archer" given the same thing read "(Cavalry) Archer". Two subjects that moved in opposite directions read "changed".
+- **Pairs:** "Throwing Axeman" and "Elite Throwing Axeman" with the same fields read "(Elite) Throwing Axeman"; when their values differ, "… from 3 → 5, Elite 4 → 6". The prefix is one word and the pairing is textual: it is a contraction of the two names, true whatever the upgrade line, and never guesses one. So "Archer" and "Cavalry Archer" given the same thing read "(Cavalry) Archer". Two subjects that moved in opposite directions read "changed". Each field must have changed the same way for both (a value added to one and removed from the other can't share a clause); otherwise they stay apart.
 - **Unit names:** the tech tree's labels shorten some names ("H. Mounted Crossbowman"); when the comparison's Unit stats have the same unit ID, its own name is used, so the pair reads "(Heavy) Mounted Crossbowman".
 - **Merging:** within a group, sentences that say the same about different subjects become one ("Battering Ram, Capped Ram and Siege Ram line of sight increased from 3 → 5"; "Bodkin Arrow, Bracer and Fletching now affect …"). Gaining and losing access are one line per item, as in the official notes.
 - **Moved commands:** the same sentence removed and added for one target (a command that only moved in the effect's list; Fabric Shields, Incas) cancels out and counts as said.

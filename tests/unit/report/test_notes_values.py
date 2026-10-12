@@ -20,6 +20,9 @@ from patch_scout.report.notes.values import direction, shown
         ("\N{MULTIPLICATION SIGN}1.0835", "+8.35%"),
         ("\N{MULTIPLICATION SIGN}1", "+0%"),
         ("\N{MULTIPLICATION SIGN}0.34", "-66%"),
+        # A factor of zero or below isn't a change in percent anyone would write: kept as is.
+        ("\N{MULTIPLICATION SIGN}0", "\N{MULTIPLICATION SIGN}0"),
+        ("\N{MULTIPLICATION SIGN}-1", "\N{MULTIPLICATION SIGN}-1"),
         ("Castle Age; Chemistry", "Castle Age; Chemistry"),
         ("", ""),
     ],

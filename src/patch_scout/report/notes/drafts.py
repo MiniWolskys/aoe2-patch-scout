@@ -108,10 +108,16 @@ def _compatible(first: Draft, second: Draft) -> bool:
     if first.scope != second.scope:
         return False
     if first.form == "stats":
-        return [item.label for item in first.fields] == [item.label for item in second.fields]
+        # The same fields, each changed the same way: a value added to one and removed from
+        # the other can't share a clause.
+        return [_shape(item) for item in first.fields] == [_shape(item) for item in second.fields]
     if first.form == "new":
         return [item.label for item in first.children] == [item.label for item in second.children]
     return True
+
+
+def _shape(item: Field) -> tuple[str, bool, bool]:
+    return item.label, bool(item.old), bool(item.new)
 
 
 def _joined(first: Draft, second: Draft, prefix: str, words: Words) -> Draft:
@@ -186,19 +192,21 @@ def render(draft: Draft, words: Words) -> Item:
         key = "notes.stats" if draft.form == "stats" else "notes.effect_change"
         return Item(words.text(key, subjects=subjects, clauses=clauses, scope=draft.scope))
     if draft.form == "gain":
-        return Item(words.text("notes.gain", subject=subjects))
+        return Item(words.text("notes.gain", subject=subjects, scope=draft.scope))
     if draft.form == "lose":
-        return Item(words.text("notes.lose", subject=subjects))
+        return Item(words.text("notes.lose", subject=subjects, scope=draft.scope))
     if draft.form == "new":
         key = "notes.new" if children else "notes.new_bare"
-        return Item(words.text(key, subject=subjects), children)
+        return Item(words.text(key, subject=subjects, scope=draft.scope), children)
     if draft.form in ("affects", "no_longer"):
         key = "notes.affects" if draft.form == "affects" else "notes.no_longer_affects"
         # Every target given the same: one line, with what they get ("…: +1 armour.").
         key += "_all" if draft.text else ""
         key += "_many" if len(draft.subjects) > 1 else ""
         targets = words.listed(draft.targets)
-        text = words.text(key, subjects=subjects, targets=targets, parts=draft.text)
+        text = words.text(
+            key, subjects=subjects, targets=targets, parts=draft.text, scope=draft.scope
+        )
         return Item(text, children)
     return Item(draft.text, children)
 

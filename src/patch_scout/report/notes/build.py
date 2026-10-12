@@ -253,10 +253,22 @@ def _drafts(entry: Entry, context: _Context, civ: CivRef | None) -> list[Draft]:
     drafts += _effects(
         [change for change in rest if _is_sentence(change)], context, rank, subject, scope
     )
-    fields = [change for change in rest if not _is_sentence(change)]
+    drafts += [
+        _came_or_went(change, context, rank, subject, scope)
+        for change in rest
+        if change.field is None and change.kind in ("added", "removed")
+    ]
+    fields = [change for change in rest if change.field is not None and not _is_sentence(change)]
     if fields:
         drafts.append(_stats(fields, context, rank, subject, scope))
     return drafts
+
+
+def _came_or_went(change: Change, context: _Context, rank: int, subject: str, scope: str) -> Draft:
+    """Something added or removed as a whole, such as a function of Effects.xs."""
+    key = "notes.added" if change.kind == "added" else "notes.removed"
+    text = context.words.text(key, subject=subject, scope=scope)
+    return Draft("line", rank, [subject], [change], text=text)
 
 
 def _subject(entry: Entry, context: _Context) -> str:
@@ -304,7 +316,7 @@ def _availability(
             access = "gain" if change.kind == "added" else "lose"
         if access is not None:
             place = rank if access == "gain" else _LOSS_RANK
-            drafts.append(Draft(access, place, [subject], [change], entity=entity))
+            drafts.append(Draft(access, place, [subject], [change], entity=entity, scope=scope))
         elif change.kind == "renamed" and change.old and change.new:
             text = words.text("notes.renamed", old=change.old, new=change.new)
             drafts.append(Draft("line", rank, [subject], [change], text=text))
@@ -342,11 +354,12 @@ def _unit(entry: Entry, context: _Context, subject: str, scope: str) -> list[Dra
     rank = _RANKS["unit_stats"]
     changes = list(entry.changes)
     if entry.kind == "added":
-        children = _new_children(changes, context)
+        said: list[Change] = []
+        children = _new_children(changes, context, said)
         entity = ("unit", entry.entity.id)
-        return [Draft("new", rank, [subject], changes, entity, scope, children=children)]
+        return [Draft("new", rank, [subject], said, entity, scope, children=children)]
     if entry.kind == "removed":
-        return [_removed(changes, context, rank, subject)]
+        return [_removed(changes, context, rank, subject, scope)]
     return [_stats(changes, context, rank, subject, scope)]
 
 
@@ -355,17 +368,21 @@ def _tech(entry: Entry, context: _Context, rank: int, subject: str, scope: str) 
     effects = [change for change in changes if _is_sentence(change)]
     fields = [change for change in changes if not _is_sentence(change)]
     if entry.kind == "added":
-        children = _effect_children(effects, context) + _new_children(fields, context)
+        # Only what the bullets say counts as said; the rest is counted in the closing line.
+        said: list[Change] = []
+        children = _effect_children(effects, context, said) + _new_children(fields, context, said)
         entity = ("tech", entry.entity.id)
-        return [Draft("new", rank, [subject], changes, entity, scope, children=children)]
+        return [Draft("new", rank, [subject], said, entity, scope, children=children)]
     if entry.kind == "removed":
-        return [_removed(changes, context, rank, subject)]
+        return [_removed(changes, context, rank, subject, scope)]
     drafts = [_stats(fields, context, rank, subject, scope)] if fields else []
     return drafts + _effects(effects, context, rank, subject, scope)
 
 
-def _removed(changes: list[Change], context: _Context, rank: int, subject: str) -> Draft:
-    text = context.words.text("notes.removed", subject=subject)
+def _removed(
+    changes: list[Change], context: _Context, rank: int, subject: str, scope: str
+) -> Draft:
+    text = context.words.text("notes.removed", subject=subject, scope=scope)
     return Draft("line", rank, [subject], changes, text=text)
 
 
@@ -377,15 +394,21 @@ def _stats(
     scope: str,
     civ: CivRef | None = None,
 ) -> Draft:
-    """ "Onager melee attack increased from 50 → 55, pierce armour …": one subject's fields."""
-    fields = [
-        Field(
-            context.words.field(change.field) if change.field else "",
-            _word(change, change.old or "", context, civ),
-            _word(change, change.new or "", context, civ),
+    """ "Onager melee attack increased from 50 → 55, pierce armour …": one subject's fields.
+
+    A field with no values says whether it came or went: "Stable building offer added".
+    """
+    words = context.words
+    fields: list[Field] = []
+    for change in changes:
+        label = words.field(change.field) if change.field else ""
+        old, new = change.old or "", change.new or ""
+        if not old and not new and change.kind in ("added", "removed"):
+            key = "notes.clause.came" if change.kind == "added" else "notes.clause.went"
+            label = words.text(key, field=label)
+        fields.append(
+            Field(label, _word(change, old, context, civ), _word(change, new, context, civ))
         )
-        for change in changes
-    ]
     return Draft("stats", rank, [subject], list(changes), scope=scope, fields=fields)
 
 
@@ -400,10 +423,10 @@ def _word(change: Change, value: str, context: _Context, civ: CivRef | None) -> 
     return value
 
 
-def _new_children(changes: Sequence[Change], context: _Context) -> list[Child]:
+def _new_children(changes: Sequence[Change], context: _Context, said: list[Change]) -> list[Child]:
     """A new unit's or tech's values, one bullet each; its costs as one: "Cost: 40 wood, 65 gold".
 
-    The cost bullet sits where the first cost was.
+    The cost bullet sits where the first cost was. The changes it says are added to `said`.
     """
     words = context.words
     costs: list[str] = []
@@ -412,6 +435,7 @@ def _new_children(changes: Sequence[Change], context: _Context) -> list[Child]:
     for change in changes:
         if change.field is None or not change.new:
             continue
+        said.append(change)
         if change.field.key == "field.cost":
             resource = words.value(change.field.args.get("resource"))
             costs.append(words.text("notes.cost_part", amount=shown(change.new), resource=resource))
@@ -573,8 +597,13 @@ def _cancel(gained: _Given, lost: _Given) -> list[Change]:
     return cancelled
 
 
-def _effect_children(changes: Sequence[Change], context: _Context) -> list[Child]:
-    """What a new tech does, one bullet per target or sentence: "(Heavy) Mounted Crossbowman: …"."""
+def _effect_children(
+    changes: Sequence[Change], context: _Context, said: list[Change]
+) -> list[Child]:
+    """What a new tech does, one bullet per target or sentence: "(Heavy) Mounted Crossbowman: …".
+
+    Only what it now does is said; the changes said are added to `said`.
+    """
     words = context.words
     gained = _Given()
     children: list[Child] = []
@@ -587,8 +616,11 @@ def _effect_children(changes: Sequence[Change], context: _Context) -> list[Child
             gained.add(target, _part(attribute, change.new, words), change)
         elif change.field.key == "effect.added":
             children.append(Child(words.value(change.field.args.get("effect"))))
-        elif change.new:
+            said.append(change)
+        elif change.new and not change.old:
             children.append(Child(words.message(change.field), shown(change.new)))
+            said.append(change)
+    said.extend(gained.used())
     targets = [
         Child(words.text("notes.target", target=name, parts=", ".join(parts)))
         for name, parts in _paired(gained.parts, words)
