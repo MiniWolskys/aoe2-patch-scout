@@ -79,7 +79,7 @@ More detail in [docs/design/architecture.md](docs/design/architecture.md).
 
 **Where things are:** your versions, icons and the log live in `%LOCALAPPDATA%\PatchScout`. To uninstall, delete the extracted folder, and that data folder if you don't want to keep your versions.
 
-**Sharing a version:** click the gear next to it, then **Export version**. The other person clicks **Import**. Versions marked pre-release ask before they are exported.
+**Sharing a version:** click the gear next to it, then **Export**. The other person clicks **Import**. Versions marked pre-release ask before they are exported.
 
 ## Documentation
 
