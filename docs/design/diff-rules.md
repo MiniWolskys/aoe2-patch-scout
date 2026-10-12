@@ -76,7 +76,7 @@ The allowlist names **stat concepts**. The mapping to snapshot field paths is fi
 | Frame delay | Attack delay |
 | Projectile unit / count / charging fields | |
 | Cost | Per resource |
-| Train time | |
+| Train time | A building's time at its builder reads **Build time** (a unit record of type 80; "Fortified Church train time at Builder" on 101.103.54800.0) |
 | Garrison capacity / garrison type | |
 | Work rate | Villagers, monks, trade |
 | Unit class, trainable location, button | Report changes; usually signals a redesign |
@@ -151,7 +151,7 @@ For each unit ID and allowlisted field of the raw unit records:
 - The app names at most 8 civs in a list ("… and 3 more"), with the full list on hover. **Exports name every civ**: they are read out or pasted, so nothing may be cut.
 - Use the "except" forms when listing the exceptions is shorter than listing the changed civs.
 
-**Where it shows (D-44):** a change that names its civs is on each of those civs' pages; every other form, including "all N civilizations that have it", is on Overall.
+**Where it shows (D-44):** a change that names its civs is on each of those civs' pages; every other form, including "all N civilizations that have it", is on Overall. When the civs named are every civ that has the entity, the scope also carries their count, as "having" does; the patch notes use it (see Patch notes).
 
 **Civ-specific changes go first.** A change limited to some civs usually means a civ bonus changed, so within a category those lines come before "all civs" lines.
 
@@ -166,7 +166,7 @@ The change set is field-level: one change per field and value group. The app and
 ```
 
 - **One change:** the entry reads as one line, as before.
-- **A new unit** (in Unit stats, every field goes from nothing to a value): the entry is marked Added and lists only its **main stats**, without empty or default values (`0`, `-1`). The main stats are hit points, line of sight, speed, attacks, armours, displayed attack and armours, maximum range, reload time, cost and train time. The entry ends with the number of values it leaves out.
+- **A new unit** (in Unit stats, every field goes from nothing to a value, hit points among them): the entry is marked Added and lists only its **main stats**, without empty or default values (`0`, `-1`). The main stats are hit points, line of sight, speed, attacks, armours, displayed attack and armours, maximum range, reload time, cost and train time. The entry ends with the number of values it leaves out. Every unit has hit points, so a unit that only gains a value in a new slot isn't new: the Missionary only gained a food cost (Spanish, 101.103.54800.0) and stays Modified.
 - **A removed unit:** one line, with the number of values left out.
 - **A new tech** is compared with nothing, like a new unit, so its entry lists its cost, research location and time, required techs and its effect's commands. The entry is marked Added when every change is a new value and one of them is a research location: a tech players could research always has one. That also covers a placeholder record the patch fills in. Bookkeeping fields (effect ID, required count, flags) and default values don't count either way. *Ordonnance Companies and Cranequins on 101.103.54800.0 were such placeholders in 101.103.48987.0 and read as lists of "added" values before 2026-10-12.* A removed tech stays one line.
 - **Other categories** keep every change they have, e.g. a building that only gained offered items.
@@ -256,7 +256,7 @@ The rules come from measuring 101.103.48987.0 → 101.103.54800.0 against its of
 
 **A unit no civ could get in the old build**, that some civ can get now, reads as **Added**, even when the old `.dat` held a placeholder record for it (Mounted Crossbowman on 101.103.54800.0 went "Hit points 1 → 45"). Only units new to every civ: a civ gaining an existing unit keeps its availability line.
 
-**Starting resources** are compared across civs: a change every civ shares, Gaia included, is one Overall line named after the resource (e.g. "Varangian Gold · Starting amount · 0 → 50"), instead of one per civ page.
+**Starting resources** are compared across civs: a change every civ shares, Gaia included, is one Overall line named after the resource, instead of one per civ page. Only the four stockpiles (food, wood, stone, gold: resources 0 to 3) read **Starting amount**. The others are values the game's mechanics read, which no civ starts with, so they read **Game value** (e.g. "Varangian Gold · Game value · 0 → 50").
 
 ## Civ bonuses are not applied to units (P-17)
 
@@ -355,7 +355,7 @@ The comparison written the way the official patch notes are, for players who are
 **Structure:**
 - A title with both versions (label, build unless the label holds it, "(pre-release)"), the line "Written by Patch Scout from the game's data. These are not the official patch notes.", then the comparison's notices for readers (stats not compared, layout substituted, unusually many changes). The filter notices are replaced by the closing line.
 - **General:** the Overall entries, one group per category in the change set's order. Techs marked `internal` are left out everywhere (maintainer, 2026-10-12).
-- **Civilizations:** one group per civ with notes, alphabetical, headed by the civ's name and crest; then **Chronicles** with the `antiquity` civs (D-38). A change shared by several civs is repeated in each of their blocks, as the official notes do. **A new civ** reads in a few lines, as a player first wants it (maintainer, 2026-10-12): "New civilization: Infantry and Siege civilization." (the first line of its description), then "Unique units: Jomsviking.", "Unique techs: …", "Regional units: …", "Regional techs: …" from the engine's summary. A unit's upgrades are named once: a name that is another of the list with one word before it ("Elite Jomsviking", "E. Varangian Guard") is left out. Its bonuses' exact effects, its units' stats and its whole tech tree are in the detailed changes and the tech tree, and counted in the closing line. Inside any other civ's block: whether it is removed, its description, its bonuses, unit stats, techs, what it gains, what it loses, other effects, then its internal techs.
+- **Civilizations:** one group per civ with notes, alphabetical, headed by the civ's name and crest; then **Chronicles** with the `antiquity` civs (D-38). A change shared by several civs is repeated in each of their blocks, as the official notes do. **Except** a unit or tech change whose civs are every civ that has the object, two or more: it is said once, in General, as the official notes do (Lou Chuan, Armored Elephant, Fortified Church, Eagle Scout, Varangian Guard on 101.103.54800.0). Gaining or losing access stays with each civ ("Gain access to (Elite) Varangian Guard"), and a change only some of its holders share stays with them (Champion for the three Chronicles civs). **A new civ** reads in a few lines, as a player first wants it (maintainer, 2026-10-12): "New civilization: Infantry and Siege civilization." (the first line of its description), then "Unique units: Jomsviking.", "Unique techs: …", "Regional units: …", "Regional techs: …" from the engine's summary. A unit's upgrades are named once: a name that is another of the list with one word before it ("Elite Jomsviking", "E. Varangian Guard") is left out. Its bonuses' exact effects, its units' stats and its whole tech tree are in the detailed changes and the tech tree, and counted in the closing line. Inside any other civ's block: whether it is removed, its description, its bonuses, unit stats, techs, what it gains, what it loses, other effects, then its internal techs.
 
 **Sentences** (every word from the catalog's `notes.*` keys):
 
@@ -365,6 +365,7 @@ The comparison written the way the official patch notes are, for players who are
 | A change every civ but some shares | "… (except Athenians, Spartans and Thracians)", whatever the kind of sentence: a field, gaining or losing access, NEW, removed, what an effect gives. |
 | Something added or removed with no value | "Stable building offer added.", "Effect of Kasbah removed." Never a bare label. |
 | A new unit (entry Added) | One line with where it is trained: "NEW: (Elite) Varangian Guard (Barracks)." Its stats are in the detailed changes and the tech tree; the line says the unit is new, so its values count as said. |
+| A new upgrade (entry Added) | A tech whose only sentence upgrades a unit into the one it is named after: "NEW: Heavy Mounted Crossbowman upgrade." |
 | A new tech (entry Added) | One line with what it does: "NEW: Ordonnance Companies: (Heavy) Mounted Crossbowman -40% gold cost." (maintainer, 2026-10-12). Its cost, research time and requirements are in the detailed changes and the tech tree; the line says the tech is new, so they count as said. An effect sentence the line doesn't write, such as one the tech lost, is counted in the closing line. |
 | A unit or tech removed | "Bearded Axe removed." |
 | A node gained, or its status leaving Not available | "Gain access to Treadmill Crane." Left out where a NEW item about the same unit or tech says it. |
@@ -377,6 +378,8 @@ The comparison written the way the official patch notes are, for players who are
 | An effect value that changed | "Wagenburg Tactics: Hand Cannoneer, Bombard Cannon, … movement speed decreased from +15% → +10%." |
 | An effect sentence with no value | "Kasbah: new effect: Runs the scripted effect: …"; several under one tech as bullets. |
 
+- **Left to the detailed changes:** required techs. On 101.103.54800.0 every change to them was plumbing ("Dupl. Imperial Age", "Civ bonus: Free Chemistry"); players read requirements as ages and availability, which the notes say from the tech tree. They are counted in the closing line.
+- **A tech's cost** reads "research cost in food", so an upgrade named after its unit isn't read as the unit's cost ("Elite Rattan Archer research cost in food decreased from 1000 → 800").
 - **Field labels** are the comparison's, with the first letter lowered mid-sentence (`notes.field_case`; a label whose second letter is a capital is left alone). Attribute names from `Constants.xs`, in title case, are lowered whole ("line of sight").
 - **Values:** a leading `=` is dropped; a multiplier reads as a percentage, computed in decimal ("×0.6" → "-40%", "×1.0835" → "+8.35%"); `+N`/`-N` keep their sign.
 - **Direction:** "increased" or "decreased" only when both values are numbers of the same form (plain, set, added, or multiplied); otherwise "changed". It states the number's direction only, never a buff or nerf (D-34).

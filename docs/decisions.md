@@ -60,7 +60,7 @@ Asked for by the maintainer on 2026-10-11; the agent proposed the design and the
 Asked for by the maintainer on 2026-10-12, after a Reddit user suggested patch notes "in the same style as the online ones"; the maintainer chose the audience, scope, format and structure, and the agent designed the rest under the autonomous workflow.
 - **What:** the comparison written the way the official patch notes are: "(Elite) Throwing Axeman range increased from 3 → 5, Elite 4 → 6", "Gain access to Treadmill Crane", "NEW: Ordonnance Companies:" with what it does and costs. Rules in [diff-rules.md](design/diff-rules.md#patch-notes-d-51).
 - **For:** reading in the app (e.g. on stream) and pasting into a video description, a Reddit post or Discord, equally.
-- **Structure:** like the official notes: General, then one block per civ with its crest, Chronicles apart; a change shared by several civs is repeated in each block.
+- **Structure:** like the official notes: General, then one block per civ with its crest, Chronicles apart; a change shared by several civs is repeated in each block, except one every civ that has the object shares, which is said once in General (2026-10-12).
 - **A curated summary:** headline changes of named objects, whatever the filters say. The comparison stays the reference: what the notes can't write as a clean sentence is counted in a closing line that says so, never guessed (rule 4). Techs known only by their internal name are left out: plumbing players never see (maintainer, 2026-10-12).
 - **Words, not judgements:** "increased"/"decreased" state a number's direction only (D-34); multipliers read as percentages, as in the official notes.
 - **Format:** light Markdown (P-13, amended), copied or saved as `.txt`.
