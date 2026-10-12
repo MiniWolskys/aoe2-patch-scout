@@ -664,10 +664,16 @@ def test_a_change_every_civ_that_has_it_shares_is_said_once_in_general(
         unit("Throwing Axeman", "281"), "field.max_range", "3", "5", scope=franks_only, civ="Franks"
     )
 
-    result = notes(catalog, *shared, *gains, axeman)
+    ram = stat(unit("Battering Ram", "35"), "field.line_of_sight", "3", "5")
+
+    # The engine puts civ-specific changes first; in General they read in name order.
+    result = notes(catalog, *shared, *gains, axeman, ram)
 
     assert groups(result) == {
-        "General/Unit stats": ["Lou Chuan bonus vs All Buildings decreased from 230 → 180."],
+        "General/Unit stats": [
+            "Battering Ram line of sight increased from 3 → 5.",
+            "Lou Chuan bonus vs All Buildings decreased from 230 → 180.",
+        ],
         "Civilizations/Franks": [
             "Throwing Axeman maximum range increased from 3 → 5.",
             "Gain access to Lou Chuan.",

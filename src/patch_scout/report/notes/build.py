@@ -204,14 +204,33 @@ def _holders_in_general(entries: Sequence[Entry]) -> tuple[list[Entry], dict[int
         first = firsts.get(key)
         if first is None:
             firsts[key] = replace(entry, civ=None)
-            kept.append(firsts[key])
             continue
         mine = {_said(change): change for change in entry.changes}
         for change in first.changes:
             copy = mine.get(_said(change))
             if copy is not None:
                 copies.setdefault(id(change), []).append(id(copy))
+    for moved in firsts.values():
+        _insert_by_name(kept, moved)
     return kept, copies
+
+
+def _insert_by_name(entries: list[Entry], moved: Entry) -> None:
+    """Put a change moved to General among its category's Overall entries, in name order.
+
+    The engine sorts civ-specific changes first, then by name; in General the moved change reads
+    where its name puts it ("Lou Chuan" between "Long Swordsman" and "Man-at-Arms").
+    """
+    name = moved.entity.name.casefold()
+    for position, entry in enumerate(entries):
+        if (
+            entry.civ is None
+            and entry.category == moved.category
+            and entry.entity.name.casefold() > name
+        ):
+            entries.insert(position, moved)
+            return
+    entries.append(moved)
 
 
 def _said(change: Change) -> tuple[object, ...]:
