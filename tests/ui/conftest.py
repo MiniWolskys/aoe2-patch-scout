@@ -111,6 +111,17 @@ FAKE_BRIDGE = """
       return new Promise((resolve) => setTimeout(() => resolve(value), delay));
     },
     export_text: answer("export_text", { text: data.exportText ?? "" }),
+    get_patch_notes: (...args) => {
+      record("get_patch_notes", args);
+      if (data.patchNotesError) {
+        return Promise.reject(new Error(data.patchNotesError));
+      }
+      return Promise.resolve(data.patchNotes);
+    },
+    save_patch_notes: answer(
+      "save_patch_notes",
+      data.saveResult ?? { saved: true, path: "C:/tmp/patch-notes.txt" },
+    ),
     save_export: answer(
       "save_export",
       data.saveResult ?? { saved: true, path: "C:/tmp/export.txt" },

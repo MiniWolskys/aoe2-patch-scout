@@ -730,6 +730,105 @@ body[data-failed] > :not(.startup-error, script) {
   align-self: start;
 }
 
+/* Patch notes (D-51, ui.md "Patch notes"): the comparison written like the official notes */
+
+.notes {
+  min-width: 0;
+  min-height: 0;
+  padding: 24px 28px 40px;
+  overflow-y: auto;
+}
+
+.notes__page {
+  max-width: 960px;
+}
+
+.notes__title {
+  overflow-wrap: anywhere;
+}
+
+.notes__notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  color: var(--warn);
+  font-size: var(--fs-sm);
+}
+
+.notes__section {
+  margin-top: 30px;
+}
+
+.notes__section-title {
+  margin: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  color: var(--accent-text);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+}
+
+.notes__group {
+  margin-top: 20px;
+  /* A civ chosen in the list lands with its heading in view, not cut at the edge */
+  scroll-margin-top: 16px;
+}
+
+.notes__group-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 6px;
+  color: var(--text);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+/* A civ's block is headed by its crest and name, as in the official notes */
+.notes__group--civ .notes__group-title {
+  color: var(--accent-text);
+  font-family: var(--font-label);
+  font-size: var(--fs-dialog);
+  font-weight: 400;
+}
+
+.notes__crest {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  box-shadow: none;
+}
+
+.notes__list {
+  margin: 0;
+  padding-left: 22px;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.notes__list li {
+  margin: 5px 0;
+}
+
+.notes__list li::marker {
+  color: var(--accent);
+}
+
+.notes__list .notes__list {
+  margin-top: 3px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  list-style: circle;
+}
+
+.notes__closing {
+  margin-top: 32px;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
 /* Tech tree (D-39, ui.md "Tech tree"): tiles are placed by tree.js from the layout */
 
 .tree {

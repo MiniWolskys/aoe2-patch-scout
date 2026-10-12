@@ -180,6 +180,53 @@ def entry(*changes: dict[str, Any], **overrides: Any) -> dict[str, Any]:
     return row | overrides
 
 
+def patch_notes(**overrides: Any) -> dict[str, Any]:
+    """What `Api.get_patch_notes` answers: the document, as `Notes.to_json` writes it, and text."""
+
+    def item(text: str, *children: dict[str, Any]) -> dict[str, Any]:
+        return {"text": text, "children": list(children)}
+
+    data: dict[str, Any] = {
+        "title": "Patch notes: Live build → PUP build (pre-release)",
+        "disclaimer": "Written by Patch Scout from the game's data. These are not the official"
+        " patch notes.",
+        "notices": [],
+        "sections": [
+            {
+                "kind": "general",
+                "title": "General",
+                "groups": [
+                    {
+                        "title": "Unit stats",
+                        "civ": None,
+                        "icon": None,
+                        "items": [item("Knight hit points increased from 100 → 110.")],
+                    }
+                ],
+            },
+            {
+                "kind": "civs",
+                "title": "Civilizations",
+                "groups": [
+                    {
+                        "title": "Franks",
+                        "civ": "Franks",
+                        "icon": {"hash": "crest-franks"},
+                        "items": [
+                            item("NEW: Ordonnance Companies:", item("Cost: 400 food, 250 gold")),
+                            item("Gain access to Archer."),
+                        ],
+                    }
+                ],
+            },
+        ],
+        "closing": "1 more change isn't in these notes.",
+        "empty": None,
+        "text": "Patch notes: Live build → PUP build (pre-release)\n- Knight hit points\n",
+    }
+    return data | overrides
+
+
 def fixture_data(**overrides: Any) -> dict[str, Any]:
     """Everything the fake bridge answers with."""
     data: dict[str, Any] = {
@@ -210,6 +257,7 @@ def fixture_data(**overrides: Any) -> dict[str, Any]:
         "entity": entity_details(),
         "icons": {},
         "exportText": "Patch Scout - what changed\n",
+        "patchNotes": patch_notes(),
         "diagnostics": {
             "environment": {"app_version": "0.0.0-test", "python": "3.12.0"},
             "log": ["folder 0% ", "save 95% "],

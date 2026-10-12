@@ -10,6 +10,7 @@ import { byId, clear, el, input, onClick, show } from "./dom.js";
 import { initEntityPanel } from "./entity-panel.js";
 import { applyTranslations, createTranslator } from "./i18n.js";
 import * as icons from "./icons.js";
+import * as notesView from "./notes.js";
 import { initDiagnostics, initExport, initPicker, initSettings } from "./panels.js";
 import * as techTree from "./tree.js";
 import * as treePanel from "./tree-panel.js";
@@ -34,8 +35,9 @@ async function start() {
    *   versions: import("./api.js").Version[],
    *   openId: string | null,
    *   comparison: {oldId: string, newId: string, changeSet: Record<string, any>,
-   *     civ: string | null, view: "changes" | "tree", treeCiv: string | null,
-   *     trees: Map<string, Record<string, any>>} | null,
+   *     civ: string | null, view: "changes" | "tree" | "notes", treeCiv: string | null,
+   *     trees: Map<string, Record<string, any>>,
+   *     notes: import("./notes.js").Notes | null} | null,
    *   capture: import("./api.js").CaptureStatus | null,
    *   filters: {low: boolean, unreachable: boolean, unnamed: boolean, details: boolean,
    *     technical: boolean, search: string},
@@ -187,8 +189,9 @@ async function start() {
       civ: same?.civ ?? null,
       view: same?.view ?? "changes",
       treeCiv: same?.treeCiv ?? null,
-      // The tree ignores unreachable units, so the trees already drawn still hold.
+      // The tree and the patch notes ignore unreachable units, so what was drawn still holds.
       trees: same?.trees ?? new Map(),
+      notes: same?.notes ?? null,
     };
     state.openId = null;
     drawComparison();
@@ -202,6 +205,7 @@ async function start() {
       return;
     }
     const inTree = current.view === "tree";
+    const inNotes = current.view === "notes";
     comparison.render({
       t,
       changeSet: current.changeSet,
@@ -221,15 +225,29 @@ async function start() {
         }
       },
     });
-    show(byId("comparison-page"), !inTree);
+    show(byId("comparison-page"), !inTree && !inNotes);
     show(byId("tree-view"), inTree);
+    show(byId("notes-view"), inNotes);
     show(byId("comparison-export"), !inTree);
+    // The patch notes don't follow the filters (D-51): neither the filters nor their notices show.
+    show(byId("comparison-filters"), !inNotes);
+    if (inNotes) {
+      show(byId("filters-panel"), false);
+      byId("comparison-filters").setAttribute("aria-expanded", "false");
+      show(byId("comparison-notice"), false);
+    }
     treePanel.hide();
     const toggle = byId("comparison-tree");
     toggle.textContent = t(inTree ? "tree.back" : "tree.open");
     toggle.setAttribute("aria-pressed", String(inTree));
+    const notesToggle = byId("comparison-notes");
+    notesToggle.textContent = t(inNotes ? "notes.back" : "notes.open");
+    notesToggle.setAttribute("aria-pressed", String(inNotes));
     if (inTree) {
       void drawTree();
+    }
+    if (inNotes) {
+      void drawNotes();
     }
   }
 
@@ -267,6 +285,54 @@ async function start() {
       (/** @type {Record<string, any>} */ civ) => (civ.era === "antiquity") === chronicles,
     );
     return found?.internal_name ?? civs[0]?.internal_name ?? null;
+  }
+
+  function toggleNotes() {
+    const current = state.comparison;
+    if (current === null) {
+      return;
+    }
+    current.view = current.view === "notes" ? "changes" : "notes";
+    drawComparison();
+  }
+
+  let notesRequest = 0;
+  /** @type {unknown} */
+  let notesShown = null;
+
+  /** Draw the patch notes, asking Python once per comparison, then show the civ chosen. */
+  async function drawNotes() {
+    const current = state.comparison;
+    if (current === null) {
+      return;
+    }
+    const container = byId("notes-view");
+    if (current.notes === null) {
+      const request = ++notesRequest;
+      clear(container);
+      container.append(el("p", { class: "help notes__loading", text: t("notes.loading") }));
+      let answer = null;
+      try {
+        answer = await api.get_patch_notes(current.oldId, current.newId);
+      } catch (error) {
+        console.error("the patch notes failed", error);
+      }
+      if (request !== notesRequest || state.comparison !== current) {
+        return; // another comparison was opened meanwhile
+      }
+      if (answer === null || typeof answer !== "object") {
+        dialogs.toast(t("notes.failed"));
+        current.view = "changes";
+        drawComparison();
+        return;
+      }
+      current.notes = answer;
+    }
+    if (notesShown !== current.notes) {
+      notesView.render(container, current.notes);
+      notesShown = current.notes;
+    }
+    notesView.scrollTo(container, current.civ);
   }
 
   function toggleTree() {
@@ -480,6 +546,9 @@ async function start() {
         details: state.filters.details,
         technical: state.filters.technical,
         civs: state.comparison.civ === null ? null : [state.comparison.civ],
+        // In the patch notes mode, the export is the patch notes (D-51).
+        notes: state.comparison.view === "notes",
+        notesText: state.comparison.notes?.text ?? null,
         prerelease: sides.some((side) => side?.prerelease === true),
         // The page on screen, for the image export.
         page: comparison.currentPage({
@@ -514,6 +583,7 @@ async function start() {
   onClick("diagnostics-button", () => void diagnostics.open(state.openId));
   onClick("comparison-export", () => void exporter.open());
   onClick("comparison-tree", toggleTree);
+  onClick("comparison-notes", toggleNotes);
   onClick("comparison-swap", () => {
     if (state.comparison !== null) {
       void openComparison(state.comparison.newId, state.comparison.oldId);
