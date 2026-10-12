@@ -60,8 +60,14 @@ def test_identical_inputs_still_list_every_civ_with_a_tree(pair: pairs.Pair) -> 
     names = [civ.name.casefold() for civ in result.civs]
     assert names == sorted(names)
     assert all(civ.count == 0 and not civ.added for civ in result.civs)
-    assert result.stat_icons
-    assert result.stat_icons == compare(pair.old, pair.new).stat_icons | result.stat_icons
+    # The age shields and stat icons the tree shows: every one the snapshot stores.
+    stored = {
+        key: icon
+        for key, icon in pair.old.stat_icons.items()
+        if isinstance(icon, dict) and isinstance(icon.get("hash"), str)
+    }
+    assert stored
+    assert result.stat_icons == stored
 
 
 def test_a_stat_shared_by_every_civ_reads_as_all_civs(change_set: ChangeSet) -> None:

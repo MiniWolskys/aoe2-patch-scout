@@ -468,6 +468,8 @@ body[data-failed] > :not(.startup-error, script) {
 
 .version-row:hover .version-row__marks,
 .version-row:focus-within .version-row__marks {
+  /* Room for Compare and the gear: a long name ends in an ellipsis instead of under them. */
+  min-width: 100px;
   visibility: hidden;
 }
 
