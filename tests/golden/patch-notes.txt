@@ -10,7 +10,7 @@ Unit stats
 
 Technologies
 
-- Fletching cost in food increased from 100 → 120.
+- Fletching research cost in food increased from 100 → 120.
 
 CIVILIZATIONS
 

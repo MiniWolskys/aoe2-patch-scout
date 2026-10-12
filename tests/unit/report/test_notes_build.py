@@ -154,16 +154,10 @@ def test_a_units_fields_read_as_one_sentence(catalog: Catalog) -> None:
 def test_values_that_are_not_numbers_of_one_form_read_changed(catalog: Catalog) -> None:
     result = notes(
         catalog,
-        stat(
-            tech("Bombard Tower"),
-            "field.required_techs",
-            "Chemistry",
-            "Imperial Age",
-            category="techs",
-        ),
+        stat(unit("Hulk"), "field.unit_class", "Warship", "Siege Weapon"),
     )
 
-    assert lines(result) == ["Bombard Tower required techs changed from Chemistry → Imperial Age."]
+    assert lines(result) == ["Hulk unit class changed from Warship → Siege Weapon."]
 
 
 def test_a_value_that_appears_or_goes_says_so(catalog: Catalog) -> None:
@@ -382,6 +376,57 @@ def test_a_new_tech_says_what_it_does_and_its_gain_is_not_repeated(catalog: Cata
         "NEW: Ordonnance Companies: (Heavy) Mounted Crossbowman -40% gold cost."
     ]
     assert result.closing is None
+
+
+def test_a_new_upgrade_reads_as_an_upgrade(catalog: Catalog) -> None:
+    """ "NEW: Heavy Mounted Crossbowman: Upgrades Mounted Crossbowman to Heavy Mounted
+    Crossbowman" said the name twice (101.103.54800.0)."""
+    heavy = tech("Heavy Mounted Crossbowman", "701")
+    sentence = Message(
+        "effect.upgrade", {"unit": "Mounted Crossbowman", "to": "Heavy Mounted Crossbowman"}
+    ).to_json()
+    changes = [
+        effect(heavy, "", "", "", "", field=Message("effect.added", {"effect": sentence})),
+        cost(heavy, "food", "", "900", category="techs", scope=Scope()),
+        stat(
+            heavy,
+            "field.research_locations",
+            "",
+            "45",
+            field=Message("field.research_locations", {"location": "Archery Range"}),
+            category="techs",
+            scope=Scope(),
+        ),
+    ]
+
+    assert lines(notes(catalog, *changes)) == ["NEW: Heavy Mounted Crossbowman upgrade."]
+
+
+def test_a_techs_cost_reads_as_its_research_cost(catalog: Catalog) -> None:
+    """ "Elite Rattan Archer cost in food decreased" read as the unit's cost (54800)."""
+    upgrade = tech("Elite Rattan Archer", "702")
+    change = cost(upgrade, "food", "1000", "800", category="techs")
+
+    assert lines(notes(catalog, change)) == [
+        "Elite Rattan Archer research cost in food decreased from 1000 → 800."
+    ]
+
+
+def test_required_techs_are_left_to_the_detailed_changes(catalog: Catalog) -> None:
+    """On 54800 every change to them was plumbing ("Dupl. Imperial Age"); players read
+    requirements as ages and availability, which the notes say from the tech tree."""
+    change = stat(
+        tech("Bombard Cannon"),
+        "field.required_techs",
+        "Imperial Age; Chemistry; Civ bonus: Free Chemistry",
+        "Dupl. Imperial Age; Chemistry",
+        category="techs",
+    )
+
+    result = notes(catalog, change)
+
+    assert lines(result) == []
+    assert result.closing is not None
 
 
 def test_a_removed_unit_is_one_line(catalog: Catalog) -> None:
@@ -947,6 +992,6 @@ def test_a_tech_cost_effect_with_no_matching_cost_change_stays(catalog: Catalog)
     ]
 
     assert lines(notes(catalog, *changes)) == [
-        "Team bonus: Start w/ Llama cost in gold removed (was 1).",
+        "Team bonus: Start w/ Llama research cost in gold removed (was 1).",
         "Incas: Team bonus: Start w/ Llama food cost removed (was 0).",
     ]

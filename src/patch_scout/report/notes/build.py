@@ -29,6 +29,10 @@ _RAW_COMMAND: Final = "detail.effect_command"
 _SENTENCE: Final = "detail.effect_command_raw"
 # Fields whose values are bare IDs: "Made at" holds building IDs.
 _ID_FIELDS: Final = frozenset({"field.building"})
+# Fields left to the detailed changes. Required techs: on 101.103.54800.0 every change to them
+# was plumbing ("Dupl. Imperial Age", "Civ bonus: Free Chemistry"); players read requirements
+# as ages and availability, which the notes say from the tech tree.
+_DETAILED_ONLY: Final = frozenset({"field.required_techs"})
 # A new civ's tech tree, one line per building.
 _TREE_FIELDS: Final = frozenset({"field.tech_tree_at", "field.tech_tree_buildings"})
 # A new civ's summary lines: its unique and regional units and techs.
@@ -40,6 +44,8 @@ _FILTER_NOTICES: Final = frozenset({"levels_hidden", "unnamed_hidden"})
 # Categories whose changes every civ that has the object shares are said once, in General.
 _SHARED: Final = frozenset({"unit_stats", "techs"})
 _NOT_AVAILABLE: Final = "NotAvailable"
+_COST: Final = "field.cost"
+_UPGRADE: Final = "effect.upgrade"
 _BULLET: Final = "\N{BULLET}"
 _CHRONICLES: Final = "antiquity"
 
@@ -235,7 +241,7 @@ def _sayable(change: Change, words: Words) -> bool:
         return False
     if change.detail is not None and change.detail.key == _RAW_COMMAND:
         return False
-    if change.field is not None and change.field.key in _ID_FIELDS:
+    if change.field is not None and change.field.key in _ID_FIELDS | _DETAILED_ONLY:
         return False
     label = words.message(change.field) if change.field is not None else ""
     return not any(_UNKNOWN_ID.search(part) for part in (label, change.old or "", change.new or ""))
@@ -544,13 +550,33 @@ def _tech(entry: Entry, context: _Context, rank: int, subject: str, scope: str) 
         # are in the detailed changes and the tech tree; the line says the tech is new, so they
         # count as said. An effect sentence it doesn't write is counted in the closing line.
         said: list[Change] = list(fields)
-        does = "; ".join(_what_it_does(effects, context, said))
         entity = ("tech", entry.entity.id)
+        if _upgrades_to_itself(effects, subject, context.words):
+            # "NEW: Heavy Mounted Crossbowman upgrade.", not the name twice.
+            said.extend(effects)
+            named = context.words.text("notes.upgrade", name=subject)
+            return [Draft("new", rank, [named], said, entity, scope)]
+        does = "; ".join(_what_it_does(effects, context, said))
         return [Draft("new", rank, [subject], said, entity, scope, text=does)]
     if entry.kind == "removed":
         return [_removed(changes, context, rank, subject, scope)]
     drafts = [_stats(fields, context, rank, subject, scope)] if fields else []
     return drafts + _effects(effects, context, rank, subject, scope)
+
+
+def _upgrades_to_itself(effects: Sequence[Change], subject: str, words: Words) -> bool:
+    """Whether a tech's only sentence upgrades a unit into the unit it is named after."""
+    if len(effects) != 1 or effects[0].field is None:
+        return False
+    sentence = effects[0].field.args.get("effect")
+    if effects[0].field.key != "effect.added" or not isinstance(sentence, dict):
+        return False
+    args = sentence.get("args")
+    return (
+        sentence.get("key") == _UPGRADE
+        and isinstance(args, dict)
+        and words.value(args.get("to")) == subject
+    )
 
 
 def _removed(
@@ -575,7 +601,7 @@ def _stats(
     words = context.words
     fields: list[Field] = []
     for change in changes:
-        label = words.field(change.field) if change.field else ""
+        label = _label(change, words)
         old, new = change.old or "", change.new or ""
         if not old and not new and change.kind in ("added", "removed"):
             key = "notes.clause.came" if change.kind == "added" else "notes.clause.went"
@@ -584,6 +610,17 @@ def _stats(
             Field(label, _word(change, old, context, civ), _word(change, new, context, civ))
         )
     return Draft("stats", rank, [subject], list(changes), scope=scope, fields=fields)
+
+
+def _label(change: Change, words: Words) -> str:
+    """A field's label; a tech's cost reads "research cost", so an upgrade named after its unit
+    ("Elite Rattan Archer", "Demolition Ship" on 101.103.54800.0) isn't read as the unit's."""
+    if change.field is None:
+        return ""
+    if change.category == "techs" and change.field.key == _COST:
+        resource = words.value(change.field.args.get("resource"))
+        return words.lowered(words.text("notes.research_cost", resource=resource))
+    return words.field(change.field)
 
 
 def _word(change: Change, value: str, context: _Context, civ: CivRef | None) -> str:
