@@ -10,6 +10,7 @@ from support.ui_data import (
     detail_row,
     entity_details,
     fixture_data,
+    show_changes,
     startup_data,
     tech_tree,
     version,
@@ -25,6 +26,7 @@ def _compared(open_shell: OpenShell, **overrides: Any) -> Page:
     data = fixture_data(startup=startup_data(versions=rows), techTree=tech_tree()) | overrides
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
     expect(page.locator("#comparison-view")).to_be_visible()
     return page
 

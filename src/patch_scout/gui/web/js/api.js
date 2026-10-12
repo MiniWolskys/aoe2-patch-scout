@@ -80,6 +80,10 @@
  * @property {(oldId: string, newId: string, kind?: string, lowPriority?: boolean,
  *   civs?: string[] | null, unnamed?: boolean, details?: boolean, technical?: boolean)
  *   => Promise<{saved: boolean, path?: string, error?: string}>} save_export
+ * @property {(oldId: string, newId: string) => Promise<import("./notes.js").Notes>}
+ *   get_patch_notes
+ * @property {(oldId: string, newId: string, path?: string | null)
+ *   => Promise<{saved: boolean, path?: string, error?: string}>} save_patch_notes
  * @property {(captureId: string, path?: string | null) => Promise<{saved: boolean, path?: string, error?: string}>}
  *   export_version
  * @property {() => Promise<string | null>} choose_archive

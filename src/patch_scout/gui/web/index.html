@@ -195,6 +195,7 @@
           </button>
           <div class="comparison-header__spacer"></div>
           <button type="button" class="button button--ghost" id="comparison-tree" aria-pressed="false" data-i18n="tree.open"></button>
+          <button type="button" class="button button--ghost" id="comparison-notes" aria-pressed="false" data-i18n="notes.open"></button>
           <button type="button" class="button button--ghost" id="comparison-filters" aria-expanded="false" data-i18n="comparison.filters"></button>
           <button type="button" class="button button--accent" id="comparison-export" data-i18n="comparison.export"></button>
         </header>
@@ -240,6 +241,8 @@
           </div>
           <!-- The civ's tech tree with the changes marked on it (D-39, ui.md "Tech tree") -->
           <div class="tree" id="tree-view" hidden></div>
+          <!-- The comparison written as patch notes (D-51, ui.md "Patch notes") -->
+          <div class="notes" id="notes-view" hidden></div>
         </div>
       </section>
     </main>
@@ -318,7 +321,7 @@
       <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="export-title">
         <h2 class="dialog__title" id="export-title" data-i18n="export.title"></h2>
         <div class="dialog__body">
-          <p class="help" data-i18n="export.help"></p>
+          <p class="help" id="export-help" data-i18n="export.help"></p>
           <p class="first-launch__warning" id="export-embargo" hidden>
             <span class="icon icon--warning" aria-hidden="true"></span>
             <span data-i18n="export.embargo"></span>

@@ -55,3 +55,60 @@ def test_a_new_civ_shows_its_bonus_text(change_set: ChangeSet) -> None:
     ]
     assert len(texts) == 1
     assert {word.kind for word in texts[0].words} == {"added"}
+
+
+def _node(
+    node_id: int, use_type: str, node_type: str, string_id: int, **extra: JsonValue
+) -> JsonValue:
+    node: dict[str, JsonValue] = {
+        "node_id": node_id,
+        "use_type": use_type,
+        "node_type": node_type,
+        "node_status": "ResearchedCompleted",
+        "name_string_id": string_id,
+        "building_id": 82,
+    }
+    return node | extra
+
+
+def test_a_new_civ_lists_its_unique_and_regional_units_and_techs() -> None:
+    # As the Danes on 101.103.54800.0: what the tree marks unique or regional, in tree order.
+    from support.snapshots import make_snapshot
+
+    danes: JsonValue = {"internal_name": "Danes", "name_string_id": 1, "bonus_string_id": 2}
+    nodes = [
+        _node(2711, "Unit", "UniqueUnit", 11),
+        _node(2712, "Unit", "UniqueUnit", 12),
+        _node(1484, "Tech", "UniqueTech", 13),
+        _node(2703, "Unit", "RegionalUnit", 14),
+        _node(1452, "Tech", "RegionalTech", 15),
+        _node(4, "Unit", "Unit", 16),
+        _node(2633, "Unit", "RegionalUnit", 17, node_status="NotAvailable"),
+    ]
+    names = {
+        "1": "Danes",
+        "2": "Infantry and Siege civilization",
+        "11": "Jomsviking",
+        "12": "Elite Jomsviking",
+        "13": "Hamask",
+        "14": "Varangian Guard",
+        "15": "Cranequins",
+        "16": "Archer",
+        "17": "Catapult Galleon",
+    }
+    strings = {"tables": {"en": names}}
+    old = make_snapshot(civs=[], tech_trees={}, strings=strings)
+    new = make_snapshot(civs=[danes], tech_trees={"Danes": nodes}, strings=strings)
+
+    found = {
+        change.field.key: change.new
+        for change in compare(old, new).for_civ("Danes")
+        if change.category == "civilizations" and change.field is not None
+    }
+
+    assert found == {
+        "field.unique_units": "Jomsviking, Elite Jomsviking",
+        "field.unique_techs": "Hamask",
+        "field.regional_units": "Varangian Guard",
+        "field.regional_techs": "Cranequins",
+    }

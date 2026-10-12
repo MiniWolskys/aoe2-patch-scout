@@ -176,7 +176,7 @@ Read it with genieutils-py; see [genieutils-py.md](genieutils-py.md) for exact c
 |---|---|
 | `Use Type` | `Unit` (3,468), `Tech` (4,974), `Building` (1,725). **Chooses the ID namespace of `Node ID` and the icon folder.** [verified] |
 | `Node ID` | Unit, tech or building ID in the `.dat`; the namespace follows `Use Type`. |
-| `Node Type` | `Research` 4,974 · `UnitUpgrade` 1,575 · `Unit` 1,526 · `BuildingNonTech` 931 · `BuildingTech` 777 · `UniqueUnit` 173 · `RegionalUnit` 142 · `RegionalBuilding` 11 · `UniqueBuilding` 6 · **key absent** 52. All 52 key-absent nodes are Elite Cannon Galleon (Node ID 691). [verified] |
+| `Node Type` | `Research` 4,974 · `UnitUpgrade` 1,575 · `Unit` 1,526 · `BuildingNonTech` 931 · `BuildingTech` 777 · `UniqueUnit` 173 · `RegionalUnit` 142 · `RegionalBuilding` 11 · `UniqueBuilding` 6 · **key absent** 52. All 52 key-absent nodes are Elite Cannon Galleon (Node ID 691). [verified] On 101.103.54800.0 techs are marked too: `UniqueTech` (the Danes' Hamask, Northmen's Fury) and `RegionalTech` (Cranequins). [verified 101.103.54800.0] |
 | `Node Status` | `ResearchedCompleted` 8,153 (available) · `ResearchRequired` 593 (needs a prerequisite) · `NotAvailable` 1,421. **This is the per-civ availability to diff.** [verified] |
 | `Age ID` | 1 = Dark, 2 = Feudal, 3 = Castle, 4 = Imperial; only 1–4 occur. Chronicles civs use other age names (§8, `eras.json`). [verified] |
 | `Building ID` | Building where the node is trained or researched. |

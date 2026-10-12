@@ -8,6 +8,7 @@ from both snapshots, so a unit added or removed in one of them still counts.
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import Final
 
 from patch_scout.capture.stats_tier import apply_overrides
 from patch_scout.diff.values import at_path
@@ -15,6 +16,9 @@ from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
 
 # Links followed from a reachable unit to another form of the same unit (D-37).
 FORM_LINKS = ("building.transform_unit",)
+# Units in the same task swap group are one unit's forms by task: a Villager becomes a Gold
+# Miner or a Forager, a Fishing Ship an Oystering Ship (D-37).
+TASK_GROUP = "bird.task_swap_group"
 # Links to the projectiles a unit fires. Projectiles are not units in the report: their changes
 # are shown on the unit that fires them.
 PROJECTILE_LINKS = (
@@ -22,6 +26,13 @@ PROJECTILE_LINKS = (
     "creatable.secondary_projectile_unit",
     "creatable.charge_projectile_unit",
 )
+# A unit record's type for a building.
+_BUILDING_TYPE: Final = 80
+
+
+def is_building(record: JsonObject | None) -> bool:
+    """Whether a unit record is a building's: its train time is then its build time."""
+    return record is not None and record.get("type") == _BUILDING_TYPE
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +55,7 @@ class UnitLookup:
         units = snapshot.stats.get("units") if snapshot.stats else None
         self._units: Mapping[str, JsonValue] = units if isinstance(units, dict) else {}
         self._cache: dict[tuple[int, int], JsonObject | None] = {}
+        self._task_groups: dict[int, frozenset[int]] | None = None
 
     @property
     def unit_ids(self) -> list[int]:
@@ -62,6 +74,17 @@ class UnitLookup:
             entry = self.entry(unit_id)
             self._cache[key] = apply_overrides(entry, civ_index) if entry is not None else None
         return self._cache[key]
+
+    def task_group(self, group: int) -> frozenset[int]:
+        """The units of one task swap group: a Villager's forms by task, e.g. the Gold Miner."""
+        if self._task_groups is None:
+            groups: dict[int, set[int]] = {}
+            for unit_id in self.unit_ids:
+                found = at_path(self.any_record(unit_id), TASK_GROUP)
+                if isinstance(found, int) and found > 0:
+                    groups.setdefault(found, set()).add(unit_id)
+            self._task_groups = {key: frozenset(units) for key, units in groups.items()}
+        return self._task_groups.get(group, frozenset())
 
     def any_record(self, unit_id: int) -> JsonObject | None:
         """The base record, for questions that do not depend on the civ."""
@@ -151,12 +174,15 @@ def for_civ(
 
 
 def _forms(record: JsonObject, lookup: UnitLookup, civ_index: int) -> set[int]:
-    """The other forms of a unit: transform targets, and named dismount-style forms."""
+    """The other forms of a unit: transform targets, task forms, and named dismount forms."""
     found: set[int] = set()
     for path in FORM_LINKS:
         target = at_path(record, path)
         if isinstance(target, int) and target > 0:
             found.add(target)
+    group = at_path(record, TASK_GROUP)
+    if isinstance(group, int) and group > 0:
+        found |= lookup.task_group(group)
     blood = record.get("blood_unit_id")
     if isinstance(blood, int) and blood > 0:
         other = lookup.record(blood, civ_index)

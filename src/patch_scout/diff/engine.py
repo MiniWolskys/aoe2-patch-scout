@@ -35,10 +35,11 @@ from patch_scout.diff.model import (
     Notice,
     Scope,
     Side,
+    UnitLine,
     sorted_changes,
 )
-from patch_scout.diff.names import Names, string_table
-from patch_scout.diff.reachability import Reachable, UnitLookup, all_civs
+from patch_scout.diff.names import Names, is_bonus_name, string_table
+from patch_scout.diff.reachability import Reachable, UnitLookup, all_civs, is_building
 from patch_scout.diff.values import at_path, pair, unknown_id, whitespace_only, words
 from patch_scout.diff.vocabulary import Vocabulary
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
@@ -50,6 +51,8 @@ VOLUME_THRESHOLD: Final = 0.20
 # Civ-specific lines come before global ones inside a category (diff-rules.md).
 _CIV_FIRST: Final = 0
 _GLOBAL: Final = 1
+# Resources 0 to 3 are the food, wood, stone and gold stockpiles.
+_STOCKPILES: Final = 4
 
 
 @dataclass(frozen=True, slots=True)
@@ -220,7 +223,22 @@ def compare(
         civs=civs,
         entries=entries,
         stat_icons=_stat_icons(run),
+        unit_lines=_unit_lines(run),
     )
+
+
+def _unit_lines(run: _Run) -> tuple[UnitLine, ...]:
+    """The game's unit lines, from the newer build (the older one when it has none), each named
+    after its first unit as the players read it: "Militia" for the Militia line."""
+    found = run.new.unit_lines or run.old.unit_lines
+    lines: list[UnitLine] = []
+    for line in found:
+        chain = line.get("id_chain") if isinstance(line, dict) else None
+        units = [unit for unit in chain if isinstance(unit, int)] if isinstance(chain, list) else []
+        name = _unit_name(run, units[0]) if len(units) >= 2 else None
+        if name:
+            lines.append(UnitLine(name, tuple(str(unit) for unit in units)))
+    return tuple(lines)
 
 
 def _civ_icon(civ: JsonObject) -> JsonObject | None:
@@ -344,6 +362,15 @@ def _civilizations(run: _Run) -> list[CivRef]:
     return refs
 
 
+# Tech tree node types that set a civ apart, and the summary line each gets (game-files.md §5).
+SPECIAL_NODES: Final = {
+    "UniqueUnit": "unique_units",
+    "UniqueTech": "unique_techs",
+    "RegionalUnit": "regional_units",
+    "RegionalTech": "regional_techs",
+}
+
+
 def _new_civ_summary(run: _Run, internal_name: str, entity: Entity, civ: JsonObject) -> None:
     """A new civ has nothing to compare with: show its bonus text and its tech tree instead.
 
@@ -368,15 +395,34 @@ def _new_civ_summary(run: _Run, internal_name: str, entity: Entity, civ: JsonObj
         )
     nodes = run.new.tech_trees.get(internal_name)
     lines: dict[JsonValue, list[str]] = {}
+    special: dict[str, list[str]] = {}  # the tree's own unique and regional marks
     for node in nodes if isinstance(nodes, list) else []:
         if not isinstance(node, dict) or node.get("node_status") == "NotAvailable":
             continue
         label = run.new_names.one_line(node.get("name_string_id"))
         if not label:
             continue
+        kind = SPECIAL_NODES.get(str(node.get("node_type")))
+        if kind is not None:
+            special.setdefault(kind, []).append(label)
         # Buildings get a line of their own; units and techs go under where they are made.
         where = "buildings" if node.get("use_type") == "Building" else node.get("building_id")
         lines.setdefault(where, []).append(label)
+    # What sets the civ apart, as the game's tree marks it: its unique and regional units and techs.
+    for position, kind in enumerate(SPECIAL_NODES.values()):
+        if kind in special:
+            run.add(
+                Change(
+                    category="civilizations",
+                    kind="added",
+                    entity=entity,
+                    scope=scope,
+                    field=Message(f"field.{kind}"),
+                    new=", ".join(special[kind]),
+                    civ=internal_name,
+                    sort_key=(_CIV_FIRST, "", f"{position:04d}"),
+                )
+            )
     for position, (where, labels) in enumerate(lines.items()):
         building = _building_name(run, internal_name, where) if where != "buildings" else None
         if where != "buildings" and building is None:
@@ -802,13 +848,19 @@ def _civ_resources(run: _Run) -> None:
                     kind="modified",
                     entity=entity,
                     scope=group.scope,
-                    field=Message("field.civ_resource"),
+                    field=Message(_resource_label(position)),
                     old=old_text,
                     new=new_text,
                     sort_key=sort,
                 ),
                 group.scope,
             )
+
+
+def _resource_label(position: int) -> str:
+    """ "Starting amount" for the four stockpiles; other resources are values the game's
+    mechanics read, such as Varangian Gold, which no civ starts with (101.103.54800.0)."""
+    return "field.civ_resource" if position < _STOCKPILES else "field.civ_resource_value"
 
 
 def _civ_effects(
@@ -984,12 +1036,17 @@ def _sub_fields(
     if allow.kind == "resource_costs":
         return [(key, Message("field.cost", {"resource": _resource_name(key)})) for key in ordered]
     if allow.kind == "train_locations":
-        return [
-            (key, Message(f"field.{allow.key}", {"location": _location_name(run, key)}))
-            for key in ordered
-        ]
+        # A building's "train time" at its builder is the time it takes to build (Fortified
+        # Church on 101.103.54800.0 read "train time at Builder").
+        label = "field.build_time" if _is_building(records) else f"field.{allow.key}"
+        return [(key, Message(label, {"location": _location_name(run, key)})) for key in ordered]
     kind: ClassKind = "armours" if allow.key == "armours" else "attacks"
     return [(key, class_field(kind, key, run.vocabulary)) for key in ordered]
+
+
+def _is_building(records: Mapping[str, tuple[JsonObject | None, JsonObject | None]]) -> bool:
+    """Whether the unit records are a building's (unit type 80 in the .dat)."""
+    return any(is_building(record) for pair in records.values() for record in pair)
 
 
 def _location_name(run: _Run, location: JsonValue) -> str:
@@ -1067,22 +1124,31 @@ def _techs(run: _Run) -> None:
         name = run.new_names.tech_name(after, _numeric_key(key)) or run.old_names.tech_name(
             before, _numeric_key(key)
         )
+        # Known only by its developers' name in every build that has it (diff-rules.md).
+        internal = name is not None and all(
+            names.internal_tech(record)
+            for names, record in ((run.new_names, after), (run.old_names, before))
+            if record is not None
+        )
         entity = Entity(
             "tech",
             key,
             name or unknown_id(key),
             icon=_node_icon(run, "Tech", _numeric_key(key)),
             named=name is not None,
+            internal=internal,
         )
         _remember_string(run, source.get("language_dll_name"))
         # A tech the .dat ties to a civ is that civ's bonus: it goes on the civ's page.
         owners = _tech_civs(run, before, after)
         scope = Scope("some", owners) if owners else Scope()
         sort = (_CIV_FIRST, "", "") if owners else (_GLOBAL, "", "")
-        if before is None or after is None:
-            kind: Kind = "added" if before is None else "removed"
-            run.spread(Change("techs", kind, entity, scope, sort_key=sort), scope)
+        if after is None:
+            run.spread(Change("techs", "removed", entity, scope, sort_key=sort), scope)
             continue
+        # A new tech is compared with nothing, like a new unit, so its entry lists what it costs
+        # and does (diff-rules.md, One entry per entity).
+        before = before if before is not None else {}
         for allow in TECH_FIELDS:
             if allow.key == "effect_id":
                 continue  # reported with the effect's commands, just below
@@ -1152,7 +1218,9 @@ def _other_effects(run: _Run) -> None:
             continue
         name = _text(after.get("name"))
         shown = run.new_names.internal_name(name) if name else unknown_id(key)
-        entity = Entity("effect", key, shown, named=bool(name))
+        # An effect has only its developers' name; a bonus's says what it does.
+        internal = bool(name) and not is_bonus_name(name or "")
+        entity = Entity("effect", key, shown, named=bool(name), internal=internal)
         for change in _command_changes(
             run, entity, before, after, "other_effects", Message("field.effect_command")
         ):

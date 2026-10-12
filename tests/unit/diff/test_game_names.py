@@ -1,10 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Classes, buildings and techs named in unit and tech changes (game-files.md §11)."""
 
+from dataclasses import replace
+
+import pytest
 from support.snapshots import make_snapshot
 
 from patch_scout.diff import compare
-from patch_scout.diff.model import Change, ChangeSet
+from patch_scout.diff.model import Change, ChangeSet, UnitLine
+from patch_scout.diff.names import Names
 from patch_scout.snapshot import JsonObject, JsonValue, Snapshot
 
 SWORDSMAN = 77
@@ -48,9 +52,16 @@ def _tech(dll: int, required: list[JsonValue]) -> JsonValue:
 
 
 def _build(
-    *, shock: int, pierce: int, train_time: int, required: list[JsonValue], scripts: bool = True
+    *,
+    shock: int,
+    pierce: int,
+    train_time: int,
+    required: list[JsonValue],
+    scripts: bool = True,
+    unit_type: int = 70,
 ) -> Snapshot:
     swordsman: JsonObject = {
+        "type": unit_type,
         "hit_points": 60,
         "language_dll_name": 5077,
         "type_50": {"attacks": [{"class_": 29, "amount": shock}, {"class_": 4, "amount": 9}]},
@@ -135,6 +146,28 @@ def test_a_train_location_is_named_after_its_building() -> None:
     assert _field_args(change) == {"location": "Archery Range"}
 
 
+def test_a_buildings_train_time_is_its_build_time() -> None:
+    """Fortified Church on 101.103.54800.0 read "train time at Builder": a building is built."""
+    old = _build(shock=6, pierce=0, train_time=40, required=[FEUDAL], unit_type=80)
+    new = _build(shock=6, pierce=0, train_time=50, required=[FEUDAL], unit_type=80)
+    [change] = [c for c in compare(old, new).changes if c.entity.name == "Long Swordsman"]
+    assert change.field is not None
+    assert change.field.key == "field.build_time"
+    assert (change.old, change.new) == ("40", "50")
+
+
+def test_the_unit_lines_are_named_after_their_first_unit() -> None:
+    """The patch notes say a line's changes in one sentence ("Militia line …")."""
+    old = _build(shock=6, pierce=0, train_time=21, required=[FEUDAL])
+    new = _build(shock=8, pierce=0, train_time=21, required=[FEUDAL])
+    lines: list[JsonValue] = [
+        {"name": "Archery Line", "id_chain": [4, SWORDSMAN], "line_id": -299},
+        {"name": "Empty", "id_chain": [], "line_id": -1},
+    ]
+    change_set = compare(replace(old, unit_lines=lines), replace(new, unit_lines=lines))
+    assert change_set.unit_lines == (UnitLine("Archer", ("4", str(SWORDSMAN))),)
+
+
 def test_required_techs_are_named_and_empty_slots_left_out() -> None:
     changes = _compare(required=[CASTLE, -1]).changes
     [change] = [c for c in changes if c.entity.name == "Crossbowman"]
@@ -184,3 +217,20 @@ def test_required_techs_are_separated_so_names_with_commas_stay_whole() -> None:
     changes = _compare(required=[FEUDAL, CASTLE]).changes
     [change] = [c for c in changes if c.entity.name == "Crossbowman"]
     assert change.new == "Feudal Age; Castle Age"
+
+
+@pytest.mark.parametrize(
+    ("internal", "shown"),
+    [
+        ("C-Bonus, Inf Cav +1 armor Age3", "Civ bonus: Inf Cav +1 armor Castle Age"),
+        ("Upgrade Eagle in Age3", "Upgrade Eagle in Castle Age"),
+        ("Flemish Militia Age4", "Flemish Militia Imperial Age"),
+        ("Age1 bonus", "Dark Age bonus"),
+        ("Feudal Age 2", "Feudal Age 2"),  # not the developers' shorthand: kept as written
+        ("Page3", "Page3"),
+    ],
+)
+def test_the_developers_age_numbers_read_as_ages(internal: str, shown: str) -> None:
+    # "Age3" in internal names is the Castle Age (maintainer, 2026-10-12).
+
+    assert Names(make_snapshot()).internal_name(internal) == shown

@@ -85,6 +85,8 @@ def test_up_to_eight_owners_changing_are_named() -> None:
     groups = collapse(owners, dict.fromkeys(owners, (1, 2)), every=EVERY)
     assert groups[0].scope.kind == "some"
     assert groups[0].scope.civs == owners
+    # Every civ that has it: the patch notes say it once, in General (Lou Chuan, 54800).
+    assert groups[0].scope.count == 8
 
 
 def test_more_than_eight_owners_changing_read_as_all_that_have_it() -> None:
@@ -109,6 +111,7 @@ def test_a_few_owners_changing_among_many_are_named() -> None:
     groups = collapse(owners, {"Huns": (1, 2)}, every=EVERY)
     assert groups[0].scope.kind == "some"
     assert groups[0].scope.civs == ("Huns",)
+    assert groups[0].scope.count == 0  # not every civ that has it
 
 
 def test_the_largest_of_several_pairs_reads_as_all_except() -> None:

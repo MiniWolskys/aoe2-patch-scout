@@ -3,7 +3,7 @@
 
 from typing import Any
 
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
 
 from patch_scout.i18n.catalog import load_catalog
 
@@ -180,6 +180,65 @@ def entry(*changes: dict[str, Any], **overrides: Any) -> dict[str, Any]:
     return row | overrides
 
 
+def patch_notes(**overrides: Any) -> dict[str, Any]:
+    """What `Api.get_patch_notes` answers: the document, as `Notes.to_json` writes it, and text."""
+
+    def item(text: str, *children: dict[str, Any]) -> dict[str, Any]:
+        return {"text": text, "children": list(children)}
+
+    data: dict[str, Any] = {
+        "title": "Patch notes: Live build → PUP build (pre-release)",
+        "disclaimer": "Written by Patch Scout from the game's data. These are not the official"
+        " patch notes.",
+        "notices": [],
+        "sections": [
+            {
+                "kind": "general",
+                "title": "General",
+                "groups": [
+                    {
+                        "title": "Unit stats",
+                        "civ": None,
+                        "icon": None,
+                        "items": [item("Knight hit points increased from 100 → 110.")],
+                    }
+                ],
+            },
+            {
+                "kind": "civs",
+                "title": "Civilizations",
+                "groups": [
+                    {
+                        "title": "Franks",
+                        "civ": "Franks",
+                        "icon": {"hash": "crest-franks"},
+                        "items": [
+                            item("NEW: Ordonnance Companies:", item("Cost: 400 food, 250 gold")),
+                            item("Gain access to Archer."),
+                        ],
+                    }
+                ],
+            },
+            {
+                "kind": "chronicles",
+                "title": "Chronicles",
+                "groups": [
+                    {
+                        "title": "Spartans",
+                        "civ": "Spartans",
+                        "icon": None,
+                        "items": [item("New civilization: Infantry civilization.")],
+                    }
+                ],
+            },
+        ],
+        "closing": "1 more change isn't in these notes.",
+        "empty": None,
+        "text": "Patch notes: Live build → PUP build (pre-release)\n- Knight hit points\n",
+    }
+    return data | overrides
+
+
 def fixture_data(**overrides: Any) -> dict[str, Any]:
     """Everything the fake bridge answers with."""
     data: dict[str, Any] = {
@@ -210,6 +269,7 @@ def fixture_data(**overrides: Any) -> dict[str, Any]:
         "entity": entity_details(),
         "icons": {},
         "exportText": "Patch Scout - what changed\n",
+        "patchNotes": patch_notes(),
         "diagnostics": {
             "environment": {"app_version": "0.0.0-test", "python": "3.12.0"},
             "log": ["folder 0% ", "save 95% "],
@@ -218,6 +278,13 @@ def fixture_data(**overrides: Any) -> dict[str, Any]:
         },
     }
     return data | overrides
+
+
+def show_changes(page: Page) -> None:
+    """Switch an open comparison from the patch notes, where it opens (D-51), to its changes."""
+    expect(page.locator("#comparison-notes")).to_have_attribute("aria-pressed", "true")
+    page.locator("#comparison-notes").click()
+    expect(page.locator("#comparison-page")).to_be_visible()
 
 
 def calls(page: Page, name: str) -> list[list[Any]]:

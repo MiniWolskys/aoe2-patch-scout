@@ -68,6 +68,9 @@ class Entity:
     # False when the game gives the entity no usable name and `name` is only `#<id>`: such
     # changes are hidden unless the reader asks for them (diff-rules.md, Values and formatting).
     named: bool = True
+    # True when `name` is the developers' internal name of a tech or effect players never see,
+    # such as "Disable Regionals"; civ and team bonuses don't count (diff-rules.md, Patch notes).
+    internal: bool = False
 
     def to_json(self) -> JsonObject:
         """The form the GUI and the exports read."""
@@ -78,6 +81,7 @@ class Entity:
             "where": self.where,
             "icon": self.icon,
             "named": self.named,
+            "internal": self.internal,
         }
 
 
@@ -87,8 +91,14 @@ class Scope:
 
     kind: ScopeKind = "global"
     civs: tuple[str, ...] = ()
-    # How many civs have the entity; set for "having" and "having_except" only.
+    # How many civs have the entity; set for "having" and "having_except", and for "some" when
+    # the civs named are every civ that has it (Lou Chuan on 101.103.54800.0). 0 otherwise.
     count: int = 0
+
+    @property
+    def every_holder(self) -> bool:
+        """Whether the civs named are every civ that has the entity, and there are several."""
+        return self.kind == "some" and self.count >= 2 and len(self.civs) == self.count
 
     def to_json(self) -> JsonObject:
         """The form the GUI and the exports read."""
@@ -257,6 +267,14 @@ class CivRef:
 
 
 @dataclass(frozen=True, slots=True)
+class UnitLine:
+    """An upgrade line of the game's `unitlines.json`, named after its first unit."""
+
+    name: str
+    units: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class ChangeSet:
     """Everything a comparison produced, in a deterministic order."""
 
@@ -270,6 +288,8 @@ class ChangeSet:
     entries: tuple[Entry, ...] = ()
     # Stat key -> icon reference, for the stat icons next to field labels (D-09).
     stat_icons: Mapping[str, JsonValue] = field(default_factory=dict)
+    # The game's unit lines, so the patch notes can say a line's changes in one sentence.
+    unit_lines: tuple[UnitLine, ...] = ()
 
     @property
     def overall_count(self) -> int:

@@ -12,6 +12,7 @@ import * as image from "./image.js";
  *   t: (key: string, values?: Record<string, unknown>) => string,
  *   current: () => {oldId: string, newId: string, low: boolean, unnamed: boolean,
  *     details: boolean, technical: boolean, civs: string[] | null, prerelease: boolean,
+ *     notes: boolean, notesText: string | null,
  *     page: Parameters<typeof image.draw>[0]["page"], versions: string} | null,
  * }} deps
  * @returns {{open: () => Promise<void>}}
@@ -23,9 +24,26 @@ export function initExport(deps) {
       return;
     }
     show(byId("export-embargo"), state.prerelease);
+    // In the patch notes mode the export is the patch notes, as text only (D-51).
+    byId("export-title").textContent = deps.t(state.notes ? "export.notes_title" : "export.title");
+    byId("export-help").textContent = deps.t(state.notes ? "export.notes_help" : "export.help");
+    show(byId("export-html"), !state.notes);
+    show(byId("export-image"), !state.notes);
     byId("export-status").textContent = "";
     byId("export-preview").textContent = deps.t("export.loading");
     dialogs.open("export-scrim");
+    byId("export-preview").textContent = await previewText(state);
+  }
+
+  /**
+   * The text the dialog shows and copies: the patch notes, or the export with the filters on.
+   * @param {NonNullable<ReturnType<typeof deps.current>>} state
+   * @returns {Promise<string>}
+   */
+  async function previewText(state) {
+    if (state.notes) {
+      return state.notesText ?? (await deps.api.get_patch_notes(state.oldId, state.newId)).text;
+    }
     const exported = await deps.api.export_text(
       state.oldId,
       state.newId,
@@ -35,7 +53,7 @@ export function initExport(deps) {
       state.details,
       state.technical,
     );
-    byId("export-preview").textContent = exported.text;
+    return exported.text;
   }
 
   byId("export-close").addEventListener("click", () => dialogs.close("export-scrim"));
@@ -76,16 +94,19 @@ export function initExport(deps) {
       if (state === null) {
         return;
       }
-      const saved = await deps.api.save_export(
-        state.oldId,
-        state.newId,
-        kind,
-        state.low,
-        state.civs,
-        state.unnamed,
-        state.details,
-        state.technical,
-      );
+      const saved =
+        state.notes && kind === "text"
+          ? await deps.api.save_patch_notes(state.oldId, state.newId)
+          : await deps.api.save_export(
+              state.oldId,
+              state.newId,
+              kind,
+              state.low,
+              state.civs,
+              state.unnamed,
+              state.details,
+              state.technical,
+            );
       byId("export-status").textContent = saved.saved
         ? deps.t("export.saved", { path: String(saved.path ?? "") })
         : notSaved(deps.t, saved);

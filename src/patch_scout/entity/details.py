@@ -21,7 +21,7 @@ from patch_scout.diff.classes import BASIC, ClassKind, basic_name, class_field
 from patch_scout.diff.effects import Lookup, describe, raw_pair
 from patch_scout.diff.model import Message
 from patch_scout.diff.names import Names
-from patch_scout.diff.reachability import UnitLookup
+from patch_scout.diff.reachability import UnitLookup, is_building
 from patch_scout.diff.values import at_path, display, pair, unknown_id
 from patch_scout.diff.vocabulary import Vocabulary
 from patch_scout.entity.affects import Kind, Target, affects, script_number
@@ -322,7 +322,8 @@ def _side_parts(
         sections["cost"] = _costs(
             at_path(record, "creatable.resource_costs"),
             at_path(record, "creatable.train_locations"),
-            "field.train_locations",
+            # A building's train time at its builder is its build time (diff-rules.md).
+            "field.build_time" if is_building(record) else "field.train_locations",
             "unit_id",
             "train_time",
             context.naming,

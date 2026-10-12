@@ -15,6 +15,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -47,6 +48,7 @@
       "entity": {
         "icon": null,
         "id": "87",
+        "internal": false,
         "kind": "building",
         "name": "Archery Range",
         "named": true,
@@ -79,6 +81,7 @@
       "entity": {
         "icon": null,
         "id": "87",
+        "internal": false,
         "kind": "building",
         "name": "Archery Range",
         "named": true,
@@ -119,6 +122,7 @@
           "width": 4
         },
         "id": "199",
+        "internal": false,
         "kind": "tech",
         "name": "Fletching",
         "named": true,
@@ -157,6 +161,7 @@
       "entity": {
         "icon": null,
         "id": "Redlanders",
+        "internal": false,
         "kind": "civ",
         "name": "Redlanders",
         "named": true,
@@ -195,6 +200,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -235,6 +241,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -275,6 +282,7 @@
           "width": 4
         },
         "id": "87",
+        "internal": false,
         "kind": "unit",
         "name": "Archery Range",
         "named": true,
@@ -313,6 +321,7 @@
           "width": 4
         },
         "id": "199",
+        "internal": false,
         "kind": "tech",
         "name": "Fletching",
         "named": true,
@@ -353,6 +362,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -396,6 +406,7 @@
       "entity": {
         "icon": null,
         "id": "99001",
+        "internal": false,
         "kind": "string",
         "name": "99001",
         "named": true,
@@ -431,6 +442,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -469,6 +481,7 @@
           "width": 4
         },
         "id": "87",
+        "internal": false,
         "kind": "building",
         "name": "Archery Range",
         "named": true,
@@ -507,6 +520,7 @@
           "width": 4
         },
         "id": "199",
+        "internal": false,
         "kind": "tech",
         "name": "Fletching",
         "named": true,
@@ -579,6 +593,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -605,6 +620,7 @@
       "entity": {
         "icon": null,
         "id": "87",
+        "internal": false,
         "kind": "building",
         "name": "Archery Range",
         "named": true,
@@ -638,6 +654,7 @@
           "width": 4
         },
         "id": "199",
+        "internal": false,
         "kind": "tech",
         "name": "Fletching",
         "named": true,
@@ -663,6 +680,7 @@
       "entity": {
         "icon": null,
         "id": "Redlanders",
+        "internal": false,
         "kind": "civ",
         "name": "Redlanders",
         "named": true,
@@ -694,6 +712,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -727,6 +746,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -760,6 +780,7 @@
           "width": 4
         },
         "id": "87",
+        "internal": false,
         "kind": "unit",
         "name": "Archery Range",
         "named": true,
@@ -791,6 +812,7 @@
           "width": 4
         },
         "id": "199",
+        "internal": false,
         "kind": "tech",
         "name": "Fletching",
         "named": true,
@@ -822,6 +844,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -845,6 +868,7 @@
       "entity": {
         "icon": null,
         "id": "99001",
+        "internal": false,
         "kind": "string",
         "name": "99001",
         "named": true,
@@ -876,6 +900,7 @@
           "width": 4
         },
         "id": "4",
+        "internal": false,
         "kind": "unit",
         "name": "Archer",
         "named": true,
@@ -907,6 +932,7 @@
           "width": 4
         },
         "id": "87",
+        "internal": false,
         "kind": "building",
         "name": "Archery Range",
         "named": true,
@@ -938,6 +964,7 @@
           "width": 4
         },
         "id": "199",
+        "internal": false,
         "kind": "tech",
         "name": "Fletching",
         "named": true,

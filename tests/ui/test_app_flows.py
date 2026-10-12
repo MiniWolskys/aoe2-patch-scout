@@ -12,6 +12,7 @@ from support.ui_data import (
     change_set,
     entry,
     fixture_data,
+    show_changes,
     startup_data,
     version,
 )
@@ -338,6 +339,7 @@ def test_opening_a_civ_shows_only_its_changes(open_shell: OpenShell) -> None:
 def test_low_priority_changes_are_hidden_until_the_filter_is_on(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
     expect(page.locator("ins")).to_have_count(0)
 
     page.locator("#comparison-filters").click()
@@ -355,6 +357,7 @@ def test_objects_with_no_name_are_hidden_until_the_filter_is_on(open_shell: Open
     )
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
     expect(page.locator(".change-row__name")).to_have_text(["Knight"])
 
     page.locator("#comparison-filters").click()
@@ -432,6 +435,7 @@ def test_the_image_export_draws_the_page_for_a_video(open_shell: OpenShell) -> N
 
     page = open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
     page.locator("#comparison-export").click()
     page.locator("#export-image").click()
 
@@ -474,6 +478,7 @@ def test_minor_changes_wait_for_their_filter(open_shell: OpenShell) -> None:
     data["changeSet"] = change_set(changes=[change(), search], entries=[entry(change(), search)])
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
     expect(page.locator(".change-row__field")).to_have_text(["Hit points"])
 
     page.locator("#comparison-filters").click()
@@ -525,6 +530,7 @@ def test_long_old_and_new_values_do_not_overlap(open_shell: OpenShell) -> None:
     data["changeSet"] = change_set(changes=[status], entries=[entry(status)])
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
 
     old = page.locator(".value-old").bounding_box()
     new = page.locator(".value-new").bounding_box()
@@ -553,6 +559,7 @@ def test_each_change_detail_sits_on_its_own_line(open_shell: OpenShell) -> None:
     data["changeSet"] = change_set(changes=commands, entries=[entry(*commands)])
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
 
     details = page.locator(".change-row__detail")
     expect(details).to_have_count(3)
@@ -579,6 +586,7 @@ def test_a_new_unit_says_how_many_values_it_leaves_out(open_shell: OpenShell) ->
 def test_the_search_filter_narrows_the_list(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
 
     page.locator("#comparison-filters").click()
     page.locator("#filter-search").fill("nothing matches this")
@@ -619,6 +627,7 @@ def test_a_notice_is_shown_above_the_comparison(open_shell: OpenShell) -> None:
     )
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
 
     expect(page.locator("#comparison-notice")).to_be_visible()
     expect(page.locator("#comparison-notice-text")).to_contain_text("42%")
@@ -627,6 +636,7 @@ def test_a_notice_is_shown_above_the_comparison(open_shell: OpenShell) -> None:
 def test_exporting_shows_a_preview_and_the_embargo_reminder(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
 
     page.locator("#comparison-export").click()
 
@@ -639,6 +649,7 @@ def test_exporting_shows_a_preview_and_the_embargo_reminder(open_shell: OpenShel
 def test_saving_an_export_reports_where_it_went(open_shell: OpenShell) -> None:
     page = open_shell(data=with_versions(version("new", "PUP build"), version("old", "Live build")))
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
     page.locator("#comparison-export").click()
 
     page.locator("#export-html").click()
@@ -720,6 +731,7 @@ def test_labels_line_up_whether_or_not_their_stat_has_an_icon(open_shell: OpenSh
     data["icons"] = {"h" * 64: PIXEL}
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
     page.locator("#comparison-filters").click()
     page.locator("#filter-details").check()
 
@@ -824,6 +836,7 @@ def test_a_civ_bonus_list_keeps_its_lines_across_the_wide_columns(open_shell: Op
     data["changeSet"] = change_set(changes=[bonus])
     page = open_shell(data=data)
     page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
 
     values = page.locator(".change-values--block")
     expect(values).to_have_count(1)

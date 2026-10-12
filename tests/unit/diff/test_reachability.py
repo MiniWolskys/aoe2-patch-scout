@@ -38,7 +38,10 @@ def snapshot() -> Snapshot:
         building_offers={"Franks": {"buildings": [{"id": 12, "units": [74], "techs": [22]}]}},
         stats=stats(
             {
-                "38": unit(building={"transform_unit": 39}),
+                "38": unit(building={"transform_unit": 39}, bird={"task_swap_group": 1}),
+                "579": unit(language_dll_name=5579, bird={"task_swap_group": 1}),  # Gold Miner
+                "13": unit(language_dll_name=5013, bird={"task_swap_group": 3}),  # another group
+                "57": unit(language_dll_name=5057, bird={"task_swap_group": 0}),  # no group
                 "39": unit(language_dll_name=5039),
                 "74": unit(blood_unit_id=75),
                 "75": unit(language_dll_name=5075),
@@ -68,6 +71,16 @@ def test_a_transform_form_is_reachable(snapshot: Snapshot) -> None:
     lookup = UnitLookup(snapshot)
     reach = for_civ(snapshot, snapshot, "Franks", (0, 0), (lookup, lookup))
     assert reach.includes(39)
+
+
+def test_a_task_form_is_reachable(snapshot: Snapshot) -> None:
+    """A Villager becomes a Gold Miner or a Forager by its task: the game swaps units in the same
+    task swap group. Malians' bonus "no longer affects Gold Miner" (101.103.54800.0)."""
+    lookup = UnitLookup(snapshot)
+    reach = for_civ(snapshot, snapshot, "Franks", (0, 0), (lookup, lookup))
+    assert reach.includes(579)
+    assert not reach.includes(13)
+    assert not reach.includes(57)
 
 
 def test_a_named_dismount_form_is_reachable(snapshot: Snapshot) -> None:
@@ -106,7 +119,7 @@ def test_a_snapshot_without_stats_still_gives_its_seeds(snapshot: Snapshot) -> N
 
 def test_the_unit_lookup_lists_what_the_snapshot_stores(snapshot: Snapshot) -> None:
     lookup = UnitLookup(snapshot)
-    assert lookup.unit_ids == [12, 38, 39, 74, 75, 101, 102, 900]
+    assert lookup.unit_ids == [12, 13, 38, 39, 57, 74, 75, 101, 102, 579, 900]
     assert lookup.record(38, 0) is not None
     assert lookup.record(4242, 0) is None
     assert lookup.any_record(38) is not None

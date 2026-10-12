@@ -25,6 +25,9 @@ _LINE_BREAK: Final = "\\n"
 # (345 civ bonuses and 1 team bonus on 101.103.54800.0), and the catalog message that says it.
 _BONUS_PREFIX: Final = re.compile(r"^([CT])-Bonus\s*[,:]\s*(?P<name>\S.*)$", re.IGNORECASE)
 _BONUS_MESSAGES: Final = {"C": "name.civ_bonus", "T": "name.team_bonus"}
+# The developers' shorthand for an age in internal names, "Age3" (Castle Age); 1 to 4 are the
+# ages of game-files.md §5. "Age 3" with a space, or "Page3", are left as written.
+_AGE_NUMBER: Final = re.compile(r"\bAge([1-4])\b")
 
 
 class Names:
@@ -100,16 +103,35 @@ class Names:
             return self.internal_name(internal.strip())
         return None
 
+    def internal_tech(self, record: JsonObject | None) -> bool:
+        """Whether a tech is known only by its developers' name, and isn't a civ or team bonus.
+
+        Such techs are plumbing players never see, e.g. "Disable Regionals" or "Genitour (make
+        avail)" on 101.103.54800.0. A bonus's internal name says what it does, so it counts as
+        a name (diff-rules.md, Values and formatting).
+        """
+        if record is None or self.one_line(at_path(record, "language_dll_name")):
+            return False
+        internal = record.get("name")
+        return isinstance(internal, str) and not is_bonus_name(internal.strip())
+
     def internal_name(self, name: str) -> str:
         """An internal `.dat` name as players can read it: "C-Bonus, X" reads "Civ bonus: X".
 
         Only the prefix is spelled out; the rest is the developers' own wording, kept as is.
         """
+        # The developers number the ages: "Inf Cav +1 armor Age3" is the Castle Age.
+        name = _AGE_NUMBER.sub(lambda age: self._catalog.text(f"tree.age.{age.group(1)}"), name)
         match = _BONUS_PREFIX.match(name)
         if match is None:
             return name
         key = _BONUS_MESSAGES[match.group(1).upper()]
         return self._catalog.text(key, name=match.group("name"))
+
+
+def is_bonus_name(name: str) -> bool:
+    """Whether an internal name is a civ or team bonus's: "C-Bonus, Pastures"."""
+    return _BONUS_PREFIX.match(name) is not None
 
 
 @cache
