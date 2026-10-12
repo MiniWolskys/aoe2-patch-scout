@@ -18,10 +18,10 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 ┌──────────────────────┬───────────────────────────────────────────────┐
 │ Patch Scout      [◧] │  Main area, depending on the selection:       │
 │ [Capture new version]│   • no versions      → first launch           │
-│ [Import]             │   • a version open   → version details        │
-│──────────────────────│   • a capture open   → capture progress       │
-│ VERSIONS           4 │   • two versions     → comparison             │
-│ ◌ PUP October   64%  │                                               │
+│ [Import]             │   • a version open   → its tech tree (D-52)   │
+│──────────────────────│   • its gear button  → version details        │
+│ VERSIONS           4 │   • a capture open   → capture progress       │
+│ ◌ PUP October   64%  │   • two versions     → comparison             │
 │ ● PUP September  NEW │                                               │
 │ ● Live           OLD │                                               │
 │   Baseline August    │                                               │
@@ -50,8 +50,8 @@ The screens were designed in three rounds of mockups with sample data. The mocku
   | State | Look |
   |---|---|
   | Default | Panel background |
-  | Hover | Hover background. The **Compare** button replaces the icons and tags, so the name and build keep their room |
-  | Open (details) | Selected background with a strong border |
+  | Hover or keyboard focus | Hover background. The **Compare** button and the gear button ("Version details", D-52) replace the icons and tags, so the name and build keep their room |
+  | Open (alone or details) | Selected background with a strong border |
   | In the comparison | Selected background, OLD or NEW tag |
   | Capturing | Label, "Capturing · 64%", a progress ring and a thin progress bar along the bottom |
 
@@ -59,17 +59,18 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 
 | Action | Result |
 |---|---|
-| Click a version | Its details open. If a comparison was open, the details show a link back to it. |
+| Click a version | It opens on its own, in its tech tree (D-52). |
+| Its gear button | Its details open, with a link back to the comparison or the tree that was open. |
 | Hover another version, click **Compare** | That version is compared with the open one. |
 | Ctrl+click another version | Same as Compare. |
-| **Compare with…** in the details | Pick a version, then compare. This is the keyboard route. |
+| **Compare with…** in the details or a version's tree | Pick a version, then compare. This is the keyboard route. |
 | A picker in the comparison header | Changes that side. |
 | Swap | Exchanges old and new. |
 
 - **Old and new are assigned automatically:** the lower game build is old; for the same build, the earlier capture is old.
 - **One copy at a time:** a second copy of the app on the same data folder says Patch Scout is already open, and exits. Two copies would undo each other's labels and notes.
 - **When the system refuses** (a file locked by another program, a read-only folder, a full disk), the action says why and nothing is half done: a version that can't be deleted stays, an export that can't be written leaves no partial file, and a capture or comparison still succeeds if only remembering it fails.
-- **On launch:** the last comparison reopens. The window shows straight away, with "Comparing…" while it is computed.
+- **On launch:** the last comparison, or version alone, reopens; with neither, the newest version opens alone. The window shows straight away, with "Comparing…" while it is computed.
 - **While comparing** (a few seconds on real builds): a "Comparing…" view names both versions, with a sweeping progress bar. A failed comparison goes back to where the reader was and says so; any other failed call shows a short message pointing to Diagnostics.
 
 ### Capture
@@ -93,12 +94,12 @@ The screens were designed in three rounds of mockups with sample data. The mocku
    | Save | |
 
    Done steps show a neutral check, the running step an accent ring, and pending steps a hollow circle. **Cancel** stops the capture.
-4. **When it finishes,** the new version opens compared with the previous newest version.
+4. **When it finishes,** the new version opens compared with the previous newest version, or alone if it is the first.
 5. **If every input matches an existing snapshot** (P-05), the capture stops early. The message names that snapshot and offers to capture anyway.
 
 ### Import
 
-**Import** takes the baseline pack (P-21) and version archives (`.aoe2snap`). The file is chosen first; then "Importing…" shows while the archive is checked and stored (a few seconds for a real one). An imported version is added to the list and opened. A version already in the list is opened, not duplicated, and keeps its own label. An archive that can't be used says why in a toast: not an archive, incomplete, unreadable game data, a broken icon, too large, or saved by a newer Patch Scout.
+**Import** takes the baseline pack (P-21) and version archives (`.aoe2snap`). The file is chosen first; then "Importing…" shows while the archive is checked and stored (a few seconds for a real one). An imported version is added to the list and opened on its own. A version already in the list is opened, not duplicated, and keeps its own label. An archive that can't be used says why in a toast: not an archive, incomplete, unreadable game data, a broken icon, too large, or saved by a newer Patch Scout.
 
 **Export** is in the version details. It saves the version as an archive where the user chooses. A version ticked as pre-release asks for confirmation first (P-14).
 
@@ -107,10 +108,11 @@ The screens were designed in three rounds of mockups with sample data. The mocku
 - **With no versions,** the main area explains that a comparison needs two versions and offers two cards: **Capture your game** and **Import a version** (a baseline pack or an exported version).
 - **A warning line** reminds users to capture the live build before switching Steam to a preview build.
 - **Wording:** the `first_launch.*` messages in the catalog (`en.json`), taken from the round-3 mockups.
-- **With one version,** its details show, with a hint that comparing needs a second version.
+- **With one version,** it opens on its own (D-52), with a line saying a second version is needed to compare.
 
 ### Version details
 
+Opened with a version's gear button (D-52).
 - **Title:** the label (click to rename, P-14), then build and capture date.
 - **Actions:** **Compare with…**, **Export version** (snapshot archive), **Delete** (asks for confirmation).
 - **Fields:**
@@ -183,6 +185,15 @@ One civ's tech tree, in the comparison, laid out like the game's and aoe2techtre
 
   A changed value reads old → new in red and green; a value the data doesn't have reads `?`. The panel stays inside the window.
 - **Click a tile** to open its details drawer (below). The hover panel hides.
+
+### A version on its own (D-52)
+
+The version's tech tree, for players to look around before a patch and to learn the tree and the details panel. It is the version compared with itself, so it is the tech tree view with nothing to mark.
+- **Header:** the version's name, build, date and pre-release badge, without OLD/NEW; clicking it picks a version to compare with, as does the **Compare with…** button. No swap, Tech tree, Patch notes, Filters or Export.
+- **A line under the header** says how to compare: "Hover another version and click Compare to see what changed.", or with one version, "Capture or import a second version to see what changed."
+- **Civ list:** every civ, without counts or NEW tags, with the Main game / Chronicles tabs. Going from one version alone to another keeps the civ.
+- **The tree:** no legend and no marks; the hover panel and the details panel show the version's values once.
+- **If the tree can't be drawn,** the view says so in place; there is no change list to go back to.
 
 ### Patch notes (D-51)
 

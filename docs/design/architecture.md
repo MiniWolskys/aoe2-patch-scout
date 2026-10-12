@@ -167,7 +167,7 @@ flowchart TD
    - Every snapshot with its label, build and capture date. Icons flag pre-release versions and versions without stats.
    - **Capture new version** and **Import** at the top. Import takes snapshot archives and the baseline pack (P-21).
    - Diagnostics and Settings at the bottom.
-   - Click a version to open its details. To compare it with another, use that version's **Compare** button (shown on hover), Ctrl+click, or **Compare with…** in the details.
+   - Click a version to open its tech tree (D-52); its gear button (shown on hover) opens its details. To compare it with another, use that version's **Compare** button (shown on hover), Ctrl+click, or **Compare with…**.
    - A running capture shows as a row at the top of the list. The list can collapse to a narrow strip.
 2. **First launch.** With no snapshots yet: capture your game, or import the baseline pack from the release page.
 3. **Capture dialog.**
