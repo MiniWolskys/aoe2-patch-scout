@@ -2,11 +2,11 @@
 
 Find out what changed in *Age of Empires II: Definitive Edition* between two game builds, without waiting for patch notes.
 
-> **Status: preparing v1.0.** The app captures, compares, exports and draws tech trees for real; the first release is being prepared. Progress is tracked in the [roadmap](docs/roadmap.md).
+> **Status: early releases.** Version 0.3.0 is out on the [releases page](https://github.com/MiniWolskys/aoe2-patch-scout/releases). The `0.x` versions aren't code-signed yet; 1.0.0 will be the first signed one. Progress is tracked in the [roadmap](docs/roadmap.md).
 
-![The changes of a patch for every civilization: a few lines, with the civs each one applies to](docs/images/comparison-overall.png)
+![Patch notes written by Patch Scout: general changes such as "Militia line bonus vs Shock Infantry increased: Man-at-Arms 2 → 3, Long Swordsman 6 → 8…", then one block per civilization](docs/images/patch-notes.png)
 
-<p align="center"><em>Update 185872 (101.103.48987.0 → 101.103.54800.0): what changed for every civilization.</em></p>
+<p align="center"><em>Update 185872 (101.103.48987.0 → 101.103.54800.0), as patch notes written from the game data alone.</em></p>
 
 ## Why
 
@@ -15,7 +15,8 @@ Content creators often get early builds (pre-release, PUP) before any patch note
 ## Features
 
 - **Capture** a snapshot of any AoE2:DE install. The app looks for the game and shows you the folder it found; you can always pick another one, e.g. a pre-release build.
-- **Compare** two snapshots and get the changes, page by page: Overall for what changed for everyone, then one page per civilization, with game icons. The Chronicles civilizations have their own tab.
+- **Patch notes** written like the official ones, the first thing you see after a comparison: "Militia line bonus vs Shock Infantry increased: Man-at-Arms 2 → 3, Long Swordsman 6 → 8…", "Gain access to Treadmill Crane". General changes first, then one block per civilization, ready to paste into a video description, a Reddit post or Discord.
+- **Detailed changes,** one click away: Overall for what changed for everyone, then one page per civilization, with game icons. The Chronicles civilizations have their own tab.
   - new or removed civilizations;
   - units, techs and buildings gained or lost, per civ;
   - civ bonus and team bonus texts, line by line in the game's own wording, with the words that changed marked;
@@ -26,8 +27,7 @@ Content creators often get early builds (pre-release, PUP) before any patch note
 - **Tech tree:** a civ's tree laid out like the game's, with what it gained, lost or had changed marked on it, and its bonuses on the side. Hover a unit or tech for the game's own tooltip, with changed values old → new.
 - **Look around before a patch:** click a version to see its tech tree on its own, with every unit's stats.
 - **Details:** click a unit, building or tech, in the tree or the change list, for all its stats in both versions and, for a civ, every bonus and technology that affects it.
-- **Export** as plain text (for video descriptions), a single HTML page, or 1920 × 1080 images for videos, with only the changes you chose to show.
-- **Patch notes** written like the official ones ("(Elite) Throwing Axeman range increased from 3 → 5, Elite 4 → 6", "Gain access to Treadmill Crane"), ready to paste into a video description, a Reddit post or Discord.
+- **Export** the patch notes as text to copy or save, or the detailed changes as plain text, a single HTML page, or 1920 × 1080 images for videos, with only the changes you chose to show.
 - **Organise your snapshots:** rename them, add notes, mark the ones from pre-release builds, and export or import a version as a single file.
 - **Diagnostics:** if something looks wrong, one screen shows how each file was read and checked, and copies a report for a bug report without any game data.
 - **A snapshot of the current live build is published with every release,** so you can compare even if you installed after the patch dropped.
@@ -35,7 +35,7 @@ Content creators often get early builds (pre-release, PUP) before any patch note
 
 ## Screenshots
 
-**A civilization's page:** its bonus text with the line that changed, and its unit changes.
+**Detailed changes for a civilization:** its bonus text with the line that changed, and its unit changes.
 
 ![The Vietnamese page: the bonus text with the changed line in red and green, and two unit changes](docs/images/comparison-civ.png)
 

@@ -1,8 +1,8 @@
 # Roadmap
 
-**Status on 2026-10-10:** M0 to M3 are done. M4 is done, including the tech tree view the maintainer moved before v1.0 (D-39). M5 has a working build, the release files and steps, but no release yet: the first one is made by hand by the maintainer. The checks that need a PUP branch or a Microsoft Store install are still deferred.
+**Status on 2026-10-12:** M0 to M4 are done, including the tech tree view the maintainer moved before v1.0 (D-39). M5 shipped unsigned releases `v0.1.0` to `v0.3.0`, each with a baseline pack; `v1.0.0` will be the first signed one (D-48). The checks that need a PUP branch or a Microsoft Store install are still deferred.
 
-The app captures a real install, gates the `.dat`, compares two versions and exports the result as text or HTML. What is left before v1.0 is listed under each milestone below.
+The app captures a real install, gates the `.dat`, compares two versions, writes patch notes, draws tech trees and exports the result as text, HTML or images. What is left before v1.0 is listed under each milestone below.
 
 **How milestones run:**
 - Design that goes beyond `docs/design/` is agreed in an issue first, then recorded in `docs/design/` and `docs/decisions.md` together with the code.
@@ -154,11 +154,13 @@ Goal: remove the biggest unknowns before building on them. Spike code is throwaw
 **Exit criteria**
 - [x] `uv run pyinstaller packaging/patch-scout.spec` produces a one-folder build that runs and compares real captures (217 files, 40.8 MB).
 - [x] `COPYING.LESSER` (the LGPLv3 text) and the exe icon, 2026-10-10.
-- [ ] **Not done:** the baseline pack, release notes, the 3.13 smoke test, and the walkthrough on a clean machine.
+- [x] Baseline pack and release notes, published with every release from `v0.1.0` (2026-10-10).
+- [ ] **Not done:** the 3.13 smoke test, and the walkthrough on a clean machine.
 
 ## After v0.1.0
 
 - [x] **Patch notes** (D-51), 2026-10-12: the comparison written like the official notes, in the app and as light Markdown to paste.
+- [x] **A version on its own** (D-52), 2026-10-12: clicking a version opens its tech tree, with every unit's stats; released in `v0.3.0`.
 - Apply to the SignPath Foundation; add the code signing policy page and the signing step to the release workflow (O-6). The first signed release is `v1.0.0` (D-48).
 - **Civ overview** (D-39): the rest of the overview beyond the tech tree, i.e. one civ's bonuses and stats in a version, with a comparison's changes highlighted. One unit, building or tech at a time is covered by the details drawer (D-49).
 
