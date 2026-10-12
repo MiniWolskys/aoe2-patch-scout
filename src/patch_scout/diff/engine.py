@@ -50,6 +50,8 @@ VOLUME_THRESHOLD: Final = 0.20
 # Civ-specific lines come before global ones inside a category (diff-rules.md).
 _CIV_FIRST: Final = 0
 _GLOBAL: Final = 1
+# Resources 0 to 3 are the food, wood, stone and gold stockpiles.
+_STOCKPILES: Final = 4
 
 
 @dataclass(frozen=True, slots=True)
@@ -830,13 +832,19 @@ def _civ_resources(run: _Run) -> None:
                     kind="modified",
                     entity=entity,
                     scope=group.scope,
-                    field=Message("field.civ_resource"),
+                    field=Message(_resource_label(position)),
                     old=old_text,
                     new=new_text,
                     sort_key=sort,
                 ),
                 group.scope,
             )
+
+
+def _resource_label(position: int) -> str:
+    """ "Starting amount" for the four stockpiles; other resources are values the game's
+    mechanics read, such as Varangian Gold, which no civ starts with (101.103.54800.0)."""
+    return "field.civ_resource" if position < _STOCKPILES else "field.civ_resource_value"
 
 
 def _civ_effects(

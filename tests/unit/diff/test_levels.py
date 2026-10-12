@@ -179,12 +179,17 @@ def test_a_resource_changed_for_every_civ_is_one_overall_line() -> None:
     [change] = [c for c in change_set.changes if c.category == "bonuses"]
     assert (change.entity.name, change.civ, change.scope.kind) == ("Varangian Gold", None, "all")
     assert (change.old, change.new) == ("0", "50")
+    # Not gold every civ starts with: a value the game's mechanics read (Varangian Guard).
+    assert change.field is not None
+    assert change.field.key == "field.civ_resource_value"
 
 
 def test_a_resource_changed_for_one_civ_stays_on_its_page() -> None:
     change_set = _compare(new={"food": [200, 300, 200]})
     [change] = [c for c in change_set.changes if c.category == "bonuses"]
     assert (change.entity.name, change.civ) == ("Food", "Alpha")
+    assert change.field is not None
+    assert change.field.key == "field.civ_resource"  # the food a civ starts with
 
 
 # --- unit stats ---------------------------------------------------------------------------------

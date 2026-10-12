@@ -197,6 +197,7 @@
   "field.charge_type": "Charge type",
   "field.civ_bonus_text": "Civilization bonus text",
   "field.civ_resource": "Starting amount",
+  "field.civ_resource_value": "Game value",
   "field.conversion_chance_mod": "Conversion resistance",
   "field.cost": "Cost in {resource}",
   "field.projectile": "Projectile: {field}",
