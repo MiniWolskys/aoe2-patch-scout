@@ -550,6 +550,50 @@ def test_two_pages_asking_for_one_comparison_at_once_compare_once(
     assert runs == [1]
 
 
+def test_both_answers_of_the_unreachable_filter_are_kept(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runs: list[bool] = []
+
+    def counted_compare(*_: Any, options: Any, **__: Any) -> Any:
+        runs.append(options.show_unreachable)
+        return object()
+
+    monkeypatch.setattr("patch_scout.gui.api.compare", counted_compare)
+    old, new = SimpleNamespace(capture_id="old"), SimpleNamespace(capture_id="new")
+    for show_unreachable in (False, True, False, True):
+        api._compared(old, new, show_unreachable=show_unreachable)  # type: ignore[arg-type]
+    assert runs == [False, True]
+
+
+def test_a_kept_answer_does_not_wait_for_a_running_comparison(
+    api: Api, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started, release = threading.Event(), threading.Event()
+
+    def compare_(*_: Any, options: Any, **__: Any) -> Any:
+        if options.show_unreachable:
+            started.set()
+            release.wait(5)
+        return object()
+
+    monkeypatch.setattr("patch_scout.gui.api.compare", compare_)
+    old, new = SimpleNamespace(capture_id="old"), SimpleNamespace(capture_id="new")
+    kept = api._compared(old, new, show_unreachable=False)  # type: ignore[arg-type]
+    running = threading.Thread(
+        target=api._compared, args=(old, new), kwargs={"show_unreachable": True}
+    )
+    running.start()
+    try:
+        assert started.wait(5)
+        answered = time.monotonic()
+        assert api._compared(old, new, show_unreachable=False) is kept  # type: ignore[arg-type]
+        assert time.monotonic() - answered < 1
+    finally:
+        release.set()
+        running.join()
+
+
 def test_a_double_click_starts_one_capture(
     api: Api, install: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

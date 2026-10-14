@@ -17,6 +17,8 @@ import * as treePanel from "./tree-panel.js";
 import { initVersionList, render as renderVersions } from "./version-list.js";
 
 const VIEWS = ["first-launch", "capture-view", "details-view", "comparing-view", "comparison-view"];
+// An answer quicker than this (a comparison Python kept) updates the page without a status.
+const UPDATING_DELAY_MS = 200;
 
 async function start() {
   const api = await connect();
@@ -178,6 +180,7 @@ async function start() {
 
   async function openComparison(firstId, secondId) {
     const request = ++comparisonRequest;
+    cancelFilterUpdate();
     const previous = state.view;
     const label = (id) => state.versions.find((version) => version.capture_id === id)?.label ?? "";
     const alone = firstId === secondId;
@@ -201,7 +204,7 @@ async function start() {
     if (request !== comparisonRequest) {
       return;
     }
-    // The same pair again (the unreachable filter reopens it): stay on the same civ and view.
+    // The same pair again (swapping the sides reopens it): stay on the same civ and view.
     const before = state.comparison;
     const same =
       before !== null &&
@@ -234,6 +237,87 @@ async function start() {
     drawVersionList();
   }
 
+  // The unreachable units filter needs another comparison (diff-rules.md, Reachability): it
+  // is asked for while the page stays, and the last click wins.
+  let filterRequest = 0;
+  let updating = false;
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  let updatingTimer;
+
+  /**
+   * Say what is coming, unless the answer comes first; the changes being replaced are dimmed.
+   * @param {string} message
+   */
+  function showUpdating(message) {
+    clearTimeout(updatingTimer);
+    byId("comparison-updating-text").textContent = message;
+    updatingTimer = setTimeout(() => {
+      updating = true;
+      drawUpdating();
+    }, UPDATING_DELAY_MS);
+  }
+
+  function hideUpdating() {
+    clearTimeout(updatingTimer);
+    updating = false;
+    drawUpdating();
+  }
+
+  /** The status shows over the changes and the tree, not over the patch notes it can't affect. */
+  function drawUpdating() {
+    show(byId("comparison-updating"), updating && state.comparison?.view !== "notes");
+    const page = byId("comparison-page");
+    if (updating) {
+      page.setAttribute("aria-busy", "true");
+    } else {
+      page.removeAttribute("aria-busy");
+    }
+  }
+
+  function cancelFilterUpdate() {
+    filterRequest += 1;
+    hideUpdating();
+  }
+
+  /**
+   * Show or hide the units a civ can't get, in place.
+   * @param {boolean} wanted
+   */
+  async function updateUnreachable(wanted) {
+    const current = state.comparison;
+    if (current === null) {
+      return;
+    }
+    const request = ++filterRequest;
+    state.filters.unreachable = wanted;
+    showUpdating(t(wanted ? "comparison.unreachable_adding" : "comparison.unreachable_hiding"));
+    let changeSet;
+    try {
+      changeSet = await api.compare_versions(current.oldId, current.newId, wanted);
+      await icons.preload(api, comparison.iconHashes(changeSet));
+    } catch (error) {
+      console.error("the comparison for the unreachable filter failed", error);
+      if (request === filterRequest) {
+        hideUpdating();
+        state.filters.unreachable = !wanted;
+        input("filter-unreachable").checked = !wanted;
+        dialogs.toast(
+          t(wanted ? "comparison.unreachable_add_failed" : "comparison.unreachable_hide_failed"),
+        );
+      }
+      return;
+    }
+    if (request !== filterRequest || state.comparison !== current) {
+      return;
+    }
+    hideUpdating();
+    current.changeSet = changeSet;
+    // The tree and the patch notes don't show these units: only the changes are drawn again.
+    if (current.view === "changes") {
+      drawComparison();
+    }
+  }
+
   function drawComparison() {
     const current = state.comparison;
     if (current === null) {
@@ -242,6 +326,7 @@ async function start() {
     const inTree = current.view === "tree";
     const inNotes = current.view === "notes";
     const alone = current.alone;
+    drawUpdating();
     comparison.render({
       t,
       changeSet: current.changeSet,
@@ -716,11 +801,10 @@ async function start() {
       }
     });
   }
-  input("filter-unreachable").addEventListener("change", async (event) => {
+  input("filter-unreachable").addEventListener("change", (event) => {
     const target = event.target;
-    if (target instanceof HTMLInputElement && state.comparison !== null) {
-      state.filters.unreachable = target.checked;
-      await openComparison(state.comparison.oldId, state.comparison.newId);
+    if (target instanceof HTMLInputElement) {
+      void updateUnreachable(target.checked);
     }
   });
   input("filter-search").addEventListener("input", (event) => {

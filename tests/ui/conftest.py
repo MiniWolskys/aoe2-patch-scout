@@ -60,6 +60,24 @@ FAKE_BRIDGE = """
     record(name, args);
     return Promise.resolve(typeof value === "function" ? value(...args) : value);
   };
+  const compared = (first, second, showUnreachable) => {
+    if (first !== second) {
+      return showUnreachable ? (data.unreachableChangeSet ?? data.changeSet) : data.changeSet;
+    }
+    const side =
+      (data.startup.versions ?? []).find((row) => row.capture_id === first) ??
+      { capture_id: first, label: first };
+    return {
+      ...data.changeSet,
+      old: side,
+      new: side,
+      identical: true,
+      notices: [],
+      changes: [],
+      entries: [],
+      civs: (data.changeSet.civs ?? []).map((civ) => ({ ...civ, added: false, count: 0 })),
+    };
+  };
   const api = {
     get_startup: data.startupError
       ? (...args) => {
@@ -92,24 +110,24 @@ FAKE_BRIDGE = """
     cancel_capture: answer("cancel_capture", { cancelled: true }),
     clear_capture: answer("clear_capture", { cleared: true }),
     // A version compared with itself is that version alone (D-52): no changes, every civ.
-    compare_versions: answer("compare_versions", (first, second) => {
-      if (first !== second) {
-        return data.changeSet;
-      }
-      const side =
-        (data.startup.versions ?? []).find((row) => row.capture_id === first) ??
-        { capture_id: first, label: first };
-      return {
-        ...data.changeSet,
-        old: side,
-        new: side,
-        identical: true,
-        notices: [],
-        changes: [],
-        entries: [],
-        civs: (data.changeSet.civs ?? []).map((civ) => ({ ...civ, added: false, count: 0 })),
-      };
-    }),
+    // With the units a civ can't get, the answer is `unreachableChangeSet`, or fails with
+    // `unreachableError`, after waiting `unreachableDelay` milliseconds.
+    compare_versions: (...args) => {
+      record("compare_versions", args);
+      const delay = args[2] ? (data.unreachableDelay ?? 0) : 0;
+      return new Promise((resolve, reject) =>
+        setTimeout(() => {
+          try {
+            if (args[2] && data.unreachableError) {
+              throw new Error(data.unreachableError);
+            }
+            resolve(compared(...args));
+          } catch (error) {
+            reject(error);
+          }
+        }, delay),
+      );
+    },
     get_icons: answer("get_icons", data.icons ?? {}),
     get_tech_tree: answer("get_tech_tree", (oldId, newId, civ) =>
       data.techTreeError ? null : { ...(data.techTree ?? {}), civ },

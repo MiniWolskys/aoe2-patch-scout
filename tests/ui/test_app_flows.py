@@ -371,6 +371,113 @@ def test_objects_with_no_name_are_hidden_until_the_filter_is_on(open_shell: Open
     expect(page.locator(".change-row__name")).to_have_text(["Knight", "#172"])
 
 
+def _with_unreachable(open_shell: OpenShell, **overrides: Any) -> Page:
+    """A comparison on its changes, whose answer with unreachable units adds a campaign hero."""
+    hero = {"kind": "unit", "id": "2700", "name": "Finn Arnason", "where": None, "icon": None}
+    data = with_versions(
+        version("new", "PUP build"),
+        version("old", "Live build"),
+        unreachableChangeSet=change_set(changes=[change(), change(entity=hero)]),
+        **overrides,
+    )
+    page = open_shell(data=data)
+    page.locator(".version-row").nth(1).click(modifiers=["Control"])
+    show_changes(page)
+    expect(page.locator(".change-row__name")).to_have_text(["Knight"])
+    page.locator("#comparison-filters").click()
+    return page
+
+
+def _watch_comparing(page: Page) -> None:
+    """Remember in `window.__comparingShown` whether the Comparing… view ever shows."""
+    page.evaluate(
+        """() => {
+          window.__comparingShown = false;
+          const view = document.getElementById("comparing-view");
+          new MutationObserver(() => {
+            window.__comparingShown ||= !view.hidden;
+          }).observe(view, { attributes: true });
+        }"""
+    )
+
+
+def test_the_unreachable_filter_updates_the_list_in_place(open_shell: OpenShell) -> None:
+    page = _with_unreachable(open_shell, unreachableDelay=1500)
+    _watch_comparing(page)
+
+    page.locator("#filter-unreachable").check()
+
+    status = page.locator("#comparison-updating")
+    expect(status).to_be_visible()
+    expect(status).to_contain_text("Adding the units civilizations can't get")
+    expect(page.locator("#comparison-page")).to_have_attribute("aria-busy", "true")
+    expect(page.locator(".change-row__name")).to_have_text(["Knight"])
+
+    expect(page.locator(".change-row__name")).to_have_text(["Knight", "Finn Arnason"])
+    expect(status).to_be_hidden()
+    expect(page.locator("#comparison-page")).not_to_have_attribute("aria-busy", "true")
+    expect(page.locator("#filters-panel")).to_be_visible()
+    assert page.evaluate("window.__comparingShown") is False
+    assert calls(page, "compare_versions")[-1] == ["old", "new", True]
+
+
+def test_a_quick_answer_to_the_unreachable_filter_does_not_flash(open_shell: OpenShell) -> None:
+    page = _with_unreachable(open_shell)
+    page.evaluate(
+        """() => {
+          window.__updatingShown = false;
+          const status = document.getElementById("comparison-updating");
+          new MutationObserver(() => {
+            window.__updatingShown ||= !status.hidden;
+          }).observe(status, { attributes: true });
+        }"""
+    )
+
+    page.locator("#filter-unreachable").check()
+
+    expect(page.locator(".change-row__name")).to_have_text(["Knight", "Finn Arnason"])
+    assert page.evaluate("window.__updatingShown") is False
+
+
+def test_the_last_click_on_the_unreachable_filter_wins(open_shell: OpenShell) -> None:
+    page = _with_unreachable(open_shell, unreachableDelay=1000)
+
+    page.locator("#filter-unreachable").check()
+    page.locator("#filter-unreachable").uncheck()
+
+    expect(page.locator("#comparison-updating")).to_be_hidden()
+    page.wait_for_timeout(1200)  # the first, slower answer has arrived by now
+    expect(page.locator(".change-row__name")).to_have_text(["Knight"])
+    expect(page.locator("#comparison-updating")).to_be_hidden()
+    expect(page.locator("#filter-unreachable")).not_to_be_checked()
+
+
+def test_a_failed_unreachable_filter_says_so_and_unticks(open_shell: OpenShell) -> None:
+    page = _with_unreachable(open_shell, unreachableError="boom")
+
+    page.locator("#filter-unreachable").check()
+
+    expect(page.locator("#toast")).to_contain_text(
+        "The units civilizations can't get couldn't be added"
+    )
+    expect(page.locator("#filter-unreachable")).not_to_be_checked()
+    expect(page.locator("#comparison-updating")).to_be_hidden()
+    expect(page.locator(".change-row__name")).to_have_text(["Knight"])
+    expect(page.locator("#comparison-view")).to_be_visible()
+
+
+def test_opening_another_version_drops_a_pending_filter_update(open_shell: OpenShell) -> None:
+    page = _with_unreachable(open_shell, unreachableDelay=1000)
+
+    page.locator("#filter-unreachable").check()
+    page.locator(".version-row").first.click()
+
+    expect(page.locator("#comparison-view")).to_have_attribute("data-alone", "")
+    expect(page.locator("#comparison-updating")).to_be_hidden()
+    page.wait_for_timeout(1200)
+    expect(page.locator("#comparison-view")).to_have_attribute("data-alone", "")
+
+
 def test_a_projectile_field_is_labelled_as_part_of_its_shooter(open_shell: OpenShell) -> None:
     data = with_versions(version("new", "PUP build"), version("old", "Live build"))
     nested = {"key": "field.attacks", "args": {"class": "#3"}}

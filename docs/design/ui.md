@@ -145,6 +145,7 @@ Opened with a version's gear button (D-52).
 
   A text change replaces the values and note columns with a word diff: removed words struck through in red, added words in green. A text with lines, such as a civ bonus list, keeps them.
 - **Filters:** "Show minor changes" and "Show technical changes" show changes below the headline level (D-46), next to "Show objects with no name", the low-priority categories, unreachable units and search.
+  - **Unreachable units** need a second comparison, about three times as long as the first (12 s on 101.103.48987.0 → 101.103.54800.0). The page stays as it is while it runs: a bar along the top of the page and a floating message ("Adding the units civilizations can't get. This takes a few seconds.") say what is coming, and the changes are dimmed. Nothing moves. An answer within 200 ms, such as unticking (Python keeps both answers of the open pair), shows no status. The last click wins. A failure unticks the box again and says so in a toast. The tree and the patch notes don't show these units, so they stay as drawn.
 
 ### Tech tree (D-39)
 

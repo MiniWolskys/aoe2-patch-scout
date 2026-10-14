@@ -45,6 +45,9 @@ logger = logging.getLogger(__name__)
 # How many icons the page may ask for at once; a comparison shows far fewer than this.
 # Whole snapshots kept in memory: a comparison needs two.
 MAX_LOADED: Final = 2
+# Comparisons kept: the open pair with and without the units a civ can't get, so the filter,
+# the tree, the patch notes and the exports switch between them without comparing again.
+MAX_COMPARISONS: Final = 2
 MAX_ICONS: Final = 400
 
 type FolderPicker = Callable[[], str | None]
@@ -106,7 +109,10 @@ class Api:
         # Insertion-ordered: the first key is the snapshot used least recently.
         self._loaded: dict[str, Snapshot] = {}
         self._window: Any = None
-        self._last_comparison: tuple[tuple[object, ...], ChangeSet] | None = None
+        # Insertion-ordered like `_loaded`, and read under its own lock: a kept comparison is
+        # answered at once, even while another one runs under `_work_lock`.
+        self._comparisons: dict[tuple[object, ...], ChangeSet] = {}
+        self._comparisons_lock = threading.Lock()
         self._log: list[str] = []
         # pywebview runs each call from the page on its own thread. Loading and comparing take
         # seconds and hundreds of MB, so they run one at a time: a second caller waits and then
@@ -656,16 +662,21 @@ class Api:
         return self._compared(older, newer, show_unreachable=False)
 
     def _compared(self, older: Snapshot, newer: Snapshot, *, show_unreachable: bool) -> ChangeSet:
-        """Compare two snapshots, reusing the last result: a real comparison takes seconds.
+        """Compare two snapshots, reusing a kept result: a real comparison takes seconds.
 
         Labels and pre-release flags are part of the result, so they are part of the key too.
         """
         old_info = self._side_info(older.capture_id)
         new_info = self._side_info(newer.capture_id)
         key = (older.capture_id, newer.capture_id, show_unreachable, old_info, new_info)
+        kept = self._kept_comparison(key)
+        if kept is not None:
+            return kept
         with self._work_lock:
-            if self._last_comparison is not None and self._last_comparison[0] == key:
-                return self._last_comparison[1]
+            # Another caller may have compared the same pair while this one waited.
+            kept = self._kept_comparison(key)
+            if kept is not None:
+                return kept
             change_set = compare(
                 older,
                 newer,
@@ -673,7 +684,18 @@ class Api:
                 old_info=old_info,
                 new_info=new_info,
             )
-            self._last_comparison = (key, change_set)
+            with self._comparisons_lock:
+                self._comparisons[key] = change_set
+                while len(self._comparisons) > MAX_COMPARISONS:
+                    self._comparisons.pop(next(iter(self._comparisons)))
+            return change_set
+
+    def _kept_comparison(self, key: tuple[object, ...]) -> ChangeSet | None:
+        """A comparison already made, now the one used most recently; None if not kept."""
+        with self._comparisons_lock:
+            change_set = self._comparisons.pop(key, None)
+            if change_set is not None:
+                self._comparisons[key] = change_set
             return change_set
 
     def _ask_where_to_save(self, name: str, suffix: str) -> str | None:

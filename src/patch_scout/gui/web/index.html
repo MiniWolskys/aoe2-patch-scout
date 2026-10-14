@@ -236,6 +236,13 @@
         </div>
 
         <div class="comparison__body">
+          <!-- A filter that needs a new comparison: the page stays, and this says what is coming -->
+          <div class="updating" id="comparison-updating" role="status" hidden>
+            <div class="progress progress--busy updating__bar" aria-hidden="true">
+              <div class="progress__bar"></div>
+            </div>
+            <p class="updating__text" id="comparison-updating-text"></p>
+          </div>
           <nav class="civ-list" id="civ-list" aria-label="Civilizations"></nav>
           <div class="comparison__page" id="comparison-page">
             <h1 class="page__title" id="comparison-title"></h1>
